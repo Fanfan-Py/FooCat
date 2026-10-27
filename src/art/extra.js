@@ -92,4 +92,26 @@
     }
     return p.outline(P.K);
   };
+
+  // scorpion de fer (niveau 4) : marche au sol, sa queue tire trois balles en éventail
+  S.scorpion = function (f) {
+    var p = new Pix(28, 18), b = new Pix(28, 18), off = f % 2;
+    // pattes
+    for (var i = 0; i < 4; i++) { var lx = 8 + i * 4; p.line(lx, 13, lx - 2 + (i + off) % 2 * 2, 17, P.n); }
+    // corps en segments
+    b.ell(12, 12, 7, 3.6, function (x, y, dx, dy) { return dy < -0.3 ? P.m : (x % 4 === 0 ? P.n : P.M); });
+    b.ell(5, 12, 3.2, 3, P.M);
+    // pinces vers l'avant (à gauche)
+    b.ell(1.5, 9.5, 2.2, 1.8, P.m); b.ell(1.5, 14.5, 2.2, 1.8, P.m);
+    b.put(3, 10, P.n); b.put(3, 14, P.n);
+    // queue qui remonte au-dessus du dos, dard rouge
+    var tail = [[18, 11], [21, 9], [23, 6], [22, 3], [19, 2], [16, 3]];
+    for (var k = 0; k < tail.length; k++) b.ell(tail[k][0], tail[k][1] - off * (k > 2 ? 1 : 0), 2, 2, k % 2 ? P.M : P.m);
+    b.put(14, 4 - off, P.R); b.put(13, 4 - off, P.R); b.put(14, 5 - off, P.q);
+    // yeux
+    b.put(4, 10, P.R); b.put(6, 10, P.R);
+    b.outline(P.K);
+    p.blit(b, 0, 0);
+    return p;
+  };
 })(typeof window !== 'undefined' ? window : globalThis);

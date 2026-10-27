@@ -16,6 +16,8 @@ const sfx = new SoundFx();
 const input = new Input();
 const app = new App(sfx);
 input.onMute = () => toggleMute();
+// sur l'ordinateur de développement (npm run dev), le choix du niveau est toujours proposé
+if (import.meta.env.DEV) app.setDev(true);
 
 // ---------- mise à l'échelle : le jeu 320x180 remplit l'écran sans être déformé ----------
 const touchUI = $('touch'), stick = $('stick'), knob = $('knob'), rotate = $('rotate');
@@ -35,10 +37,23 @@ function insets() {
   return { l: n(cs.paddingLeft), r: n(cs.paddingRight), t: n(cs.paddingTop), b: n(cs.paddingBottom) };
 }
 
+// Taille de l'écran. Sur certains iPhone, elle n'est pas encore à jour au lancement ou juste
+// après une rotation, et le téléphone ne prévient pas toujours : on la surveille à chaque image.
+const stageEl = $('stage');
+function screenSize() {
+  return { w: window.innerWidth || stageEl.clientWidth, h: window.innerHeight || stageEl.clientHeight };
+}
+let laidOut = { w: 0, h: 0 };
+
 function layout() {
-  const vw = window.innerWidth, vh = window.innerHeight, ins = insets();
+  const { w: vw, h: vh } = screenSize(), ins = insets();
+  laidOut = { w: vw, h: vh };
   const aw = vw - ins.l - ins.r, ah = vh - ins.t - ins.b; // zone utilisable
-  const s = Math.min(aw / W, ah / H), cw = Math.round(W * s), ch = Math.round(H * s);
+  let s = Math.min(aw / W, ah / H);
+  // sur un écran tactile sans place autour du jeu (iPhone SE…), on réduit un peu le jeu
+  // pour garder deux bandes libres sur les côtés : les boutons ne cachent jamais rien
+  if (app.touch && (aw - W * s) / 2 < 64 && ah - H * s < 128) s = Math.min((aw - 128) / W, ah / H);
+  const cw = Math.round(W * s), ch = Math.round(H * s);
   const left = Math.round(ins.l + (aw - cw) / 2), top = Math.round(ins.t + (ah - ch) / 2);
   Object.assign(canvas.style, { width: cw + 'px', height: ch + 'px', left: left + 'px', top: top + 'px' });
 
@@ -71,6 +86,10 @@ function layout() {
   rotate.hidden = !(app.touch && vh > vw);
 }
 window.addEventListener('resize', layout);
+window.addEventListener('pageshow', layout);
+window.visualViewport?.addEventListener('resize', layout);
+// après une rotation, l'iPhone met parfois un moment à donner la nouvelle taille
+window.addEventListener('orientationchange', () => { for (const ms of [50, 250, 600, 1200]) setTimeout(layout, ms); });
 
 // ---------- commandes tactiles ----------
 let stickId: number | null = null, stickX = 0, stickY = 0, fireId: number | null = null;
@@ -158,12 +177,15 @@ function frame(now: number) {
   let n = 0;
   while (acc >= STEP && n < 5) { app.update(STEP, input.poll()); acc -= STEP; n++; }
   if (n === 5) acc = 0;
+  const sz = screenSize();
+  if (sz.w !== laidOut.w || sz.h !== laidOut.h) layout(); // la taille a changé sans prévenir
   app.draw(scr);
   img.data.set(scr.d);
   ctx.putImageData(img, 0, 0);
   requestAnimationFrame(frame);
 }
 layout();
+for (const ms of [100, 500, 1500]) setTimeout(layout, ms); // au cas où la taille arrive en retard
 requestAnimationFrame(frame);
 
 // Version en ligne : le jeu s'installe sur le téléphone et marche sans connexion

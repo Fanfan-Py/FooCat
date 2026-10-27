@@ -2,7 +2,7 @@
 import { FC, Pix, Color } from '../art';
 import * as C from './config';
 import { World, WEAPON_ORDER, rainStage } from './world';
-import { enemySprite, elecOn, cablePoint } from './things';
+import { enemySprite, elecOn, elecSoon, cablePoint } from './things';
 
 const P = FC.P;
 const BONUS_SPRITE: Record<string, string> = {
@@ -290,8 +290,14 @@ export function drawHud(scr: Pix, w: World) {
 
 // fils électriques entre deux pylônes : allumés, ou qui grésillent juste avant de s'allumer
 function drawElec(scr: Pix, o: any, t: number) {
-  const e = o.elec, x0 = o.x + e.x, y0 = o.y + e.y, on = elecOn(o, t);
-  const soon = !on && ((t + e.offset) % 2.6) > 2.25;
+  const e = o.elec, x0 = o.x + e.x, y0 = o.y + e.y, on = elecOn(o, t), soon = !on && elecSoon(o, t);
+  // voyants en haut des pylônes : rouge = courant branché, vert = coupé, orange clignotant = il va revenir
+  const blink = Math.floor(t * 8) % 2;
+  const lamp = on ? P.R : soon ? (blink ? P.o : P.y) : P.g;
+  for (const lx of [o.x + 7, o.x + 67]) {
+    scr.ell(lx + 1, o.y + 2, 4, 4, FC.alpha(lamp, 70));
+    scr.rect(lx, o.y + 1, 3, 3, lamp); scr.put(lx, o.y + 1, P.W);
+  }
   if (!on && !soon) return;
   const fl = Math.floor(t * 12) % 3;
   for (let k = 0; k * 11 < e.h - 4; k++) {

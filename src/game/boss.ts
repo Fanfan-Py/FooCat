@@ -1,6 +1,6 @@
 // Le boss du niveau 5 : l'Araignée de Fer.
 // Seul son cœur rose est fragile (le casse-dents l'abîme partout).
-// Phase 1 : salves de toiles. Phase 2 : elle lâche aussi des mini-araignées.
+// Phase 1 : salves de toiles. Phase 2 : salves plus larges.
 // Phase 3 : elle vise avec le laser de ses yeux (une ligne rouge prévient avant le tir).
 import * as C from './config';
 import { Box, boxEllipse } from './things';
@@ -8,7 +8,7 @@ import { Box, boxEllipse } from './things';
 export interface BossHost {
   heroCenter(): [number, number];
   bossWebs(x: number, y: number, spread: number[]): void;
-  bossSpiderlings(x: number, y: number, n: number): void;
+  bossReinforcements(x: number, y: number, n: number, drone: boolean): void;
   bossExplosion(x: number, y: number, big: boolean): void;
   sound(name: string): void;
 }
@@ -27,7 +27,7 @@ export class Boss {
   laserY = 0;
   private laserT = 3;
   private shootT = 2.5;
-  private spawnT = 3;
+  private spawnT = 4;
 
   static readonly HOME_X = C.W - 134;
 
@@ -81,10 +81,13 @@ export class Boss {
       host.bossWebs(ex - 4, ey - 4, stage === 1 ? [-14, 0, 14] : [-20, -7, 7, 20]);
       this.shootT = stage === 1 ? 2.2 : stage === 2 ? 2.6 : 3.2;
     }
-    // mini-araignées
-    if (stage >= 2) {
-      this.spawnT -= dt;
-      if (this.spawnT <= 0) { host.bossSpiderlings(this.x + 40, this.y + 72, stage === 2 ? 2 : 1); this.spawnT = 5.5; }
+    // renforts : plus sa vie baisse, plus il en appelle, et plus souvent
+    // (vie pleine : 1 mini-araignée toutes les 6 s ; presque vaincu : 3 toutes les 3,2 s, avec des drones)
+    const lost = 1 - this.hp / this.maxHp;
+    this.spawnT -= dt;
+    if (this.spawnT <= 0) {
+      host.bossReinforcements(this.x + 40, this.y + 72, 1 + Math.floor(lost * 2.6), lost > 0.33 && Math.random() < 0.4);
+      this.spawnT = 6 - 2.8 * lost;
     }
     // laser des yeux
     if (stage === 3) {

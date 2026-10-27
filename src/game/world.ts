@@ -299,9 +299,11 @@ export class World implements BossHost {
       if (this.passageOk(d, y)) {
         this.place(d, y, speed);
         const o = this.obstacles[this.obstacles.length - 1];
-        o.elec = { ...d.elec!, offset: this.rnd() * 2.6 };
-        // un bonus précieux coincé entre les poteaux : il faut passer quand le courant est coupé
-        if (this.rnd() < (this.phase.banner === 'ZONE ÉLECTRIQUE !' ? 0.7 : 0.45)) {
+        // un bonus précieux coincé entre les poteaux : il faut passer quand le courant est coupé.
+        // Dans ce cas, le courant reste coupé plus longtemps (1,8 s au lieu de 1 s).
+        const withBonus = this.rnd() < (this.phase.banner === 'ZONE ÉLECTRIQUE !' ? 0.7 : 0.45);
+        o.elec = { ...d.elec!, on: 1.6, off: withBonus ? 1.8 : 1.0, offset: this.rnd() * 3.4 };
+        if (withBonus) {
           const kind = pickWeighted({ jaw: 2, heart: 2, drag: 2, life: 1, bomb: 1 }, this.rnd) as BonusKind;
           this.spawnBonus(o.x + 30, o.y + o.elec.y + o.elec.h / 2 - 8, speed, kind);
         }
@@ -341,6 +343,21 @@ export class World implements BossHost {
         if (!G) return this.spawnFormation('solo', gold);
         const n = 1 + Math.floor(R() * (1 + this.progress));
         for (let i = 0; i < n; i++) this.enemies.push(newEnemy('turret', C.W + 6 + i * 70, G - 13, { shootT: 1 + R() * 1.5 }));
+        return;
+      }
+      case 'scorpion': {
+        if (!G) return this.spawnFormation('solo', gold);
+        const n = 1 + Math.floor(R() * (1 + this.progress));
+        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('scorpion', C.W + 6 + i * 60, G - 17, { phase: R() * 6, shootT: 1.2 + R() }));
+        return;
+      }
+      case 'droneSquad': { // escadrille de 3 drones en V qui traverse l'écran sans s'arrêter
+        if (this.enemies.filter(e => e.kind === 'drone').length > 3) return this.spawnFormation('v', gold);
+        const baseY = top + 26 + R() * (playBottom - top - 52), id = ++this.groupSeq;
+        this.groups.set(id, { left: 3, ok: true });
+        for (const [dx, dy] of [[0, 0], [22, -18], [22, 18]]) {
+          this.enemies.push(newEnemy('drone', C.W + 6 + dx, baseY + dy, { phase: R() * 6, speed: 68 * sp, amp: 4, holdX: -100, shootT: 1 + R() * 1.5, group: id }));
+        }
         return;
       }
       case 'spiderling': {
@@ -471,8 +488,11 @@ export class World implements BossHost {
           e.x -= this.level.scroll * dt;
           e.y = e.baseY + Math.sin(this.t * 1.1 + e.phase) * e.amp;
           break;
-        case 'drone': // comme l'araignée, mais tire des rafales de 3 balles
-          if (e.x > e.holdX && e.holdT > 0) e.x -= e.speed * dt;
+        case 'drone': // comme l'araignée, mais tire des rafales ; en escadrille, il traverse sans s'arrêter
+          if (e.holdX < 0) {
+            e.x -= e.speed * dt; e.shootT -= dt;
+            if (e.shootT <= 0 && this.canAim(e)) { this.aimShot('bullet', e.x + 4, e.y + 10, (66 + 16 * p) * m.speed); e.shootT = 3.2 / m.enemyFire; }
+          } else if (e.x > e.holdX && e.holdT > 0) e.x -= e.speed * dt;
           else {
             e.holdT -= dt;
             if (e.holdT <= 0) e.x -= 80 * dt;
@@ -491,6 +511,14 @@ export class World implements BossHost {
           if (e.shootT <= 0 && this.canAim(e) && e.x < C.W - 10) {
             e.shootT = (3 + this.rnd() * 1.2) / m.enemyFire;
             this.aimShot('bullet', e.x + 3, e.y + 2, (70 + 18 * p) * m.speed);
+          }
+          break;
+        case 'scorpion': // marche au sol, sa queue tire 3 balles en éventail
+          e.x -= (this.level.scroll + 10) * dt;
+          e.shootT -= dt;
+          if (e.shootT <= 0 && this.canAim(e) && e.x < C.W - 10) {
+            e.shootT = 3.6 / m.enemyFire;
+            this.fan('bullet', e.x + 14, e.y + 3, [-16, 0, 16], (58 + 14 * p) * m.speed);
           }
           break;
         case 'spiderling': { // fonce vers le chat en corrigeant sa hauteur
@@ -515,6 +543,16 @@ export class World implements BossHost {
   private aimShot(kind: 'web' | 'bullet', sx: number, sy: number, v: number) {
     const h = this.hero, tx = h.x + 20, ty = h.y + 16, d = Math.hypot(tx - sx, ty - sy) || 1;
     this.eshots.push({ kind, x: sx, y: sy, vx: (tx - sx) / d * v, vy: (ty - sy) / d * v, g: 0, dead: false });
+    this.sfx.play(kind === 'web' ? 'web' : 'pew');
+  }
+
+  // plusieurs tirs en éventail vers le chat
+  private fan(kind: 'web' | 'bullet', x: number, y: number, degs: number[], v: number) {
+    const [hx, hy] = this.heroCenter(), base = Math.atan2(hy - y, hx - x);
+    for (const d of degs) {
+      const a = base + d * Math.PI / 180;
+      this.eshots.push({ kind, x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 0, dead: false });
+    }
     this.sfx.play(kind === 'web' ? 'web' : 'pew');
   }
 
@@ -795,8 +833,11 @@ export class World implements BossHost {
     }
     this.sfx.play('web');
   }
-  bossSpiderlings(x: number, y: number, n: number) {
-    for (let i = 0; i < n; i++) this.enemies.push(newEnemy('spiderling', x - i * 12, y - i * 10, { phase: this.rnd() * 6, speed: 70 * this.mode.speed }));
+  // renforts appelés par le boss (de plus en plus nombreux quand sa vie baisse)
+  bossReinforcements(x: number, y: number, n: number, drone: boolean) {
+    if (this.enemies.length > 8) return; // pas plus de 8 ennemis à la fois
+    for (let i = 0; i < n; i++) this.enemies.push(newEnemy('spiderling', x - i * 12, y - i * 10, { phase: this.rnd() * 6, speed: 58 * this.mode.speed }));
+    if (drone) this.spawnWave('drone', 0);
   }
   bossExplosion(x: number, y: number, big: boolean) {
     this.burst(x, y, big ? 80 : 16, big ? FC.RAINBOW.concat([FC.P.W, FC.P.P]) : [FC.P.y, FC.P.o, FC.P.W, FC.P.m], big ? 140 : 70);

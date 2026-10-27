@@ -20,8 +20,8 @@ export interface Shot {
   life: number; age: number; frame: number; bounces: number; hit: Enemy[]; dead: boolean; hitBoss?: boolean;
 }
 export interface EShot { kind: 'web' | 'sugar' | 'bullet'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean }
-// elec : zone électrique (clôture) qui s'allume et s'éteint
-export interface Elec { x: number; y: number; w: number; h: number; offset: number }
+// elec : zone électrique (clôture) qui s'allume (on secondes) et s'éteint (off secondes)
+export interface Elec { x: number; y: number; w: number; h: number; offset: number; on: number; off: number }
 export interface Obstacle { kind: C.ObstacleKind; pix: Pix; x: number; y: number; shapes: Shape[]; speed: number; dead: boolean; belt: boolean; elec?: Elec; top?: boolean }
 export interface Bonus { kind: BonusKind; x: number; y: number; baseY: number; speed: number; t: number; dead: boolean }
 export interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; color: Color; g: number }
@@ -67,6 +67,7 @@ const BOXES: Record<EnemyKind, Box> = {
   fly: FLY_BOX, flyGold: FLY_BOX, spider: SPIDER_BOX, hanger: SPIDER_BOX,
   wasp: { x: 2, y: 3, w: 18, h: 9 }, ant: { x: 2, y: 3, w: 18, h: 12 }, mint: { x: 0, y: 0, w: 0, h: 0 },
   drone: { x: 5, y: 5, w: 17, h: 11 }, turret: { x: 3, y: 4, w: 16, h: 10 }, spiderling: { x: 1, y: 2, w: 13, h: 8 },
+  scorpion: { x: 1, y: 5, w: 22, h: 12 },
 };
 export function enemyBox(e: Enemy): Box {
   if (e.kind === 'mint') return { x: e.x + 1, y: e.y + 1, w: e.size * 2 + 1, h: e.size * 2 + 1 };
@@ -85,11 +86,12 @@ export function enemySprite(e: Enemy, t: number): Pix {
     case 'drone': return FC.spr('robot', Math.floor(t * 10 + e.phase) % 2);
     case 'turret': return FC.turret(e.flash > 0 || e.shootT < 0.25 ? 1 : 0);
     case 'spiderling': return FC.spr('spiderling', Math.floor(t * 8 + e.phase) % 2);
+    case 'scorpion': return FC.spr('scorpion', Math.floor(t * 6 + e.phase) % 2);
   }
 }
 
 // ---------- obstacles ----------
-export interface ObstacleDef { kind: C.ObstacleKind; pix: Pix; shapes: Shape[]; elec?: Omit<Elec, 'offset'> }
+export interface ObstacleDef { kind: C.ObstacleKind; pix: Pix; shapes: Shape[]; elec?: Omit<Elec, 'offset' | 'on' | 'off'> }
 
 export function planetDefs(): ObstacleDef[] {
   return FC.mk('planetDefs', () => {
@@ -164,7 +166,11 @@ export function pillarDef(rnd: () => number): ObstacleDef {
   return { kind: 'pillar', pix, shapes: [{ t: 'r', x: 2, y: 0, w: 14, h }] };
 }
 // la clôture est-elle allumée à cet instant ?
-export function elecOn(o: Obstacle, t: number) { return !!o.elec && ((t + o.elec.offset) % 2.6) < 1.6; }
+export function elecOn(o: Obstacle, t: number) { return !!o.elec && elecPhase(o, t) < o.elec.on; }
+// où en est le cycle (0 = le courant vient de s'allumer)
+export function elecPhase(o: Obstacle, t: number) { const e = o.elec!; return (t + e.offset) % (e.on + e.off); }
+// le courant va revenir bientôt (avertissement)
+export function elecSoon(o: Obstacle, t: number) { const e = o.elec!; return elecPhase(o, t) > e.on + e.off - 0.6; }
 
 // câble électrique suspendu : il pend entre deux attaches et grésille ; on passe dessus ou dessous
 export function cableDef(rnd: () => number): ObstacleDef {

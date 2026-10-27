@@ -76,6 +76,7 @@ if (shotsDir) {
   const scr = new FC.Pix(W, H);
   for (let lv = Number(process.env.FROM || 0); lv < LEVELS.length; lv++) {
     const app = new App(sfx);
+    app.setDev(true);
     for (let i = 0; i < 30; i++) app.update(STEP, idle);
     for (let i = 0; i < lv; i++) app.update(STEP, { ...idle, right: true });
     app.draw(scr); if (lv === 2) savePng(scr, 3, shotsDir + '/titre.png');

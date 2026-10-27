@@ -50,33 +50,49 @@ class Menu {
 export class App {
   state: 'title' | 'play' | 'pause' | 'over' | 'done' | 'end' = 'title';
   world: World | null = null;
-  reached = Math.max(1, load('foocat.reached')); // dernier niveau atteint
-  choice = 0; // niveau choisi à l'accueil
+  // mode développeur : choix du niveau à l'accueil (automatique sur l'ordinateur de développement,
+  // ou en touchant 5 fois le logo sur le site)
+  dev = load('foocat.dev') === 1;
+  choice = 0; // niveau choisi à l'accueil (mode développeur)
   mode: C.Mode = 'normal';
   touch = false;
   private t = 0;
   private stateT = 0;
   private menu: Menu | null = null;
+  private devRun = false; // partie lancée depuis le choix du niveau : on ne sauvegarde pas
+  private logoTaps: number[] = [];
+  private notice: { text: string; t: number } | null = null;
   private levelStart: Carry | null = null; // pour rejouer le niveau après un game over
   private titleStars = FC.stars(3, C.W, C.H, 120);
   private bigHero: Record<number, Pix> = {};
 
-  constructor(private sfx: Sfx) { this.sfx.music?.('title'); }
+  constructor(private sfx: Sfx) { this.sfx.music?.('title'); this.titleMenu(); }
 
-  get unlocked() { return C.UNLOCK_ALL ? C.LEVELS.length : Math.min(this.reached, C.LEVELS.length); }
+  setDev(on: boolean) { this.dev = on; this.titleMenu(); }
+
+  // sauvegarde « Continuer » : le début du dernier niveau atteint, pour chaque mode
+  get saveKey() { return 'foocat.save.' + this.mode; }
+  get saved(): { level: number; carry: Carry } | null {
+    try { const v = JSON.parse(localStorage.getItem(this.saveKey) || 'null'); return v && typeof v.level === 'number' ? v : null; } catch { return null; }
+  }
+  private writeSave(v: { level: number; carry: Carry } | null) {
+    try { if (v) localStorage.setItem(this.saveKey, JSON.stringify(v)); else localStorage.removeItem(this.saveKey); } catch { /* stockage indisponible */ }
+  }
   get bestKey() { return this.mode === 'normal' ? 'foocat.best' : 'foocat.best.' + this.mode; }
   get best() { return load(this.bestKey); }
 
   private go(s: App['state'], menu: string[] | null = null, y0 = 0) {
     this.state = s; this.stateT = 0;
     this.menu = menu ? new Menu(menu, y0) : null;
-    if (s === 'title') this.sfx.music?.('title');
+    if (s === 'title') { this.sfx.music?.('title'); this.titleMenu(); }
     if (s === 'over' || s === 'end') this.sfx.music?.(null);
   }
   private startLevel(i: number, carry?: Carry) {
+    // on repart toujours avec au moins les vies de départ du mode
+    if (carry) carry = { ...carry, lives: Math.max(carry.lives, C.MODES[this.mode].lives) };
     this.world = new World(this.sfx, { level: i, carry, mode: this.mode });
     this.levelStart = this.world.carry();
-    if (i + 1 > this.reached) { this.reached = i + 1; save('foocat.reached', this.reached); }
+    if (!this.devRun) this.writeSave(i > 0 ? { level: i, carry: this.levelStart } : null);
     this.go('play'); this.sfx.play('start');
     this.sfx.music?.(THEMES[i] ?? 'space');
   }
@@ -116,7 +132,7 @@ export class App {
         else if (i === 0) {
           if (this.state === 'over') this.startLevel(w.levelIndex, this.levelStart ?? undefined);
           else if (w.levelIndex + 1 < C.LEVELS.length) this.startLevel(w.levelIndex + 1, w.carry());
-          else this.go('end');
+          else { if (!this.devRun) this.writeSave(null); this.go('end'); }
         }
         break;
       }
@@ -126,18 +142,53 @@ export class App {
     }
   }
 
+  // menu de l'accueil : Continuer (si une partie est sauvegardée), Nouvelle partie, Mode
+  private titleMenu() {
+    const sv = this.saved, items: string[] = [];
+    if (sv) items.push('CONTINUER : NIVEAU ' + (sv.level + 1));
+    items.push(this.dev ? 'JOUER LE NIVEAU ' + (this.choice + 1) : 'NOUVELLE PARTIE');
+    items.push('MODE : ' + MODE_NAMES[this.mode]);
+    const idx = this.menu ? Math.min(this.menu.idx, items.length - 1) : 0;
+    this.menu = new Menu(items, this.dev ? 124 : 117, 11);
+    this.menu.idx = idx;
+  }
+
   private updateTitle(c: AppInput) {
-    const n = this.unlocked;
-    let lv = (c.right ? 1 : 0) - (c.left ? 1 : 0), md = c.up || c.down ? 1 : 0, start = c.confirm;
-    if (c.tapX >= 0) { // toucher les flèches change le niveau ou le mode ; ailleurs, on lance la partie
-      const side = c.tapX < 110 ? -1 : c.tapX > 210 ? 1 : 0;
-      if (side && c.tapY > 108 && c.tapY < 122) lv = side;
-      else if (side && c.tapY >= 122 && c.tapY < 136) md = 1;
-      else start = true;
+    if (this.notice && (this.notice.t += 1 / 60) > 2.5) this.notice = null;
+    // geste secret : toucher 5 fois le logo en 3 secondes active ou coupe le mode développeur
+    if (c.tapX >= 0 && c.tapY < 40 && c.tapX > 90 && c.tapX < 230) {
+      this.logoTaps = this.logoTaps.filter((t) => this.t - t < 3).concat(this.t);
+      if (this.logoTaps.length >= 5) {
+        this.dev = !this.dev; this.logoTaps = []; save('foocat.dev', this.dev ? 1 : 0);
+        this.notice = { text: this.dev ? 'MODE DÉVELOPPEUR ACTIVÉ' : 'MODE DÉVELOPPEUR DÉSACTIVÉ', t: 0 };
+        this.sfx.play('pickup'); this.titleMenu();
+      }
+      return;
     }
-    if (lv && n > 1) { this.choice = (this.choice + lv + n) % n; this.sfx.play('swap'); }
-    else if (md) { this.mode = MODES[(MODES.indexOf(this.mode) + 1) % MODES.length]; this.sfx.play('swap'); }
-    else if (start) this.startLevel(this.choice);
+    const n = C.LEVELS.length;
+    // mode développeur : gauche/droite (ou toucher les flèches de la ligne DEV) changent le niveau
+    if (this.dev) {
+      let lv = (c.right ? 1 : 0) - (c.left ? 1 : 0);
+      if (c.tapX >= 0 && c.tapY >= 106 && c.tapY < 119) lv = c.tapX < 160 ? -1 : 1;
+      if (lv && this.menu!.items[this.menu!.idx].startsWith('MODE') === false) {
+        this.choice = (this.choice + lv + n) % n; this.sfx.play('swap'); this.titleMenu(); return;
+      }
+      if (c.tapX >= 0 && c.tapY >= 106 && c.tapY < 119) return;
+    }
+    const menu = this.menu!, modeIdx = menu.items.length - 1;
+    if ((c.left || c.right) && menu.idx === modeIdx) { this.toggleMode(); return; }
+    const i = menu.handle(c);
+    if (i < 0) return;
+    if (i === modeIdx) { this.toggleMode(); return; }
+    const sv = this.saved;
+    if (sv && i === 0) { this.devRun = false; this.startLevel(sv.level, sv.carry); return; }
+    this.devRun = this.dev && this.choice > 0;
+    this.startLevel(this.dev ? this.choice : 0);
+  }
+
+  private toggleMode() {
+    this.mode = MODES[(MODES.indexOf(this.mode) + 1) % MODES.length];
+    this.sfx.play('swap'); this.titleMenu();
   }
 
   private openPause() {
@@ -223,18 +274,18 @@ export class App {
     const big = this.bigHero[f], by = Math.round(Math.sin(t * 2.4) * 2), hx = Math.round((C.W - big.w) / 2), hy = 48 + by;
     FC.trail(scr, hx + 8, hy + 48, t, true);
     scr.blit(big, hx, hy);
-    // choix du niveau et du mode
-    const lv = C.LEVELS[this.choice], a = Math.floor(t * 3) % 2;
-    center(scr, 'NIVEAU ' + lv.num + ' · ' + lv.name, 113, P.W, { outline: P.K });
-    center(scr, 'MODE ' + MODE_NAMES[this.mode], 126, this.mode === 'normal' ? P.b : P.P, { outline: P.K });
-    if (this.unlocked > 1) { FC.text(scr, '<', 76 - a, 113, P.y, { outline: P.K }); FC.text(scr, '>', 242 + a, 113, P.y, { outline: P.K }); }
-    FC.text(scr, '<', 76 - a, 126, P.y, { outline: P.K }); FC.text(scr, '>', 242 + a, 126, P.y, { outline: P.K });
-    if (t % 1.2 < 0.8) center(scr, this.touch ? 'TOUCHE AU MILIEU POUR JOUER' : 'ENTRÉE OU ESPACE POUR JOUER', 140, P.y, { outline: P.K });
-    if (this.touch) center(scr, 'TOUCHE LES FLÈCHES POUR CHOISIR', 152, P.v);
-    else {
-      center(scr, 'GAUCHE/DROITE : NIVEAU · HAUT/BAS : MODE', 151, P.v);
-      center(scr, 'ESPACE : TIRER · X : ARME · C : CASSE-DENTS · ÉCHAP : PAUSE', 160, P.v);
+    if (!this.menu) this.titleMenu();
+    if (this.dev) { // ligne réservée au mode développeur
+      const a = Math.floor(t * 3) % 2;
+      center(scr, 'DEV · NIVEAU ' + (this.choice + 1) + ' · ' + C.LEVELS[this.choice].name, 110, P.o, { outline: P.K });
+      FC.text(scr, '<', 52 - a, 110, P.o, { outline: P.K }); FC.text(scr, '>', 266 + a, 110, P.o, { outline: P.K });
     }
+    this.menu!.draw(scr, t);
+    if (!this.dev) {
+      if (this.touch) center(scr, 'TOUCHE UNE LIGNE POUR CHOISIR', 156, P.v);
+      else center(scr, 'HAUT/BAS PUIS ENTRÉE · ESPACE : TIRER · X : ARME · C : CASSE-DENTS', 156, P.v);
+    }
+    if (this.notice) center(scr, this.notice.text, 100, P.y, { outline: P.K });
     center(scr, 'MEILLEUR SCORE (' + MODE_NAMES[this.mode] + ') ' + this.best, 171, P.y);
   }
 }

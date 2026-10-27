@@ -29,6 +29,15 @@ Les icônes se refont avec `npm run icons`.
 - `npm test` : un robot joue 12 parties pour vérifier que rien ne plante et mesurer la difficulté.
 - `npm run single` : crée `dist-single/foocat.html`, le jeu complet dans un seul fichier.
 
+## Mode développeur
+
+Le choix du niveau à l'accueil n'apparaît qu'en mode développeur :
+- automatiquement avec `npm run dev` ;
+- sur le site en ligne : toucher (ou cliquer) 5 fois le logo FOOCAT en moins de 3 secondes.
+  Recommencer pour le couper.
+
+Les parties lancées depuis le choix du niveau ne modifient pas la sauvegarde « Continuer ».
+
 ## Où régler le jeu
 
 Tous les réglages (vies, cœurs, dégâts, armes, ennemis, points pour finir un niveau)

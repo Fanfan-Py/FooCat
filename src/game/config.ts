@@ -4,9 +4,7 @@ export const W = 320; // largeur de l'écran de jeu (en pixels du jeu)
 export const H = 180; // hauteur
 export const HUD_H = 14; // bandeau du haut (score, vies...)
 
-// Pendant la mise au point, tous les niveaux sont proposés à l'écran titre.
-// Plus tard : false, et on ne peut choisir que les niveaux déjà atteints.
-export const UNLOCK_ALL = true;
+// Le choix du niveau à l'accueil n'existe qu'en mode développeur (voir app.ts).
 
 // Modes de jeu. « difficile » est prêt mais pas encore proposé à l'écran titre.
 export const MODES = {
@@ -51,12 +49,13 @@ export const ENEMIES = {
   drone: { points: 350, hp: 5, drop: 0.3 }, // drone-araignée : tire des rafales
   turret: { points: 400, hp: 6, drop: 0.25 }, // tourelle au sol : tire vers le chat
   spiderling: { points: 150, hp: 2, drop: 0.08 }, // mini-araignée de métal : fonce vers le chat
+  scorpion: { points: 350, hp: 6, drop: 0.25 }, // scorpion de fer au sol : tire 3 balles en éventail
 };
 export type EnemyKind = keyof typeof ENEMIES;
 export const POINTS = { planet: 300, bonus: 50, wave: 500, belt: 1000, perSecond: 10 };
 
 // Vagues d'ennemis possibles
-export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling';
+export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling' | 'scorpion' | 'droneSquad';
 // Obstacles possibles
 export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable';
 
@@ -116,13 +115,13 @@ export const LEVELS: Level[] = [
     ],
   },
   {
-    num: 4, name: 'TERRES DE FER', points: 28000, decor: 'iron', ground: 148, ceiling: null, scroll: 44, outro: 'K',
+    num: 4, name: 'TERRES DE FER', points: 30000, decor: 'iron', ground: 148, ceiling: null, scroll: 44, outro: 'K',
     phases: [
-      { from: 0, obstacle: 6.0, obstacles: { fence: 1 }, wave: 2.6, waves: { drone: 1, solo: 1, line: 2 }, gold: 0.2 },
-      { from: 0.15, obstacle: 4.8, obstacles: { fence: 3, cable: 1 }, wave: 2.3, waves: { drone: 1, turret: 1, v: 1, line: 1, wasps: 1 }, gold: 0.25 },
-      { from: 0.45, banner: 'ZONE ÉLECTRIQUE !', obstacle: 3.0, obstacles: { fence: 2, cable: 1 }, wave: 3.6, waves: { solo: 2, turret: 1 }, gold: 0 },
-      { from: 0.6, obstacle: 4.4, obstacles: { fence: 3, cable: 1 }, wave: 2.0, waves: { drone: 1, turret: 1, swarm: 1, v: 1, spider: 1 }, gold: 0.3 },
-      { from: 0.88, banner: 'LA FORTERESSE !', obstacle: 99, obstacles: {}, wave: 1.7, waves: { drone: 2, turret: 1, line: 1 }, gold: 0.3 },
+      { from: 0, obstacle: 6.0, obstacles: { fence: 1 }, wave: 2.5, waves: { drone: 1, solo: 1, line: 2, scorpion: 1 }, gold: 0.2 },
+      { from: 0.15, obstacle: 4.8, obstacles: { fence: 3, cable: 1 }, wave: 2.2, waves: { drone: 1, droneSquad: 1, turret: 1, scorpion: 1, v: 1, line: 2, wasps: 1 }, gold: 0.25 },
+      { from: 0.45, banner: 'ZONE ÉLECTRIQUE !', obstacle: 3.0, obstacles: { fence: 2, cable: 1 }, wave: 3.0, waves: { solo: 2, scorpion: 1, droneSquad: 1 }, gold: 0 },
+      { from: 0.6, obstacle: 4.4, obstacles: { fence: 3, cable: 1 }, wave: 2.0, waves: { drone: 1, droneSquad: 1, turret: 1, scorpion: 1, swarm: 1, v: 1, line: 1, spider: 1 }, gold: 0.3 },
+      { from: 0.88, banner: 'LA FORTERESSE !', obstacle: 99, obstacles: {}, wave: 2.0, waves: { droneSquad: 1, drone: 1, turret: 1, scorpion: 1, line: 2 }, gold: 0.3 },
     ],
   },
   {
