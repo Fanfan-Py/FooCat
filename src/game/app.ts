@@ -30,7 +30,7 @@ function right(scr: Pix, s: string, x: number, y: number, c: number[], o: any = 
 
 const MODES: C.Mode[] = ['normal', 'difficile'];
 const MODE_NAMES: Record<C.Mode, string> = { normal: 'NORMAL', difficile: 'DIFFICILE' };
-const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'nebula', 'planet', 'iron'];
+const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'nebula', 'planet', 'iron', 'iron'];
 
 // histoire illustrée entre le niveau 5 et le niveau 6
 const STORY = [
@@ -237,7 +237,7 @@ export class App {
       else if (ev.type === 'break') this.stats.jawBreaks++;
       else if (ev.type === 'belt') this.unlock('belt');
       else if (ev.type === 'pinata5') this.unlock('pinata');
-      else if (ev.type === 'boss') { this.unlock('boss'); if (this.mode === 'difficile') this.unlock('hard'); }
+      else if (ev.type === 'boss') { this.unlock(ev.kind === 'skel' ? 'skel' : 'boss'); if (this.mode === 'difficile') this.unlock('hard'); }
     }
     w.events = [];
     this.statsDirty = true;
@@ -437,7 +437,7 @@ export class App {
     if (c.up) this.sel = (this.sel + n - 1) % n;
     if (c.down) this.sel = (this.sel + 1) % n;
     if (c.tapX >= 0) {
-      const row = Math.floor((c.tapY - 24 + 2) / 9);
+      const row = Math.floor((c.tapY - 25 + 1) / 8);
       if (row >= 0 && row < n && c.tapY < 140) this.sel = row; else this.go('title');
       return;
     }
@@ -586,8 +586,8 @@ export class App {
     this.drawTitleBackground(scr);
     center(scr, 'SUCCÈS ' + this.unlocked.size + '/' + ACHIEVEMENTS.length, 6, P.y, { sc: 2, outline: P.P });
     ACHIEVEMENTS.forEach((a, i) => {
-      const y = 24 + i * 9, got = this.unlocked.has(a.id), on = i === this.sel;
-      if (on) scr.rect(30, y - 2, 262, 9, FC.alpha(P.P, 170));
+      const y = 25 + i * 8, got = this.unlocked.has(a.id), on = i === this.sel;
+      if (on) scr.rect(30, y - 1, 262, 7, FC.alpha(P.P, 170));
       scr.rect(34, y, 5, 5, got ? P.g : P.k);
       if (got) { scr.put(35, y + 2, P.W); scr.put(36, y + 3, P.W); scr.put(37, y + 1, P.W); }
       FC.text(scr, a.name, 44, y, got ? P.W : P.M);

@@ -21,7 +21,7 @@ export interface Shot {
   src?: number; // numéro du tir (les éclats de Piñata gardent celui de leur Piñata)
   touched?: boolean; // ce tir a déjà touché (pour la précision)
 }
-export interface EShot { kind: 'web' | 'sugar' | 'bullet' | 'note' | 'juice' | 'maraca'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean; age?: number; bounces?: number }
+export interface EShot { kind: 'web' | 'sugar' | 'bullet' | 'note' | 'juice' | 'maraca' | 'bone'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean; age?: number; bounces?: number }
 // elec : zone électrique (clôture) qui s'allume (on secondes) et s'éteint (off secondes)
 export interface Elec { x: number; y: number; w: number; h: number; offset: number; on: number; off: number }
 // jet de paillettes : part du rocher en biais (vers le haut ou vers le bas), s'allume et s'éteint
@@ -76,7 +76,7 @@ const BOXES: Record<EnemyKind, Box> = {
   scorpion: { x: 1, y: 5, w: 22, h: 12 },
   batShrimp: { x: 2, y: 11, w: 24, h: 12 }, guitarFish: { x: 2, y: 3, w: 26, h: 12 }, comet: { x: 29, y: 1, w: 10, h: 10 },
   crab: { x: 2, y: 7, w: 22, h: 11 }, jellyBlue: { x: 2, y: 2, w: 16, h: 14 }, jellyPink: { x: 2, y: 2, w: 16, h: 14 },
-  sleepBubble: { x: 2, y: 2, w: 14, h: 14 }, hangShrimp: { x: 2, y: 5, w: 24, h: 12 }, fish: { x: 1, y: 2, w: 14, h: 7 },
+  sleepBubble: { x: 2, y: 2, w: 14, h: 14 }, hangShrimp: { x: 2, y: 5, w: 24, h: 12 }, fish: { x: 1, y: 2, w: 14, h: 7 }, miniSkel: { x: 1, y: 1, w: 16, h: 9 },
 };
 export function enemyBox(e: Enemy): Box {
   if (e.kind === 'mint') return { x: e.x + 1, y: e.y + 1, w: e.size * 2 + 1, h: e.size * 2 + 1 };
@@ -90,6 +90,7 @@ export function enemySprite(e: Enemy, t: number): Pix {
   switch (e.kind) {
     case 'fly': case 'flyGold': return FC.spr(e.kind, Math.floor(t * 12 + e.phase) % 2);
     case 'fish': return FC.spr('smallFish', Math.floor(t * 6 + e.phase) % 2);
+    case 'miniSkel': return FC.spr('miniSkel', Math.floor(t * 8 + e.phase) % 2);
     case 'spider': case 'hanger': return FC.spr('spider', Math.floor(t * 4 + e.phase) % 2);
     case 'wasp': return FC.spr('wasp', Math.floor(t * 14 + e.phase) % 2);
     case 'ant': return FC.spr('ant', Math.floor(t * 8 + e.phase) % 2);

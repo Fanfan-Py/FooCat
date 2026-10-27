@@ -264,7 +264,24 @@ function castleFront(scr: Pix, w: World) {
   for (let x = 0; x < C.W; x++) if ((x + off) % 16 === 0) scr.rect(x, G + 1, 1, C.H - G - 1, P.K);
 }
 
-const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle };
+// salle du trône (niveau 10) : grande salle sombre, colonnes et torches vertes
+function decorThrone(scr: Pix, w: World) {
+  const bg = FC.bg('throne', C.W, C.H, [[0, '0a1030'], [0.6, '141a4a'], [1, '1f1440']]), t = w.t;
+  scr.d.set(bg.d);
+  const pillar = FC.col('23285a'), light = FC.col('343a7a'), o = Math.floor((t * 12) % 90);
+  for (let k = -1; k < 5; k++) {
+    const x = 30 + k * 90 - o;
+    scr.rect(x, C.HUD_H, 14, C.H, pillar); scr.rect(x, C.HUD_H, 3, C.H, light);
+    // torche : flamme verte qui vacille
+    const fy = 74, fl = Math.sin(t * 9 + k * 2) * 1.5;
+    scr.ell(x + 7, fy - 2, 9 + fl, 9 + fl, FC.alpha(FC.col('6dff9a'), 40));
+    scr.rect(x + 5, fy, 5, 3, P.M);
+    scr.ell(x + 7, fy - 3, 2.5, 3.5 + fl * 0.5, FC.col('6dff9a')); scr.put(x + 7, fy - 2, P.W);
+  }
+  floatBits(scr, t, 40);
+}
+
+const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone };
 
 // ---------- le niveau ----------
 export function drawWorld(scr: Pix, w: World) {
@@ -296,7 +313,7 @@ export function drawWorld(scr: Pix, w: World) {
   if (w.level.decor === 'iron') metalGround(scr, t, w.level.scroll, w.level.ground!);
   if (w.level.decor === 'fortress') fortressBands(scr, w);
   if (w.level.decor === 'sea') seaFront(scr, w);
-  if (w.level.decor === 'castle') castleFront(scr, w);
+  if (w.level.decor === 'castle' || w.level.decor === 'throne') castleFront(scr, w);
 
   for (const b of w.bonuses) scr.blit(FC.spr(BONUS_SPRITE[b.kind]), b.x, b.y);
   const jets = w.obstacles.some((o) => o.jet);
@@ -311,6 +328,7 @@ export function drawWorld(scr: Pix, w: World) {
     else if (s.kind === 'note') scr.blit(FC.spr('note', Math.floor(t * 8) % 3), s.x, s.y);
     else if (s.kind === 'juice') scr.blit(FC.spr('juice', Math.floor(t * 8)), s.x, s.y);
     else if (s.kind === 'maraca') scr.blit(FC.spr('maraca', Math.floor(t * 12)), s.x, s.y);
+    else if (s.kind === 'bone') scr.blit(FC.spr('bone', Math.floor(t * 8) % 2), s.x, s.y);
     else if (s.kind === 'bullet') { scr.rect(s.x - 1, s.y - 1, 5, 5, FC.alpha(P.R, 90)); scr.rect(s.x, s.y, 3, 3, P.R); scr.put(s.x + 1, s.y + 1, P.q); }
     else scr.blit(FC.spr('sugar'), s.x, s.y);
   }
@@ -323,7 +341,7 @@ export function drawWorld(scr: Pix, w: World) {
     FC.trail(scr, h.x + 4, h.y + 25 + by, t);
     scr.blit(heroSprite(heroSkin, Math.floor(t * 5) % 4), h.x, h.y + by, false, op);
     if (h.slow > 0) scr.blit(FC.spr('stuck'), h.x + 8, h.y + 6 + by);
-    if (w.level.decor === 'sea' || w.level.decor === 'castle') for (let k = 0; k < 4; k++) { // bulles du scaphandre
+    if (w.level.water) for (let k = 0; k < 4; k++) { // bulles du scaphandre
       const ph = (t * 0.7 + k / 4) % 1;
       scr.ell(h.x + 24 + Math.sin(ph * 9 + k) * 2, h.y + 2 + by - ph * 34, 1 + ph, 1 + ph, FC.alpha(P.W, 190 * (1 - ph)));
     }
@@ -432,8 +450,20 @@ function drawElec(scr: Pix, o: any, t: number) {
   }
 }
 
+function drawSkel(scr: Pix, w: World) {
+  const b = w.boss!, t = w.t;
+  if (b.kind !== 'skel' || b.dead) return;
+  const open = b.mouth > 0 ? 1 : 0, shake = b.move === 'warn' || b.move === 'break' ? Math.round(Math.sin(t * 60) * 1.5) : 0;
+  // la charge est annoncée : ligne rouge clignotante à sa hauteur
+  if (b.move === 'warn' && Math.floor(t * 12) % 2) for (let x = 0; x < b.x; x += 4) { scr.put(x, b.dashY + 44, P.R); scr.put(x + 1, b.dashY + 44, P.R); }
+  const [cx, cy] = b.core();
+  if (b.alive) scr.ell(cx + shake, cy, 9 + Math.sin(t * 6) * 2, 9 + Math.sin(t * 6) * 2, FC.alpha(b.armored ? P.R : FC.col('6dff9a'), 50)); // l'œil brille
+  scr.blit(FC.spr(b.armored ? 'skelBossArmor' : 'skelBoss', open), b.x + shake, b.y, false, b.flash > 0 || (b.dying > 0 && Math.floor(t * 16) % 2) ? 0.5 : 1);
+}
+
 function drawBoss(scr: Pix, w: World) {
   const b = w.boss!, t = w.t;
+  if (b.kind === 'skel') return drawSkel(scr, w);
   if (b.dead) return;
   const f = Math.floor(t * 4) % 2;
   scr.blit(FC.spr('boss', f), b.x, b.y, false, b.flash > 0 || (b.dying > 0 && Math.floor(t * 16) % 2) ? 0.5 : 1);
@@ -453,10 +483,11 @@ function drawBoss(scr: Pix, w: World) {
 function drawBossBar(scr: Pix, w: World) {
   const b = w.boss!;
   scr.rect(0, 165, C.W, 15, FC.alpha(P.K, 200));
-  const nx = FC.text(scr, 'ARAIGNÉE DE FER', 6, 170, P.W);
+  const armor = b.kind === 'skel' && b.armored;
+  const nx = FC.text(scr, b.name + (armor ? ' · ARMURE' : ''), 6, 170, P.W);
   const bw = C.W - nx - 16, fill = Math.round((bw - 2) * b.hp / b.maxHp);
   scr.rect(nx + 8, 169, bw, 7, P.K); scr.rect(nx + 9, 170, bw - 2, 5, FC.col('4a1020'));
-  scr.rect(nx + 9, 170, fill, 5, P.R); scr.rect(nx + 9, 170, fill, 1, P.p);
-  // repères des phases
-  scr.rect(nx + 9 + Math.round((bw - 2) * 0.33), 169, 1, 7, P.W); scr.rect(nx + 9 + Math.round((bw - 2) * 0.66), 169, 1, 7, P.W);
+  scr.rect(nx + 9, 170, fill, 5, armor ? P.M : P.R); scr.rect(nx + 9, 170, fill, 1, armor ? P.W : P.p);
+  // repères des phases (araignée)
+  if (b.kind === 'spider') { scr.rect(nx + 9 + Math.round((bw - 2) * 0.33), 169, 1, 7, P.W); scr.rect(nx + 9 + Math.round((bw - 2) * 0.66), 169, 1, 7, P.W); }
 }

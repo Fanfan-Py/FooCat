@@ -8,6 +8,7 @@ import {
   iceDef, dropDef, jetRockDef, jetState, jetCircles, boxEllipse, algaePix, herseDef,
 } from './things';
 import { Boss, BossHost } from './boss';
+import { SkelBoss, SkelHost } from './skel';
 
 export type { WeaponKind } from './things';
 export const WEAPON_ORDER: WeaponKind[] = ['verm', 'drag', 'pinata', 'rain'];
@@ -47,9 +48,9 @@ export function shotBox(s: Shot): Box {
 
 export interface WorldOptions { level?: number; seed?: number; mode?: C.Mode; carry?: Carry }
 
-export class World implements BossHost {
+export class World implements BossHost, SkelHost {
   t = 0;
-  boss: Boss | null = null;
+  boss: Boss | SkelBoss | null = null;
   score: number;
   readonly startScore: number;
   readonly levelIndex: number;
@@ -220,7 +221,7 @@ export class World implements BossHost {
       this.phaseIdx++;
       const cur = ph[this.phaseIdx];
       if (cur.banner) this.say(cur.banner);
-      if (cur.event === 'boss' && !this.boss) { this.boss = new Boss(); this.sfx.play('alarm'); this.sfx.music?.('boss'); }
+      if (cur.event === 'boss' && !this.boss) { this.boss = this.level.boss === 'skel' ? new SkelBoss(this.top, this.floor) : new Boss(); this.sfx.play('alarm'); this.sfx.music?.('boss'); }
       if (cur.event === 'belt' && !this.belt.done) {
         Object.assign(this.belt, { active: true, col: 0, timer: 2.2, hitsAtStart: this.hits });
         this.sfx.play('alarm');
@@ -662,8 +663,14 @@ export class World implements BossHost {
           e.y = e.baseY + Math.sin(this.t * (e.kind === 'jellyPink' ? 1.4 : 0.9) + e.phase) * e.amp;
           break;
         }
+        case 'miniSkel': { // fonce vers la gauche en se rapprochant de la hauteur du chat
+          e.x -= e.speed * dt;
+          const dy = h.y + 12 - e.y;
+          e.y += Math.max(-12 * dt, Math.min(12 * dt, dy)) + Math.sin(this.t * 5 + e.phase) * 0.4;
+          break;
+        }
         case 'sleepBubble': // monte doucement en ondulant
-          e.x -= this.level.scroll * 0.6 * dt; e.y -= e.speed * dt; e.x += Math.sin(this.t * 2 + e.phase) * 0.3;
+          e.x -= (e.vx < 0 ? -e.vx : this.level.scroll * 0.6) * dt; e.y -= e.speed * dt; e.x += Math.sin(this.t * 2 + e.phase) * 0.3;
           if (e.y < this.top - 10) this.removeEnemy(e, false);
           break;
         case 'hangShrimp': // accrochée au plafond ; se laisse tomber quand le chat passe dessous
@@ -772,7 +779,7 @@ export class World implements BossHost {
       if (s.x < -12 || s.x > C.W + 12 || s.y < -40 || s.y > this.floor) s.dead = true;
       const b = s.kind === 'web' ? { x: s.x + 2, y: s.y + 2, w: 7, h: 7 } : s.kind === 'bullet' ? { x: s.x, y: s.y, w: 3, h: 3 }
         : s.kind === 'note' ? { x: s.x + 2, y: s.y + 2, w: 8, h: 10 } : s.kind === 'juice' ? { x: s.x + 1, y: s.y, w: 7, h: 5 }
-          : s.kind === 'maraca' ? { x: s.x + 1, y: s.y + 1, w: 6, h: 9 } : { x: s.x, y: s.y, w: 5, h: 5 };
+          : s.kind === 'maraca' ? { x: s.x + 1, y: s.y + 1, w: 6, h: 9 } : s.kind === 'bone' ? { x: s.x + 2, y: s.y + 1, w: 7, h: 5 } : { x: s.x, y: s.y, w: 5, h: 5 };
       if (!s.dead && this.heroAlive() && h.inv <= 0 && overlap(hb, b)) {
         s.dead = true;
         if (s.kind === 'web') h.slow = C.WEB_SLOW.time;
@@ -1049,8 +1056,11 @@ export class World implements BossHost {
     const b = this.boss!, h = this.hero, hb = this.heroBox();
     b.update(dt, this);
     if (!b.alive || b.entering || !this.heroAlive() || h.inv > 0) return;
-    if (b.hitsBody(hb)) { h.x = Math.max(0, h.x - 14); this.hurt(C.BOSS.contact, 'contact boss'); }
-    else if (b.laser === 'fire' && overlap(hb, b.laserBox())) this.hurt(C.BOSS.laser, 'laser');
+    if (b.hitsBody(hb)) {
+      h.x = Math.max(0, h.x - 14);
+      if (b.kind === 'skel') { h.y += h.y + 17 < b.y + 44 ? -10 : 10; this.hurt(C.SKEL.contact, b.move === 'dash' ? 'morsure' : 'contact boss'); }
+      else this.hurt(C.BOSS.contact, 'contact boss');
+    } else if (b.kind === 'spider' && b.laser === 'fire' && overlap(hb, b.laserBox())) this.hurt(C.BOSS.laser, 'laser');
   }
 
   // un tir du chat contre le boss : seul le cœur est fragile, sauf pour le casse-dents
@@ -1073,9 +1083,10 @@ export class World implements BossHost {
   }
 
   private bossDefeated() {
-    this.events.push({ type: 'boss' });
-    this.score += C.BOSS.points;
-    this.say("L'ARAIGNÉE DE FER EST VAINCUE !");
+    const skel = this.boss?.kind === 'skel';
+    this.events.push({ type: 'boss', kind: this.boss?.kind });
+    this.score += skel ? C.SKEL.points : C.BOSS.points;
+    this.say(skel ? 'LE POISSON SQUELETTE EST VAINCU !' : "L'ARAIGNÉE DE FER EST VAINCUE !");
     for (const e of this.enemies) this.killEnemy(e, true, false);
     this.eshots = [];
   }
@@ -1095,6 +1106,34 @@ export class World implements BossHost {
     if (this.enemies.length > 8) return; // pas plus de 8 ennemis à la fois
     for (let i = 0; i < n; i++) this.enemies.push(newEnemy('spiderling', x - i * 12, y - i * 10, { phase: this.rnd() * 6, speed: 58 * this.mode.speed }));
     if (drone) this.spawnWave('drone', 0);
+  }
+  // le poisson squelette
+  bossBones(x: number, y: number, spread: number[]) {
+    const [hx, hy] = this.heroCenter(), base = Math.atan2(hy - y, hx - x), v = 60 * this.mode.speed;
+    for (const deg of spread) {
+      const a = base + deg * Math.PI / 180;
+      this.eshots.push({ kind: 'bone', x: x - 5, y: y - 3, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 0, dead: false });
+    }
+    this.sfx.play('throw');
+  }
+  bossBubbles(x: number, y: number, n: number) {
+    for (let i = 0; i < n; i++) {
+      this.enemies.push(newEnemy('sleepBubble', x - 8, y - 8 + i * 14, { phase: this.rnd() * 6, speed: 8 + this.rnd() * 6, vx: -(35 + i * 12) * this.mode.speed }));
+    }
+    this.sfx.play('splash');
+  }
+  bossMinis(x: number, y: number, n: number) {
+    if (this.enemies.length > 9) return; // pas trop d'ennemis à la fois
+    for (let i = 0; i < n; i++) {
+      const yy = Math.max(this.top + 4, Math.min(this.floor - 16, y + (i - (n - 1) / 2) * 26));
+      this.enemies.push(newEnemy('miniSkel', x + i * 10, yy, { phase: this.rnd() * 6, speed: (55 + this.rnd() * 15) * this.mode.speed }));
+    }
+  }
+  bossArmorBreak(x: number, y: number) {
+    this.burst(x, y, 50, [FC.P.M, FC.P.m, FC.P.n, FC.P.W], 120, 120);
+    this.flash = 0.3; this.flashColor = [255, 255, 255, 255];
+    this.say("L'ARMURE EST BRISÉE !");
+    this.sfx.play('break');
   }
   bossExplosion(x: number, y: number, big: boolean) {
     this.burst(x, y, big ? 80 : 16, big ? FC.RAINBOW.concat([FC.P.W, FC.P.P]) : [FC.P.y, FC.P.o, FC.P.W, FC.P.m], big ? 140 : 70);

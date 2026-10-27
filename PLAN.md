@@ -101,11 +101,14 @@ Corrections après le premier essai :
 - [x] Niveau 9 : **herses et algues en même temps**, en haut et en bas, pour obliger le chat à faire du slalom.
 - [x] Niveau 8 un peu plus difficile : plus de monstres et d'obstacles.
 
-## Étape 8 : niveau 10, le poisson squelette de la mort
+## Étape 8 : niveau 10, le poisson squelette de la mort (faite le 27 octobre 2026)
 
-- [ ] Phase 1, avec armure : lance des arêtes, charge pour mordre, souffle des bulles soporifiques.
-- [ ] Jauge vidée : l'armure vole en éclats et la jauge se remplit à nouveau.
-- [ ] Phase 2, sans armure : plus rapide, escorté de mini-poissons squelettes de plus en plus nombreux.
+- [x] Phase 1, avec armure : lance des arêtes, charge pour mordre, souffle des bulles soporifiques.
+- [x] Jauge vidée : l'armure vole en éclats et la jauge se remplit à nouveau.
+- [x] Phase 2, sans armure : plus rapide, escorté de mini-poissons squelettes de plus en plus nombreux.
+- [x] Le niveau 10 « La salle du trône » : une courte traversée (herses, algues, derniers gardes), puis le boss.
+- [x] La charge est annoncée : le poisson tremble et une ligne rouge montre où il va foncer.
+- [x] Nouveau succès : « Arêtes en miettes » (vaincre le poisson squelette).
 
 ## Les nouveaux monstres et pièges
 

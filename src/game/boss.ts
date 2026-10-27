@@ -14,6 +14,8 @@ export interface BossHost {
 }
 
 export class Boss {
+  readonly kind = 'spider' as const;
+  readonly name = 'ARAIGNÉE DE FER';
   x = C.W + 10;
   y = 40;
   t = 0;

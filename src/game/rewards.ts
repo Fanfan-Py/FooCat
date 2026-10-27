@@ -26,6 +26,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'belt', name: 'SLALOM SUCRÉ', desc: 'TRAVERSER LA CEINTURE DE DONUTS SANS ÊTRE TOUCHÉ', skin: 'lemon' },
   { id: 'nolife', name: 'SANS UNE ÉGRATIGNURE', desc: 'FINIR UN NIVEAU SANS PERDRE DE VIE', skin: 'licorice' },
   { id: 'boss', name: 'ARAIGNÉE AU TAPIS', desc: "VAINCRE L'ARAIGNÉE DE FER", skin: 'blueberry' },
+  { id: 'skel', name: 'ARÊTES EN MIETTES', desc: 'VAINCRE LE POISSON SQUELETTE DE LA MORT' },
   { id: 'score100k', name: '100 000 POINTS', desc: 'ATTEINDRE 100 000 POINTS DANS UNE PARTIE', skin: 'gold' },
   { id: 'hard', name: 'CHAMPION DE LA GALAXIE', desc: 'VAINCRE LE BOSS EN MODE DIFFICILE', skin: 'rainbow' },
   { id: 'stars3', name: 'TROIS ÉTOILES', desc: 'OBTENIR 3 ÉTOILES SUR UN NIVEAU' },

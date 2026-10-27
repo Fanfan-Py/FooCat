@@ -41,7 +41,8 @@ function robot(w: World, t: number, look = 95): Controls {
   const b = w.boss;
   if (b && b.alive && !b.entering) {
     target = b.core()[1] - 3; // vise le cœur du boss
-    if (b.laser !== 'idle') blocked.push([b.laserY - 16, b.laserY + 16]);
+    if (b.kind === 'spider' && b.laser !== 'idle') blocked.push([b.laserY - 16, b.laserY + 16]);
+    if (b.kind === 'skel' && b.charging) blocked.push([b.y + 14, b.y + 74]); // s'écarte de la charge
   }
   for (let y = 26; y <= w.floor - 14; y += 2) {
     if (blocked.some(([a, b]) => y > a && y < b)) continue;
@@ -54,7 +55,7 @@ function robot(w: World, t: number, look = 95): Controls {
   const frame = Math.round(t * 60);
   const jaw = !!(b && b.alive && !b.entering) && frame % 120 === 0;
   const fight = !!(b && b.alive && !b.entering);
-  const wantX = fight ? (h.weapon === 'rain' ? 120 : 90) : 40; // pendant le boss, il s'approche
+  const wantX = fight ? (b!.kind === 'skel' ? 40 : h.weapon === 'rain' ? 120 : 90) : 40; // pendant l'araignée, il s'approche ; il garde ses distances avec le poisson
   return {
     dx: Math.max(-1, Math.min(1, (wantX - h.x) / 20)), dy, fire: true, special: jaw || frame % 400 === 0,
     swap: !fight && frame % 600 === 300, select: fight ? (h.ammo.verm > 0 ? 0 : -1) : -1,
@@ -70,7 +71,7 @@ for (let lv = Number(process.env.FROM || 0); lv < LEVELS.length; lv++) {
     if (w.state === 'cleared') cleared++;
     for (const [k, n] of Object.entries(w.hitLog)) causes[k] = (causes[k] || 0) + n;
     time += t;
-    if (process.env.VERBOSE) console.log(`  niveau ${lv + 1} partie ${seed}: ${w.state} en ${t.toFixed(0)} s, score ${w.score}`);
+    if (process.env.VERBOSE) console.log(`  niveau ${lv + 1} partie ${seed}: ${w.state} en ${t.toFixed(0)} s, score ${w.score}` + (w.boss ? `, boss ${w.boss.kind === 'skel' && w.boss.armored ? 'avec armure' : 'phase finale'} ${Math.round(w.boss.hp)}/${w.boss.maxHp} après ${Math.round(w.boss.t)} s` : ''));
   }
   console.log(`niveau ${lv + 1} (${mode}) : terminé ${cleared}/${runs} fois, durée moyenne ${Math.round(time / runs)} s`);
   if (process.env.CAUSES) console.log('   coups reçus :', Object.entries(causes).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', '));

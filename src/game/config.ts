@@ -63,6 +63,7 @@ export const ENEMIES = {
   sleepBubble: { points: 30, hp: 1, drop: 0 }, // bulle soporifique : endort le chat (on peut la crever)
   hangShrimp: { points: 250, hp: 2, drop: 0.15 }, // crevette accrochée au plafond : se laisse tomber
   fish: { points: 100, hp: 1, drop: 0.07 }, // petit poisson (en bancs, sous l'eau)
+  miniSkel: { points: 120, hp: 2, drop: 0.06 }, // mini-poisson squelette (escorte du boss du niveau 10)
 };
 export type EnemyKind = keyof typeof ENEMIES;
 export const POINTS = { planet: 300, bonus: 50, wave: 500, belt: 1000, perSecond: 10 };
@@ -87,11 +88,11 @@ export interface Phase {
 export interface Level {
   num: number; name: string;
   points: number; // points à gagner dans ce niveau pour passer au suivant
-  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle';
+  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne';
   ground: number | null; // hauteur du sol (null = pas de sol)
   ceiling: number | null; // hauteur du plafond (null = pas de plafond)
   outro?: string; // couleur du fondu de fin de niveau
-  boss?: boolean; // le niveau se termine en battant le boss
+  boss?: 'spider' | 'skel'; // le niveau se termine en battant ce boss
   water?: boolean; // sous l'eau : les groupes de mouches deviennent des bancs de poissons
   scroll: number; // vitesse de défilement des obstacles (px/s)
   next?: string; // texte de l'écran de fin
@@ -140,7 +141,7 @@ export const LEVELS: Level[] = [
     ],
   },
   {
-    num: 5, name: 'LA FORTERESSE', points: 16000, decor: 'fortress', ground: 160, ceiling: 24, scroll: 40, boss: true,
+    num: 5, name: 'LA FORTERESSE', points: 16000, decor: 'fortress', ground: 160, ceiling: 24, scroll: 40, boss: 'spider',
     next: "L'ARAIGNÉE DE FER EST VAINCUE !",
     phases: [
       { from: 0, obstacle: 3.6, obstacles: { pillar: 2, web: 1 }, wave: 2.6, waves: { drone: 1, spiderling: 2, hanger: 1 }, gold: 0 },
@@ -181,13 +182,22 @@ export const LEVELS: Level[] = [
   },
   {
     num: 9, name: 'LE CHÂTEAU MARIN', points: 28000, decor: 'castle', ground: 156, ceiling: 26, scroll: 40, water: true,
-    next: 'LA SUITE ARRIVE BIENTÔT : LE POISSON SQUELETTE DE LA MORT !',
     phases: [
       { from: 0, obstacle: 2.6, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 3.0, waves: { hanging: 1, crab: 1, jellyBlue: 1, line: 1 }, gold: 0.1 },
       { from: 0.2, banner: 'ATTENTION AUX HERSES !', obstacle: 2.0, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 2.9, waves: { hanging: 2, crab: 1, jellyPink: 1, bubbles: 1, line: 1 }, gold: 0.2 },
       { from: 0.45, banner: 'LES GARDES DU CHÂTEAU !', obstacle: 4.5, obstacles: { algae: 1 }, wave: 2.0, waves: { crab: 2, guitar: 1, jellyBlue: 1, line: 1 }, gold: 0 },
       { from: 0.62, obstacle: 2.0, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 2.7, waves: { hanging: 1, jellyBlue: 1, jellyPink: 1, bubbles: 1, guitar: 1, line: 1 }, gold: 0.3 },
       { from: 0.88, banner: 'LA SALLE DU TRÔNE !', obstacle: 2.2, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 2.4, waves: { crab: 1, hanging: 2, jellyPink: 1, line: 1 }, gold: 0.3 },
+    ],
+  },
+  {
+    num: 10, name: 'LA SALLE DU TRÔNE', points: 14000, decor: 'throne', ground: 160, ceiling: 24, scroll: 40, water: true, boss: 'skel',
+    next: 'LA PLANÈTE AQUATIQUE EST SAUVÉE !',
+    phases: [
+      { from: 0, obstacle: 2.6, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 2.8, waves: { jellyBlue: 1, crab: 1, hanging: 1, line: 1 }, gold: 0.1 },
+      { from: 0.4, banner: 'LES DERNIERS GARDES !', obstacle: 3.4, obstacles: { algae: 1 }, wave: 2.2, waves: { jellyPink: 1, guitar: 1, bubbles: 1, batShrimp: 1, line: 1 }, gold: 0.2 },
+      { from: 0.75, obstacle: 4.0, obstacles: { algae: 1 }, wave: 2.6, waves: { crab: 1, jellyBlue: 1, line: 1 }, gold: 0.3 },
+      { from: 1, event: 'boss', banner: 'LE POISSON SQUELETTE DE LA MORT !', obstacle: 99, obstacles: {}, wave: 99, waves: {}, gold: 0 },
     ],
   },
 ];
@@ -200,6 +210,8 @@ export const JET = { on: 1.8, off: 2.4, length: 100, warn: 0.7 };
 
 // Le boss du niveau 5
 export const BOSS = { hp: 450, points: 10000, contact: 2, laser: 2 };
+// Le boss du niveau 10 : le poisson squelette (sa jauge se remplit une fois quand l'armure casse)
+export const SKEL = { hp: 200, points: 15000, contact: 2 };
 
 // La ceinture de donuts : des colonnes de planètes avec un passage qui ondule
 export const BELT = { columns: 10, every: 1.5, gap: 64, speed: 36 };
