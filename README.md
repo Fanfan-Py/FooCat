@@ -62,7 +62,7 @@ nouveau décor ou un nouvel ennemi demande en plus un peu de dessin et de code.
 
 ## Commandes
 
-- Clavier : flèches ou ZQSD pour bouger, Espace pour tirer, X pour changer d'arme,
+- Clavier : flèches ou ZQSD pour bouger, Espace pour tirer, X (ou 1 à 4) pour changer d'arme,
   C pour lancer un casse-dents, Échap ou P pour la pause (reprendre, recommencer, quitter),
   M pour couper le son. À l'accueil : gauche/droite pour le niveau, haut/bas pour le mode.
 - Manette : stick ou croix, A pour tirer, B pour le casse-dents, Y pour changer d'arme.

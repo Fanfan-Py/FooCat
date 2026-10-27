@@ -6,7 +6,7 @@ import { enemySprite, elecOn, elecSoon, cablePoint } from './things';
 
 const P = FC.P;
 const BONUS_SPRITE: Record<string, string> = {
-  verm: 'bVerm', drag: 'bDrag', jaw: 'bJaw', heart: 'bLife', life: 'b1up', bomb: 'bBomb', ghost: 'bGhost',
+  verm: 'bVerm', drag: 'bDrag', pinata: 'bPinata', jaw: 'bJaw', heart: 'bLife', life: 'b1up', bomb: 'bBomb', ghost: 'bGhost',
 };
 
 function far(p: Pix, tint: Color, k: number) { const q = new FC.Pix(p.w, p.h); q.blit(p, 0, 0); return q.tint(tint, k); }
@@ -221,6 +221,10 @@ export function drawWorld(scr: Pix, w: World) {
       scr.put(s.x - 1, s.y - Math.round(slope), FC.alpha(c, 110));
     } else if (s.kind === 'drag') {
       scr.blit(FC.spr('bigDrag', s.frame), s.x, s.y);
+    } else if (s.kind === 'pinata') {
+      scr.blit(FC.spr('bigCandy', (s.frame + Math.floor(t * 8)) % 4), s.x, s.y);
+    } else if (s.kind === 'shard') {
+      scr.blit(FC.spr('candyBit', s.frame), s.x, s.y, false, Math.min(1, s.life * 4));
     } else if (s.kind === 'rain') {
       const r = FC.spr('rainArc', rainStage(s.age));
       scr.blit(r, s.x, s.y - r.h / 2, false, Math.min(1, s.life * 5));
@@ -249,7 +253,7 @@ export function drawWorld(scr: Pix, w: World) {
   }
 }
 
-const ICONS = { verm: 'icoVerm', drag: 'icoDrag', rain: 'icoRain', jaw: 'icoJaw' };
+const ICONS = { verm: 'icoVerm', drag: 'icoDrag', pinata: 'icoPinata', rain: 'icoRain', jaw: 'icoJaw' };
 
 export function drawHud(scr: Pix, w: World) {
   const h = w.hero;
@@ -272,17 +276,18 @@ export function drawHud(scr: Pix, w: World) {
   for (let b = 0; b < fill; b++) scr.rect(bx + 1 + b, 5, 1, 3, FC.RAINBOW[Math.floor(b / bw * 6)]);
   // armes
   const slots: (keyof typeof ICONS)[] = [...WEAPON_ORDER, 'jaw'];
-  const x0 = C.W - 124;
+  const sw = 25, x0 = C.W - slots.length * sw - 1; // 5 cases de 25 pixels
   slots.forEach((k, i) => {
-    const sx = x0 + i * 31;
+    const sx = x0 + i * sw;
     const n = k === 'rain' ? '~' : String(h.ammo[k]);
     const empty = n === '0';
     if (k === h.weapon) {
-      scr.rect(sx, 1, 29, 1, P.y); scr.rect(sx, 11, 29, 1, P.y); scr.rect(sx, 1, 1, 11, P.y); scr.rect(sx + 28, 1, 1, 11, P.y);
+      scr.rect(sx, 1, sw - 1, 1, P.y); scr.rect(sx, 11, sw - 1, 1, P.y); scr.rect(sx, 1, 1, 11, P.y); scr.rect(sx + sw - 2, 1, 1, 11, P.y);
     }
-    if (k === 'jaw') scr.rect(sx, 12, 29, 1, FC.alpha(P.o, 160));
-    scr.blit(FC.spr(ICONS[k]), sx + 2, 3, false, empty ? 0.35 : 1);
-    FC.text(scr, n, sx + 12, 4, empty ? P.M : P.W);
+    if (k === 'jaw') scr.rect(sx, 12, sw - 1, 1, FC.alpha(P.o, 160));
+    const ico = FC.spr(ICONS[k]);
+    scr.blit(ico, sx + 2, 3, false, empty ? 0.35 : 1);
+    FC.text(scr, n, sx + 3 + ico.w, 4, empty ? P.M : P.W);
   });
   // effets en cours
   if (h.ghost > 0) FC.text(scr, 'FANTÔME ' + Math.ceil(h.ghost), 4, 17, P.u, { outline: P.K });

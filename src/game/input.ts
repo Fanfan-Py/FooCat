@@ -10,7 +10,7 @@ const SWAP = ['KeyX', 'KeyK'];
 const SPECIAL = ['KeyC', 'KeyL'];
 const PAUSE = ['Escape', 'KeyP'];
 const CONFIRM = ['Enter', 'NumpadEnter', 'Space'];
-const SELECT = ['Digit1', 'Digit2', 'Digit3'];
+const SELECT = ['Digit1', 'Digit2', 'Digit3', 'Digit4'];
 
 export class Input {
   private keys = new Set<string>();

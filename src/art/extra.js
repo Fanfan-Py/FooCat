@@ -114,4 +114,44 @@
     p.blit(b, 0, 0);
     return p;
   };
+
+  // Piñata : gros bonbon papillote à rayures qui tournent
+  S.bigCandy = function (f) {
+    var p = new Pix(19, 13), cols = [P.P, P.W, P.y, P.W];
+    // papillotes (les deux bouts du papier)
+    p.tri(0.5, 1.5, 0.5, 11.5, 6, 6.5, P.y); p.tri(18.5, 1.5, 18.5, 11.5, 13, 6.5, P.y);
+    p.line(1, 4, 4, 6, P.Y); p.line(1, 9, 4, 7, P.Y); p.line(17, 4, 14, 6, P.Y); p.line(17, 9, 14, 7, P.Y);
+    // bonbon rond à rayures en biais
+    p.ell(9.5, 6.5, 5.6, 5.2, function (x, y, dx, dy) {
+      if (dx < -0.35 && dy < -0.35) return P.W;
+      return cols[Math.floor((x + y + f) / 2) % 4];
+    });
+    return p.outline(P.K);
+  };
+  // éclat de Piñata : petit bonbon coloré
+  S.candyBit = function (f) {
+    var p = new Pix(5, 5), c = [P.r, P.y, P.g, P.b, P.u, P.P, P.o][f % 7];
+    p.ell(2.5, 2.5, 2, 2, c); p.put(2, 1, P.W);
+    return p;
+  };
+  // icône de la barre du haut
+  S.icoPinata = function () {
+    var p = new Pix(10, 7);
+    p.tri(0, 1, 0, 6, 3, 3.5, P.y); p.tri(10, 1, 10, 6, 7, 3.5, P.y);
+    p.ell(5, 3.5, 2.8, 2.8, function (x, y) { return (x + y) % 2 ? P.P : P.W; });
+    return p;
+  };
+  // bulle bonus Piñata
+  S.bPinata = function () {
+    var p = new Pix(16, 16);
+    p.ell(8, 8, 7.2, 7.2, function (x, y, dx, dy) {
+      var r = dx * dx + dy * dy;
+      if (r > 0.72) return P.P;
+      if (dx < -0.3 && dy < -0.3 && r > 0.35) return P.h;
+      return alpha(P.P, 70);
+    });
+    p.tri(2.5, 5.5, 2.5, 10.5, 6, 8, P.y); p.tri(13.5, 5.5, 13.5, 10.5, 10, 8, P.y);
+    p.ell(8, 8, 3, 3, function (x, y) { return (x + y) % 2 ? P.P : P.W; });
+    return p;
+  };
 })(typeof window !== 'undefined' ? window : globalThis);

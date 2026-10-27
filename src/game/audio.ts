@@ -6,6 +6,8 @@ type Tone = [type: OscillatorType, from: number, to: number, dur: number, vol: n
 const SOUNDS: Record<string, { tones?: Tone[]; noise?: [dur: number, vol: number, freq: number] }> = {
   shoot_verm: { tones: [['square', 1400, 900, 0.03, 0.025]] },
   shoot_drag: { tones: [['sine', 420, 140, 0.14, 0.16]] },
+  shoot_pinata: { tones: [['sine', 320, 160, 0.14, 0.13], ['triangle', 640, 420, 0.08, 0.05]] },
+  pop: { tones: [['square', 500, 1300, 0.08, 0.06]], noise: [0.14, 0.12, 3500] },
   hop: { tones: [['square', 220, 660, 0.12, 0.05]] },
   pew: { tones: [['square', 1200, 500, 0.06, 0.04]] },
   charge: { tones: [['sawtooth', 200, 900, 0.9, 0.05]] },

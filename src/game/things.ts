@@ -3,8 +3,8 @@ import { FC, Pix, Color } from '../art';
 import * as C from './config';
 
 export type EnemyKind = C.EnemyKind;
-export type WeaponKind = 'verm' | 'drag' | 'rain';
-export type BonusKind = 'verm' | 'drag' | 'jaw' | 'heart' | 'life' | 'bomb' | 'ghost';
+export type WeaponKind = 'verm' | 'drag' | 'pinata' | 'rain';
+export type BonusKind = 'verm' | 'drag' | 'pinata' | 'jaw' | 'heart' | 'life' | 'bomb' | 'ghost';
 
 export interface Box { x: number; y: number; w: number; h: number }
 // zone de collision d'un obstacle (ellipse ou rectangle), relative au coin du dessin
@@ -16,7 +16,7 @@ export interface Enemy {
   vx: number; vy: number; stage: number; size: number;
 }
 export interface Shot {
-  kind: WeaponKind | 'jaw'; x: number; y: number; vx: number; vy: number; dmg: number;
+  kind: WeaponKind | 'jaw' | 'shard'; x: number; y: number; vx: number; vy: number; dmg: number;
   life: number; age: number; frame: number; bounces: number; hit: Enemy[]; dead: boolean; hitBoss?: boolean;
 }
 export interface EShot { kind: 'web' | 'sugar' | 'bullet'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean }

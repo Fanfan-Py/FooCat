@@ -9,7 +9,7 @@ import {
 import { Boss, BossHost } from './boss';
 
 export type { WeaponKind } from './things';
-export const WEAPON_ORDER: WeaponKind[] = ['verm', 'drag', 'rain'];
+export const WEAPON_ORDER: WeaponKind[] = ['verm', 'drag', 'pinata', 'rain'];
 
 // Ce que le joueur fait à cette image
 export interface Controls {
@@ -22,7 +22,7 @@ export interface Controls {
 export interface Sfx { play(name: string): void; music?(theme: string | null): void; pauseMusic?(paused: boolean): void }
 
 // Ce qu'on garde d'un niveau à l'autre
-export interface Carry { score: number; lives: number; ammo: { verm: number; drag: number; jaw: number } }
+export interface Carry { score: number; lives: number; ammo: { verm: number; drag: number; pinata: number; jaw: number } }
 
 const HERO_BOX = { x: 8, y: 9, w: 24, h: 16 };
 const RAIN_SIZE = [1, 1.45, 1.9];
@@ -35,6 +35,8 @@ export function shotBox(s: Shot): Box {
   if (s.kind === 'verm') return { x: s.x, y: s.y - 1, w: 5, h: 3 };
   if (s.kind === 'drag') return { x: s.x, y: s.y, w: 9, h: 8 };
   if (s.kind === 'jaw') return { x: s.x, y: s.y, w: 11, h: 11 };
+  if (s.kind === 'pinata') return { x: s.x + 2, y: s.y + 1, w: 15, h: 11 };
+  if (s.kind === 'shard') return { x: s.x, y: s.y, w: 5, h: 5 };
   const k = RAIN_SIZE[rainStage(s.age)], w = Math.round(9 * k), h = Math.round(13 * k);
   return { x: s.x + 1, y: s.y - h / 2 + 1, w: w - 1, h: h - 2 };
 }
@@ -85,7 +87,8 @@ export class World implements BossHost {
       lives: carry ? carry.lives : this.mode.lives,
       inv: C.INVINCIBLE_AFTER_RESPAWN, slow: 0, ghost: 0, dead: 0, fireCD: 0, jawCD: 0, shotCount: 0,
       weapon: 'verm' as WeaponKind,
-      ammo: carry ? { ...carry.ammo } : { verm: W.verm.start, drag: W.drag.start, jaw: W.jaw.start },
+      // (une ancienne sauvegarde n'a pas encore de Piñatas : on en donne le stock de départ)
+      ammo: carry ? { ...carry.ammo, pinata: carry.ammo.pinata ?? W.pinata.start } : { verm: W.verm.start, drag: W.drag.start, pinata: W.pinata.start, jaw: W.jaw.start },
     };
     if (this.hero.ammo.verm <= 0 && this.hero.ammo.drag > 0) this.hero.weapon = 'drag';
   }
@@ -157,11 +160,11 @@ export class World implements BossHost {
     if (c.select >= 0 && ok(WEAPON_ORDER[c.select])) pick(WEAPON_ORDER[c.select]);
     if (c.swap) {
       let i = WEAPON_ORDER.indexOf(h.weapon);
-      for (let n = 0; n < 3; n++) { i = (i + 1) % 3; if (ok(WEAPON_ORDER[i])) break; }
+      for (let n = 0; n < WEAPON_ORDER.length; n++) { i = (i + 1) % WEAPON_ORDER.length; if (ok(WEAPON_ORDER[i])) break; }
       pick(WEAPON_ORDER[i]);
     }
     if (!ok(h.weapon)) { // arme vide : on prend l'autre bonbon, sinon la corne prend le relais
-      const next = (['verm', 'drag', 'rain'] as WeaponKind[]).find(ok)!;
+      const next = WEAPON_ORDER.find(ok)!;
       this.weaponMsg = { text: 'PLUS DE ' + C.WEAPON_NAMES[h.weapon] + ' : ' + C.WEAPON_NAMES[next], t: 0 };
       h.weapon = next;
     }
@@ -187,6 +190,10 @@ export class World implements BossHost {
       const D = C.WEAPONS.drag, a = rad(D.angle * (h.shotCount % 2 ? 1 : -1));
       h.fireCD = 1 / D.rate; h.ammo.drag--;
       shot({ x: h.x + 33, y: h.y + 10, vx: Math.cos(a) * D.speed, vy: Math.sin(a) * D.speed, dmg: D.dmg, life: 3.2, frame: h.shotCount % 6, bounces: D.bounces });
+    } else if (k === 'pinata') {
+      const PI = C.WEAPONS.pinata;
+      h.fireCD = 1 / PI.rate; h.ammo.pinata--;
+      shot({ x: h.x + 26, y: h.y + 8, vx: PI.speed, dmg: PI.dmg, life: PI.life, frame: h.shotCount % 4 });
     } else {
       const R = C.WEAPONS.rain;
       h.fireCD = 1 / R.rate;
@@ -229,7 +236,7 @@ export class World implements BossHost {
     }
     if (T.bonus <= 0) { // pendant le combat contre le boss, des munitions arrivent plus souvent
       const fight = !!this.boss?.alive;
-      const kind = fight ? pickWeighted({ verm: 3, drag: 2, heart: 1, jaw: 1 }, this.rnd) as BonusKind : undefined;
+      const kind = fight ? pickWeighted({ verm: 3, drag: 2, pinata: 2, heart: 1, jaw: 1 }, this.rnd) as BonusKind : undefined;
       this.spawnBonus(C.W + 4, this.top + 16 + this.rnd() * (this.floor - this.top - 50), this.level.scroll * 0.8, kind);
       T.bonus = (fight ? 6 : C.BONUS_EVERY) * (0.8 + this.rnd() * 0.4);
     }
@@ -579,10 +586,14 @@ export class World implements BossHost {
   }
 
   private updateShots(dt: number) {
-    const bottom = this.floor;
+    const bottom = this.floor, born: Shot[] = []; // born : les éclats de Piñata créés pendant cette image
     for (const s of this.shots) {
       s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt; s.age += dt;
-      if (s.life <= 0 || s.x > C.W + 10 || s.x < -20 || s.y < -20 || s.y > bottom + 4) { s.dead = true; continue; }
+      if (s.life <= 0 || s.x > C.W + 10 || s.x < -20 || s.y < -20 || s.y > bottom + 4) {
+        s.dead = true;
+        if (s.kind === 'pinata' && s.life <= 0 && s.x < C.W) this.pinataBurst(s, null, born); // éclate au bout de sa course
+        continue;
+      }
       // les dragibus rebondissent sur le haut, le bas et le sol
       if (s.kind === 'drag' && s.bounces > 0 && ((s.y < C.HUD_H + 1 && s.vy < 0) || (s.y > bottom - 8 && s.vy > 0))) {
         s.vy = -s.vy; s.bounces--; this.sfx.play('bounce');
@@ -592,15 +603,17 @@ export class World implements BossHost {
         if (e.dead || s.hit.includes(e) || !overlap(sb, enemyBox(e))) continue;
         e.hp -= s.dmg; e.flash = 0.08;
         if (s.kind === 'jaw' || s.kind === 'rain') s.hit.push(e); else s.dead = true;
+        if (s.kind === 'pinata') this.pinataBurst(s, e, born);
         if (e.hp <= 0) this.killEnemy(e, true); else this.sfx.play('hit');
         if (s.dead) break;
       }
       for (const e of this.eshots) { // un tir détruit les morceaux de sucre
         if (e.dead || e.kind !== 'sugar' || !overlap(sb, { x: e.x - 1, y: e.y - 1, w: 7, h: 7 })) continue;
         e.dead = true; this.score += 10; this.burst(e.x + 2, e.y + 2, 6, [FC.P.W, FC.P.v], 40);
-        if (s.kind === 'verm' || s.kind === 'drag') s.dead = true;
+        if (s.kind === 'verm' || s.kind === 'drag' || s.kind === 'shard') s.dead = true;
+        if (s.kind === 'pinata') { s.dead = true; this.pinataBurst(s, null, born); }
       }
-      if (!s.dead && this.boss) this.shotVsBoss(s, sb);
+      if (!s.dead && this.boss) this.shotVsBoss(s, sb, born);
       if (s.dead || s.kind === 'rain') continue; // l'arc-en-ciel traverse les obstacles
       for (const o of this.obstacles) {
         if (o.dead || o.kind === 'cable') continue; // les tirs passent à côté des câbles
@@ -608,11 +621,26 @@ export class World implements BossHost {
         if (!shape) continue;
         if (s.kind === 'jaw') { s.dead = true; this.breakObstacle(o); }
         else if (s.kind === 'drag' && s.bounces > 0 && o.kind !== 'web') this.bounceOff(s, sb, o, shape);
+        else if (s.kind === 'pinata') { s.dead = true; this.pinataBurst(s, null, born); }
         else { s.dead = true; this.burst(s.x + 2, s.y + 1, 3, [[255, 255, 255, 255]], 30); }
         break;
       }
     }
-    this.shots = this.shots.filter(s => !s.dead);
+    this.shots = this.shots.filter(s => !s.dead).concat(born);
+  }
+
+  // la Piñata éclate : des petits bonbons partent en étoile (sauf vers le monstre déjà touché)
+  private pinataBurst(s: Shot, touched: Enemy | null, out: Shot[]) {
+    const PI = C.WEAPONS.pinata, b = shotBox(s), cx = b.x + b.w / 2, cy = b.y + b.h / 2;
+    for (let i = 0; i < PI.shards; i++) {
+      const a = i / PI.shards * Math.PI * 2 + this.rnd() * 0.4;
+      out.push({
+        kind: 'shard', x: cx - 2, y: cy - 2, vx: Math.cos(a) * PI.shardSpeed, vy: Math.sin(a) * PI.shardSpeed,
+        dmg: PI.shardDmg, life: PI.shardLife, age: 0, frame: i, bounces: 0, hit: touched ? [touched] : [], dead: false,
+      });
+    }
+    this.burst(cx, cy, 14, [FC.P.P, FC.P.W, FC.P.y, FC.P.q], 60);
+    this.sfx.play('pop');
   }
 
   // rebond d'un dragibus sur un obstacle
@@ -693,6 +721,7 @@ export class World implements BossHost {
     switch (b.kind) {
       case 'verm': h.ammo.verm = Math.min(W.verm.max, h.ammo.verm + W.verm.pickup); label = '+' + W.verm.pickup + ' VERMICELLES'; break;
       case 'drag': h.ammo.drag = Math.min(W.drag.max, h.ammo.drag + W.drag.pickup); label = '+' + W.drag.pickup + ' DRAGIBUS'; break;
+      case 'pinata': h.ammo.pinata = Math.min(W.pinata.max, h.ammo.pinata + W.pinata.pickup); label = '+' + W.pinata.pickup + ' PIÑATAS'; break;
       case 'jaw': h.ammo.jaw = Math.min(W.jaw.max, h.ammo.jaw + W.jaw.pickup); label = '+1 CASSE-DENTS'; break;
       case 'heart': h.energy = h.energyMax; label = 'ÉNERGIE'; break;
       case 'life': h.lives = Math.min(C.LIVES_MAX, h.lives + 1); label = '1UP'; break;
@@ -802,17 +831,20 @@ export class World implements BossHost {
   }
 
   // un tir du chat contre le boss : seul le cœur est fragile, sauf pour le casse-dents
-  private shotVsBoss(s: Shot, sb: Box) {
+  private shotVsBoss(s: Shot, sb: Box, born: Shot[]) {
     const b = this.boss!;
     if (!b.alive || s.hitBoss) return;
     // les tirs passent entre les plaques de métal : seul le cœur compte (le casse-dents, lui, explose sur la carapace)
-    const core = overlap(sb, b.coreBox());
-    if (!core && !(s.kind === 'jaw' && b.hitsBody(sb))) return;
-    const killed = b.damage(s.dmg);
-    this.score += s.dmg * 5;
-    this.burst(sb.x + sb.w / 2, sb.y + sb.h / 2, 4, [FC.P.q, FC.P.W, FC.P.P], 40);
-    this.sfx.play(killed ? 'break' : 'hit');
-    if (killed) this.bossDefeated();
+    const core = overlap(sb, b.coreBox()), body = b.hitsBody(sb);
+    if (!core && !((s.kind === 'jaw' || s.kind === 'pinata') && body)) return;
+    if (core || s.kind === 'jaw') {
+      const killed = b.damage(s.dmg);
+      this.score += s.dmg * 5;
+      this.burst(sb.x + sb.w / 2, sb.y + sb.h / 2, 4, [FC.P.q, FC.P.W, FC.P.P], 40);
+      this.sfx.play(killed ? 'break' : 'hit');
+      if (killed) this.bossDefeated();
+    }
+    if (s.kind === 'pinata') this.pinataBurst(s, null, born); // la Piñata éclate aussi sur la carapace
     if (s.kind === 'rain') s.hitBoss = true; else s.dead = true;
   }
 

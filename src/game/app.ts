@@ -213,20 +213,21 @@ export class App {
       scr.rect(0, 14, C.W, C.H - 14, FC.alpha(P.K, 170));
       center(scr, 'PAUSE', 24, P.W, { sc: 3, outline: P.U });
       this.menu!.draw(scr, this.t);
-      center(scr, 'LES ARMES', 94, P.W);
+      center(scr, 'LES ARMES', 90, P.W);
       const rows: [string, string, string][] = [
         ['icoVerm', 'VERMICELLES', 'RAPIDES, EN ÉVENTAIL'],
         ['icoDrag', 'DRAGIBUS', 'LOURDS, ILS REBONDISSENT'],
+        ['icoPinata', 'PIÑATA', 'ÉCLATE EN PETITS BONBONS'],
         ['icoRain', 'ARC-EN-CIEL', 'INFINI, TRAVERSE TOUT'],
         ['icoJaw', 'CASSE-DENTS', 'FAIT EXPLOSER UN OBSTACLE'],
       ];
       rows.forEach(([ico, name, desc], i) => {
-        const y = 106 + i * 11;
+        const y = 101 + i * 10;
         scr.blit(FC.spr(ico), 64, y - 1);
         FC.text(scr, name, 76, y, P.y);
         FC.text(scr, desc, 128, y, P.W);
       });
-      if (!this.touch) center(scr, 'ÉCHAP : REPRENDRE · M : SON', 154, P.v);
+      if (!this.touch) center(scr, 'ÉCHAP : REPRENDRE · M : SON · 1 À 4 : ARMES', 156, P.v);
     }
     if (this.state === 'over') {
       scr.rect(0, 14, C.W, C.H - 14, FC.alpha(P.K, Math.min(170, this.stateT * 300)));

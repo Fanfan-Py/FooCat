@@ -32,10 +32,13 @@ export const WEAPONS = {
   drag: { rate: 2.8, dmg: 4, speed: 165, angle: 16, bounces: 3, start: 40, max: 90, pickup: 25 },
   // Arc-en-ciel (la corne) : infini, courte portée, grandit et traverse les ennemis et les obstacles
   rain: { rate: 2.6, dmg: 2, speed: 150, range: 115 },
+  // Piñata : gros bonbon lent qui éclate en petits bonbons quand il touche (ou au bout de sa course) ;
+  // les éclats partent en étoile et touchent d'autres monstres
+  pinata: { rate: 1.4, dmg: 5, speed: 120, life: 2.2, shards: 8, shardDmg: 2, shardSpeed: 140, shardLife: 0.5, start: 10, max: 30, pickup: 8 },
   // Casse-dents : touche spéciale ; traverse les ennemis et fait exploser un obstacle
   jaw: { rate: 1.5, dmg: 12, speed: 140, blast: 38, blastDmg: 6, start: 2, max: 5, pickup: 1 },
 };
-export const WEAPON_NAMES = { verm: 'VERMICELLES', drag: 'DRAGIBUS', rain: 'ARC-EN-CIEL', jaw: 'CASSE-DENTS' };
+export const WEAPON_NAMES = { verm: 'VERMICELLES', drag: 'DRAGIBUS', pinata: 'PIÑATA', rain: 'ARC-EN-CIEL', jaw: 'CASSE-DENTS' };
 
 // Ennemis : points gagnés, résistance (nombre de dégâts), chance de laisser un bonus
 export const ENEMIES = {
@@ -145,6 +148,6 @@ export const BELT = { columns: 10, every: 1.5, gap: 64, speed: 36 };
 export const BONUS_EVERY = 11; // secondes entre deux bonus qui arrivent tout seuls
 // Probabilité de chaque bonus
 export const BONUS_WEIGHTS: Record<string, number> = {
-  verm: 28, drag: 26, jaw: 12, heart: 14, life: 5, bomb: 8, ghost: 7,
+  verm: 28, drag: 24, pinata: 18, jaw: 12, heart: 14, life: 5, bomb: 8, ghost: 7,
 };
 export const GHOST_TIME = 5;

@@ -32,12 +32,13 @@ Jeu en ligne : https://fanfan-py.github.io/FooCat/
 - [x] Niveau 5 : le boss appelle des renforts, de plus en plus nombreux quand sa vie baisse
       (1 mini-araignée toutes les 6 s au début, jusqu'à 3 toutes les 3 s, avec des drones).
 
-## Étape 2 : nouvelle arme « Piñata » (nom à confirmer)
+## Étape 2 : nouvelle arme « Piñata » (faite le 27 octobre 2026)
 
-- [ ] Gros bonbon lent qui éclate en 6 à 8 petits bonbons quand il touche un monstre.
-- [ ] Les éclats peuvent toucher d'autres monstres (réaction en chaîne).
-- [ ] Munitions limitées et bonus à ramasser.
-- [ ] Barre du haut réorganisée pour une case d'arme de plus.
+- [x] Gros bonbon papillote, lent, qui éclate en 8 petits bonbons quand il touche un monstre,
+      un obstacle, la carapace du boss, ou au bout de sa course.
+- [x] Les éclats partent en étoile et touchent d'autres monstres.
+- [x] Munitions limitées (10 au départ, 30 au maximum) et bulle bonus rose (+8).
+- [x] Barre du haut à 5 cases ; touche 4 du clavier ; rappel dans l'écran de pause.
 
 ## Étape 3 : tableau des meilleurs scores
 
