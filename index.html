@@ -34,6 +34,17 @@
       <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h4l5-4v14l-5-4H4z"/><path class="wave" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a8 8 0 0 1 0 11"/><path class="cross" d="M16 9l5 6M21 9l-5 6"/></svg>
     </button>
   </div>
+  <form id="name-form" hidden autocomplete="off">
+    <p class="nf-title">Nouveau record !</p>
+    <p id="nf-score"></p>
+    <label for="nf-input">Ton pseudonyme (12 lettres au maximum)</label>
+    <input id="nf-input" name="pseudo" type="text" placeholder="Pseudonyme" maxlength="12" autocomplete="nickname" autocapitalize="characters" autocorrect="off" spellcheck="false" enterkeyhint="done">
+    <p id="nf-error" role="alert"></p>
+    <div class="nf-buttons">
+      <button type="submit" class="nf-ok">Valider</button>
+      <button type="button" id="nf-skip" class="nf-skip">Passer</button>
+    </div>
+  </form>
   <div id="rotate" hidden><p>Tourne ton téléphone<br>en mode paysage</p></div>
 </div>
 <script type="module" src="/src/main.ts"></script>

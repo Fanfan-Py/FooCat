@@ -3,6 +3,7 @@ import { FC, Pix } from '../art';
 import * as C from './config';
 import { World, Controls, Sfx, Carry } from './world';
 import { drawWorld } from './draw';
+import { loadScores, qualifies, addScore, cleanName, checkName } from './scores';
 
 const P = FC.P;
 export interface AppInput extends Controls {
@@ -11,6 +12,8 @@ export interface AppInput extends Controls {
   tapX: number; tapY: number; // endroit touché dans l'écran de jeu (-1 si rien)
 }
 
+type After = 'over' | 'end' | 'title';
+function loadText(key: string): string { try { return localStorage.getItem(key) || ''; } catch { return ''; } }
 function load(key: string): number { try { return Number(localStorage.getItem(key)) || 0; } catch { return 0; } }
 function save(key: string, n: number) { try { localStorage.setItem(key, String(n)); } catch { /* stockage indisponible */ } }
 
@@ -48,7 +51,7 @@ class Menu {
 }
 
 export class App {
-  state: 'title' | 'play' | 'pause' | 'over' | 'done' | 'end' = 'title';
+  state: 'title' | 'play' | 'pause' | 'over' | 'done' | 'end' | 'name' | 'scores' = 'title';
   world: World | null = null;
   // mode développeur : choix du niveau à l'accueil (automatique sur l'ordinateur de développement,
   // ou en touchant 5 fois le logo sur le site)
@@ -63,6 +66,13 @@ export class App {
   private logoTaps: number[] = [];
   private notice: { text: string; t: number } | null = null;
   private levelStart: Carry | null = null; // pour rejouer le niveau après un game over
+  private titleActions: string[] = [];
+  // tableau des scores
+  private pendingScore: { score: number; level: number; won: boolean; then: After } | null = null;
+  private scoresThen: After = 'title'; // où aller en quittant le tableau
+  private scoresMode: C.Mode = 'normal';
+  private highlight: { mode: C.Mode; rank: number } | null = null;
+  lastName = loadText('foocat.name');
   private titleStars = FC.stars(3, C.W, C.H, 120);
   private bigHero: Record<number, Pix> = {};
 
@@ -79,7 +89,7 @@ export class App {
     try { if (v) localStorage.setItem(this.saveKey, JSON.stringify(v)); else localStorage.removeItem(this.saveKey); } catch { /* stockage indisponible */ }
   }
   get bestKey() { return this.mode === 'normal' ? 'foocat.best' : 'foocat.best.' + this.mode; }
-  get best() { return load(this.bestKey); }
+  get best() { const top = loadScores(this.mode)[0]; return Math.max(load(this.bestKey), top ? top.score : 0); }
 
   private go(s: App['state'], menu: string[] | null = null, y0 = 0) {
     this.state = s; this.stateT = 0;
@@ -107,7 +117,7 @@ export class App {
         if (!w) return;
         if (c.pause) { this.openPause(); return; }
         w.update(dt, c);
-        if (w.state === 'over') { this.record(); this.go('over', ['REJOUER LE NIVEAU ' + w.level.num, "RETOUR À L'ACCUEIL"], 124); }
+        if (w.state === 'over') { this.record(); this.sfx.music?.(null); this.afterGame('over'); }
         if (w.state === 'cleared' && w.stateT > 3) {
           this.record();
           const last = w.levelIndex + 1 >= C.LEVELS.length;
@@ -120,7 +130,7 @@ export class App {
         const i = this.menu!.handle(c);
         if (i === 0) this.resume();
         else if (i === 1 && w) this.startLevel(w.levelIndex, this.levelStart ?? undefined);
-        else if (i === 2) this.go('title');
+        else if (i === 2) { this.sfx.pauseMusic?.(false); this.afterGame('title'); }
         break;
       }
       case 'over':
@@ -132,24 +142,74 @@ export class App {
         else if (i === 0) {
           if (this.state === 'over') this.startLevel(w.levelIndex, this.levelStart ?? undefined);
           else if (w.levelIndex + 1 < C.LEVELS.length) this.startLevel(w.levelIndex + 1, w.carry());
-          else { if (!this.devRun) this.writeSave(null); this.go('end'); }
+          else { if (!this.devRun) this.writeSave(null); this.afterGame('end', true); }
         }
         break;
       }
       case 'end':
         if ((c.confirm || c.tapX >= 0) && this.stateT > 1) this.go('title');
         break;
+      case 'name': break; // la saisie se fait dans le formulaire par-dessus le jeu (main.ts)
+      case 'scores': {
+        let m = (c.right ? 1 : 0) - (c.left ? 1 : 0);
+        if (c.tapX >= 0 && c.tapY < 44) m = c.tapX < 160 ? -1 : 1; // toucher les flèches du haut
+        if (m) { this.scoresMode = MODES[(MODES.indexOf(this.scoresMode) + m + MODES.length) % MODES.length]; this.sfx.play('swap'); break; }
+        if (this.stateT > 0.5 && (c.confirm || c.pause || c.tapX >= 0)) { const then = this.scoresThen; this.scoresThen = 'title'; this.finish(then); }
+        break;
+      }
     }
+  }
+
+  // ---------- tableau des scores ----------
+  // fin d'une partie : si le score entre dans le top 10, on demande le pseudonyme
+  private afterGame(then: After, won = false) {
+    const w = this.world;
+    if (w && !this.devRun && qualifies(this.mode, w.score)) {
+      this.pendingScore = { score: w.score, level: w.level.num, won, then };
+      this.state = 'name'; this.stateT = 0; this.menu = null;
+      this.sfx.play('level');
+      return;
+    }
+    this.finish(then);
+  }
+  private finish(then: After) {
+    if (then === 'over') {
+      const w = this.world!;
+      this.go('over', ['REJOUER LE NIVEAU ' + w.level.num, "RETOUR À L'ACCUEIL"], 124);
+      this.stateT = 1; // le menu est tout de suite utilisable
+    } else this.go(then);
+  }
+  get nameRequest() { return this.state === 'name' ? this.pendingScore : null; }
+  // le joueur valide son pseudonyme : renvoie un message d'erreur, ou null si c'est enregistré
+  submitName(raw: string): string | null {
+    const p = this.pendingScore;
+    if (!p) return null;
+    const name = cleanName(raw), err = checkName(name, raw);
+    if (err) return err;
+    this.lastName = name;
+    try { localStorage.setItem('foocat.name', name); } catch { /* stockage indisponible */ }
+    const rank = addScore(this.mode, { name, score: p.score, level: p.level, won: p.won, date: new Date().toISOString().slice(0, 10) });
+    this.highlight = { mode: this.mode, rank };
+    this.pendingScore = null;
+    this.openScores(p.then);
+    return null;
+  }
+  skipName() { const p = this.pendingScore; this.pendingScore = null; if (p) this.finish(p.then); }
+  private openScores(then: After) {
+    this.scoresThen = then; this.scoresMode = this.mode;
+    this.go('scores'); this.sfx.play('pickup');
   }
 
   // menu de l'accueil : Continuer (si une partie est sauvegardée), Nouvelle partie, Mode
   private titleMenu() {
-    const sv = this.saved, items: string[] = [];
-    if (sv) items.push('CONTINUER : NIVEAU ' + (sv.level + 1));
-    items.push(this.dev ? 'JOUER LE NIVEAU ' + (this.choice + 1) : 'NOUVELLE PARTIE');
-    items.push('MODE : ' + MODE_NAMES[this.mode]);
-    const idx = this.menu ? Math.min(this.menu.idx, items.length - 1) : 0;
-    this.menu = new Menu(items, this.dev ? 124 : 117, 11);
+    const sv = this.saved, items: string[] = [], acts: string[] = [];
+    if (sv) { items.push('CONTINUER : NIVEAU ' + (sv.level + 1)); acts.push('continue'); }
+    items.push(this.dev ? 'JOUER LE NIVEAU ' + (this.choice + 1) : 'NOUVELLE PARTIE'); acts.push('new');
+    items.push('MEILLEURS SCORES'); acts.push('scores');
+    items.push('MODE : ' + MODE_NAMES[this.mode]); acts.push('mode');
+    this.titleActions = acts;
+    const idx = this.menu && this.state === 'title' ? Math.min(this.menu.idx, items.length - 1) : 0;
+    this.menu = new Menu(items, this.dev ? 124 : 113, 11);
     this.menu.idx = idx;
   }
 
@@ -179,9 +239,11 @@ export class App {
     if ((c.left || c.right) && menu.idx === modeIdx) { this.toggleMode(); return; }
     const i = menu.handle(c);
     if (i < 0) return;
-    if (i === modeIdx) { this.toggleMode(); return; }
+    const act = this.titleActions[i];
+    if (act === 'mode') { this.toggleMode(); return; }
+    if (act === 'scores') { this.highlight = null; this.openScores('title'); return; }
     const sv = this.saved;
-    if (sv && i === 0) { this.devRun = false; this.startLevel(sv.level, sv.carry); return; }
+    if (sv && act === 'continue') { this.devRun = false; this.startLevel(sv.level, sv.carry); return; }
     this.devRun = this.dev && this.choice > 0;
     this.startLevel(this.dev ? this.choice : 0);
   }
@@ -201,6 +263,7 @@ export class App {
   pause() { if (this.state === 'play') this.openPause(); }
 
   draw(scr: Pix) {
+    if (this.state === 'scores') return this.drawScores(scr);
     if (this.state === 'title' || !this.world) return this.drawTitle(scr);
     const w = this.world;
     if (this.state === 'end') return this.drawEnd(scr);
@@ -208,6 +271,10 @@ export class App {
     if (this.state === 'play' && w.t < 2.6 && Math.floor(w.t * 4) % 4 !== 3) {
       center(scr, 'NIVEAU ' + w.level.num, 64, P.W, { sc: 2, outline: P.K });
       center(scr, w.level.name, 84, P.q, { outline: P.K });
+    }
+    if (this.state === 'name') { // derrière le formulaire du pseudonyme
+      scr.rect(0, 0, C.W, C.H, FC.alpha(P.K, 190));
+      center(scr, 'NOUVEAU RECORD !', 150, P.y, { sc: 2, outline: P.P });
     }
     if (this.state === 'pause') {
       scr.rect(0, 14, C.W, C.H - 14, FC.alpha(P.K, 170));
@@ -232,6 +299,7 @@ export class App {
     if (this.state === 'over') {
       scr.rect(0, 14, C.W, C.H - 14, FC.alpha(P.K, Math.min(170, this.stateT * 300)));
       center(scr, 'GAME OVER', 46, P.P, { sc: 3, outline: P.K });
+      if (this.highlight && this.highlight.mode === this.mode) center(scr, 'TU ES ' + (this.highlight.rank === 1 ? '1ER' : this.highlight.rank + 'E') + ' AU TABLEAU DES SCORES !', 110, P.y, { outline: P.K });
       center(scr, 'SCORE ' + w.score, 82, P.W);
       center(scr, 'MEILLEUR ' + this.best, 94, P.y);
       if (this.stateT > 1) this.menu!.draw(scr, this.t);
@@ -256,6 +324,27 @@ export class App {
     center(scr, 'SCORE ' + w.score, 104, P.y, { sc: 2, outline: P.K });
     center(scr, this.mode === 'normal' ? 'ESSAIE LE MODE DIFFICILE !' : 'CHAMPION DE LA GALAXIE !', 136, P.v, { outline: P.K });
     if (this.stateT > 1 && this.t % 1.2 < 0.8) center(scr, (this.touch ? 'TOUCHE' : 'ENTRÉE') + " POUR REVENIR À L'ACCUEIL", 152, P.W, { outline: P.K });
+  }
+
+  private drawScores(scr: Pix) {
+    this.drawTitleBackground(scr);
+    const t = this.t, a = Math.floor(t * 3) % 2, list = loadScores(this.scoresMode);
+    center(scr, 'MEILLEURS SCORES', 8, P.y, { sc: 2, outline: P.P });
+    center(scr, 'MODE ' + MODE_NAMES[this.scoresMode], 30, this.scoresMode === 'normal' ? P.b : P.P, { outline: P.K });
+    FC.text(scr, '<', 100 - a, 30, P.y, { outline: P.K }); FC.text(scr, '>', 216 + a, 30, P.y, { outline: P.K });
+    if (!list.length) center(scr, 'PAS ENCORE DE SCORE : À TOI DE JOUER !', 90, P.W, { outline: P.K });
+    const medal = [P.y, P.m, P.o];
+    list.forEach((e, i) => {
+      const y = 46 + i * 11, hl = this.highlight && this.highlight.mode === this.scoresMode && this.highlight.rank === i + 1;
+      if (hl && Math.floor(t * 4) % 4) scr.rect(56, y - 2, 208, 9, FC.alpha(P.P, 170));
+      const c = hl ? P.W : medal[i] ?? P.v;
+      FC.text(scr, (i + 1) + '.', 76 - FC.textWidth((i + 1) + '.'), y, c, { outline: P.K });
+      FC.text(scr, e.name, 82, y, hl ? P.W : P.W, { outline: P.K });
+      FC.text(scr, e.won ? 'FIN' : 'NIV.' + e.level, 172, y, P.q, { outline: P.K });
+      const sc = String(e.score);
+      FC.text(scr, sc, 262 - FC.textWidth(sc), y, c, { outline: P.K });
+    });
+    if (this.stateT > 0.5 && t % 1.2 < 0.8) center(scr, this.touch ? 'TOUCHE POUR CONTINUER' : 'ENTRÉE POUR CONTINUER', 166, P.W, { outline: P.K });
   }
 
   private drawTitleBackground(scr: Pix) {
@@ -283,8 +372,8 @@ export class App {
     }
     this.menu!.draw(scr, t);
     if (!this.dev) {
-      if (this.touch) center(scr, 'TOUCHE UNE LIGNE POUR CHOISIR', 156, P.v);
-      else center(scr, 'HAUT/BAS PUIS ENTRÉE · ESPACE : TIRER · X : ARME · C : CASSE-DENTS', 156, P.v);
+      if (this.touch) center(scr, 'TOUCHE UNE LIGNE POUR CHOISIR', 160, P.v);
+      else center(scr, 'HAUT/BAS PUIS ENTRÉE · ESPACE : TIRER · X : ARME · C : CASSE-DENTS', 160, P.v);
     }
     if (this.notice) center(scr, this.notice.text, 100, P.y, { outline: P.K });
     center(scr, 'MEILLEUR SCORE (' + MODE_NAMES[this.mode] + ') ' + this.best, 171, P.y);

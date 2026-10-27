@@ -172,6 +172,28 @@ for (const ev of ['keydown', 'pointerdown', 'pointerup', 'touchend', 'click']) w
 document.addEventListener('visibilitychange', () => { if (document.hidden) app.pause(); });
 window.addEventListener('blur', () => app.pause());
 
+// ---------- saisie du pseudonyme (nouveau record) ----------
+const nameForm = $<HTMLFormElement>('name-form'), nameInput = $<HTMLInputElement>('nf-input');
+const nameErr = $('nf-error'), nameScore = $('nf-score');
+let nameOpen = false;
+function syncNameForm() {
+  const req = app.nameRequest;
+  if (req && !nameOpen) {
+    nameOpen = true; nameForm.hidden = false;
+    nameScore.textContent = 'Score : ' + req.score.toLocaleString('fr-FR');
+    nameErr.textContent = ''; nameInput.value = app.lastName;
+    setTimeout(() => { nameInput.focus(); nameInput.select(); }, 60);
+  } else if (!req && nameOpen) {
+    nameOpen = false; nameForm.hidden = true; nameInput.blur();
+  }
+}
+nameForm.addEventListener('submit', (e) => {
+  e.preventDefault();
+  const err = app.submitName(nameInput.value);
+  nameErr.textContent = err ? err.charAt(0) + err.slice(1).toLowerCase() + '.' : '';
+});
+$('nf-skip').addEventListener('click', () => app.skipName());
+
 // ---------- boucle : logique à 60 images/s, affichage à chaque rafraîchissement ----------
 const STEP = 1 / 60;
 let last = performance.now(), acc = 0;
@@ -180,6 +202,7 @@ function frame(now: number) {
   let n = 0;
   while (acc >= STEP && n < 5) { app.update(STEP, input.poll()); acc -= STEP; n++; }
   if (n === 5) acc = 0;
+  syncNameForm();
   const sz = screenSize();
   if (sz.w !== laidOut.w || sz.h !== laidOut.h) layout(); // la taille a changé sans prévenir
   app.draw(scr);

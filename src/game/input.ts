@@ -24,6 +24,7 @@ export class Input {
 
   constructor() {
     window.addEventListener('keydown', (e) => {
+      if ((e.target as HTMLElement | null)?.tagName === 'INPUT') return; // on écrit son pseudonyme
       if (MOVE[e.code] || FIRE.includes(e.code)) e.preventDefault();
       if (!e.repeat) this.pressed.add(e.code);
       this.keys.add(e.code);

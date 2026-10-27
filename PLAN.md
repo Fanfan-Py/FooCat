@@ -40,11 +40,16 @@ Jeu en ligne : https://fanfan-py.github.io/FooCat/
 - [x] Munitions limitées (10 au départ, 30 au maximum) et bulle bonus rose (+8).
 - [x] Barre du haut à 5 cases ; touche 4 du clavier ; rappel dans l'écran de pause.
 
-## Étape 3 : tableau des meilleurs scores
+## Étape 3 : tableau des meilleurs scores (faite le 27 octobre 2026)
 
-- [ ] Top 10 sur chaque appareil, un classement pour le mode normal et un pour le mode difficile.
-- [ ] Saisie du pseudonyme en fin de partie (clavier du téléphone), 12 lettres au maximum.
-- [ ] Filtre des gros mots et des insultes.
+- [x] Top 10 sur chaque appareil, un classement pour le mode normal et un pour le mode difficile
+      (accueil → « Meilleurs scores » ; flèches gauche/droite pour changer de mode).
+- [x] Saisie du pseudonyme en fin de partie (game over, victoire ou « Quitter ») quand le score entre
+      dans le top 10 ; clavier du téléphone, 12 lettres au maximum ; le dernier pseudo est proposé.
+      Les parties lancées en mode développeur ne comptent pas.
+- [x] Filtre des gros mots et des insultes (français et anglais), même déguisés (« C0NNARD »,
+      « coooonnard », « p.u.t.e ») ; les mots courts comme « con » ne sont refusés que seuls,
+      pour accepter « Constance » ou « Violette ». Liste dans src/game/scores.ts.
 - [ ] Plus tard, si on le souhaite : classement partagé en ligne entre tous les joueurs.
 
 ## Étape 4 : réglages et récompenses
