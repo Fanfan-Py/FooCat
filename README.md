@@ -33,8 +33,8 @@ Les icônes se refont avec `npm run icons`.
 
 Le choix du niveau à l'accueil n'apparaît qu'en mode développeur :
 - automatiquement avec `npm run dev` ;
-- sur le site en ligne : toucher (ou cliquer) 5 fois le logo FOOCAT en moins de 3 secondes.
-  Recommencer pour le couper.
+- sur le site en ligne : ajouter `#dev` à la fin de l'adresse (`#nodev` pour le couper),
+  ou toucher (ou cliquer) 5 fois le logo FOOCAT en moins de 3 secondes.
 
 Les parties lancées depuis le choix du niveau ne modifient pas la sauvegarde « Continuer ».
 

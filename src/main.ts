@@ -18,6 +18,9 @@ const app = new App(sfx);
 input.onMute = () => toggleMute();
 // sur l'ordinateur de développement (npm run dev), le choix du niveau est toujours proposé
 if (import.meta.env.DEV) app.setDev(true);
+// #dev à la fin de l'adresse : active le mode développeur (et s'en souvient) ; #nodev le coupe
+if (location.hash === '#dev') app.setDev(true, true);
+if (location.hash === '#nodev') app.setDev(false, true);
 
 // ---------- mise à l'échelle : le jeu 320x180 remplit l'écran sans être déformé ----------
 const touchUI = $('touch'), stick = $('stick'), knob = $('knob'), rotate = $('rotate');

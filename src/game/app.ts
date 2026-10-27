@@ -68,7 +68,7 @@ export class App {
 
   constructor(private sfx: Sfx) { this.sfx.music?.('title'); this.titleMenu(); }
 
-  setDev(on: boolean) { this.dev = on; this.titleMenu(); }
+  setDev(on: boolean, remember = false) { this.dev = on; if (remember) save('foocat.dev', on ? 1 : 0); this.titleMenu(); }
 
   // sauvegarde « Continuer » : le début du dernier niveau atteint, pour chaque mode
   get saveKey() { return 'foocat.save.' + this.mode; }
