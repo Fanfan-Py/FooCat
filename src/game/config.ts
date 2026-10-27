@@ -153,20 +153,20 @@ export const LEVELS: Level[] = [
   {
     num: 6, name: "RETOUR DANS L'ESPACE", points: 32000, decor: 'space2', ground: null, ceiling: null, scroll: 32,
     phases: [
-      { from: 0, obstacle: 5.0, obstacles: { planet: 3, jet: 1 }, wave: 2.5, waves: { line: 1, v: 1, batShrimp: 2, mints: 1 }, gold: 0.2 },
-      { from: 0.2, banner: 'ATTENTION AUX PAILLETTES !', obstacle: 4.6, obstacles: { planet: 2, jet: 2 }, wave: 2.4, waves: { batShrimp: 2, wasps: 1, swarm: 1, line: 1, spider: 1 }, gold: 0.25 },
+      { from: 0, obstacle: 4.4, obstacles: { planet: 3, jet: 1 }, wave: 2.3, waves: { line: 1, v: 1, batShrimp: 2, mints: 1 }, gold: 0.2 },
+      { from: 0.2, banner: 'ATTENTION AUX PAILLETTES !', obstacle: 4.0, obstacles: { planet: 2, jet: 2 }, wave: 2.2, waves: { batShrimp: 2, wasps: 1, swarm: 1, line: 1, spider: 1 }, gold: 0.25 },
       { from: 0.5, banner: 'PLUIE DE COMÈTES !', obstacle: 6, obstacles: { planet: 1 }, wave: 1.3, waves: { comets: 3, batShrimp: 1 }, gold: 0 },
-      { from: 0.65, obstacle: 4.2, obstacles: { planet: 2, jet: 1 }, wave: 2.2, waves: { batShrimp: 2, v: 1, swarm: 1, wasps: 1, spider: 1 }, gold: 0.3 },
+      { from: 0.65, obstacle: 3.7, obstacles: { planet: 2, jet: 1 }, wave: 2.0, waves: { batShrimp: 2, v: 1, swarm: 1, wasps: 1, spider: 1 }, gold: 0.3 },
       { from: 0.9, banner: 'DERNIER EFFORT !', obstacle: 4.4, obstacles: { jet: 1, planet: 2 }, wave: 1.6, waves: { batShrimp: 2, swarm: 1, wasps: 1 }, gold: 0.35 },
     ],
   },
   {
     num: 7, name: 'VERS LA PLANÈTE AQUATIQUE', points: 28000, decor: 'ocean', ground: null, ceiling: null, scroll: 34, outro: 'B',
     phases: [
-      { from: 0, obstacle: 4.6, obstacles: { ice: 2, drop: 1 }, wave: 2.4, waves: { guitar: 1, batShrimp: 1, line: 1, solo: 1 }, gold: 0.2 },
-      { from: 0.2, banner: 'LES POISSONS GUITARE !', obstacle: 4.0, obstacles: { ice: 2, drop: 1, jet: 1 }, wave: 2.2, waves: { guitar: 2, batShrimp: 1, v: 1, wasps: 1 }, gold: 0.25 },
+      { from: 0, obstacle: 4.0, obstacles: { ice: 2, drop: 1 }, wave: 2.2, waves: { guitar: 1, batShrimp: 1, line: 1, solo: 1 }, gold: 0.2 },
+      { from: 0.2, banner: 'LES POISSONS GUITARE !', obstacle: 3.5, obstacles: { ice: 2, drop: 1, jet: 1 }, wave: 2.0, waves: { guitar: 2, batShrimp: 1, v: 1, wasps: 1 }, gold: 0.25 },
       { from: 0.5, banner: 'CHAMP DE GLACE !', obstacle: 3.0, obstacles: { ice: 3, drop: 2 }, wave: 3.2, waves: { batShrimp: 1, solo: 1 }, gold: 0 },
-      { from: 0.65, obstacle: 3.6, obstacles: { ice: 1, drop: 1, jet: 1 }, wave: 1.9, waves: { guitar: 2, batShrimp: 2, swarm: 1, spider: 1 }, gold: 0.3 },
+      { from: 0.65, obstacle: 3.2, obstacles: { ice: 1, drop: 1, jet: 1 }, wave: 1.75, waves: { guitar: 2, batShrimp: 2, swarm: 1, spider: 1 }, gold: 0.3 },
       { from: 0.9, banner: 'PLONGEON IMMINENT !', obstacle: 99, obstacles: {}, wave: 1.6, waves: { guitar: 2, batShrimp: 1, line: 1 }, gold: 0.3 },
     ],
   },
@@ -209,7 +209,7 @@ export const ALGAE = { grow: 22, min: 40, max: 84 };
 export const JET = { on: 1.8, off: 2.4, length: 100, warn: 0.7 };
 
 // Le boss du niveau 5
-export const BOSS = { hp: 450, points: 10000, contact: 2, laser: 2 };
+export const BOSS = { hp: 420, points: 10000, contact: 2, laser: 2 };
 // Le boss du niveau 10 : le poisson squelette (sa jauge se remplit une fois quand l'armure casse)
 export const SKEL = { hp: 200, points: 15000, contact: 2 };
 

@@ -1,6 +1,6 @@
 // Garde le jeu en mémoire pour pouvoir y jouer sans connexion.
 // Stratégie : on répond avec la copie gardée, et on la met à jour en arrière-plan.
-const CACHE = 'foocat-v1';
+const CACHE = 'foocat-v2';
 
 self.addEventListener('install', (e) => {
   self.skipWaiting();

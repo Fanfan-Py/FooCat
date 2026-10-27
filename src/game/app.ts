@@ -33,7 +33,7 @@ const MODES: GameMode[] = ['normal', 'difficile', 'infini', 'defi'];
 const MODE_NAMES: Record<GameMode, string> = { normal: 'NORMAL', difficile: 'DIFFICILE', infini: 'INFINI', defi: 'DÉFI DU JOUR' };
 // le défi du jour a un tableau des scores par jour
 function scoreKey(m: GameMode) { return m === 'defi' ? 'defi.' + today() : m; }
-const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'nebula', 'planet', 'iron', 'iron'];
+const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle'];
 
 // histoire illustrée entre le niveau 5 et le niveau 6
 const STORY = [
@@ -156,7 +156,8 @@ export class App {
     this.state = s; this.stateT = 0;
     this.menu = menu ? new Menu(menu, y0) : null;
     if (s === 'title') { this.sfx.music?.('title'); this.titleMenu(); }
-    if (s === 'over' || s === 'end') this.sfx.music?.(null);
+    if (s === 'over') this.sfx.music?.(null);
+    if (s === 'end') this.sfx.music?.('victory');
   }
   private startLevel(i: number, carry?: Carry) {
     // on repart toujours avec au moins les vies de départ du mode

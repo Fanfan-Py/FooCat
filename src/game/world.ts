@@ -225,7 +225,7 @@ export class World implements BossHost, SkelHost {
       this.phaseIdx++;
       const cur = ph[this.phaseIdx];
       if (cur.banner) this.say(cur.banner);
-      if (cur.event === 'boss' && !this.boss) { this.boss = this.level.boss === 'skel' ? new SkelBoss(this.top, this.floor) : new Boss(); this.sfx.play('alarm'); this.sfx.music?.('boss'); }
+      if (cur.event === 'boss' && !this.boss) { this.boss = this.level.boss === 'skel' ? new SkelBoss(this.top, this.floor) : new Boss(); this.sfx.play('alarm'); this.sfx.music?.(this.level.boss === 'skel' ? 'skelboss' : 'boss'); }
       if (cur.event === 'belt' && !this.belt.done) {
         Object.assign(this.belt, { active: true, col: 0, timer: 2.2, hitsAtStart: this.hits });
         this.sfx.play('alarm');

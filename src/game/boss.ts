@@ -81,15 +81,15 @@ export class Boss {
     if (this.shootT <= 0 && this.laser === 'idle') {
       const [ex, ey] = this.eye();
       host.bossWebs(ex - 4, ey - 4, stage === 1 ? [-14, 0, 14] : [-20, -7, 7, 20]);
-      this.shootT = stage === 1 ? 2.2 : stage === 2 ? 2.6 : 3.2;
+      this.shootT = stage === 1 ? 2.5 : stage === 2 ? 2.9 : 3.4;
     }
     // renforts : plus sa vie baisse, plus il en appelle, et plus souvent
-    // (vie pleine : 1 mini-araignée toutes les 6 s ; presque vaincu : 3 toutes les 3,2 s, avec des drones)
+    // (vie pleine : 1 mini-araignée toutes les 6,5 s ; presque vaincu : 3 toutes les 3,7 s, avec des drones)
     const lost = 1 - this.hp / this.maxHp;
     this.spawnT -= dt;
     if (this.spawnT <= 0) {
-      host.bossReinforcements(this.x + 40, this.y + 72, 1 + Math.floor(lost * 2.6), lost > 0.33 && Math.random() < 0.4);
-      this.spawnT = 6 - 2.8 * lost;
+      host.bossReinforcements(this.x + 40, this.y + 72, 1 + Math.floor(lost * 2.1), lost > 0.33 && Math.random() < 0.4);
+      this.spawnT = 6.5 - 2.8 * lost;
     }
     // laser des yeux
     if (stage === 3) {

@@ -38,6 +38,38 @@ const THEMES: Record<string, Theme> = {
     bass: ['D2 D2 . D2 D3 . D2 . C2 C2 . C2 C3 . C2 .', 'Bb1 Bb1 . Bb1 Bb2 . Bb1 . A1 A1 . A1 A2 . A1 .'],
     drums: 'k . h k s . h . k . h k s . s s',
   },
+  // victoire : écran de fin du jeu et défi réussi
+  victory: {
+    bpm: 112,
+    lead: ['C5 - E5 - G5 - C6 - - - G5 - C6 - - -', 'A5 - F5 - A5 - C6 - - - A5 - F5 - - -', 'G5 - E5 - G5 - B5 - D6 - B5 - G5 - - -', 'C6 - G5 - E5 - G5 - C6 - - - . . . .'],
+    lead2: ['E4 - - - - - - - G4 - - - - - - -', 'F4 - - - - - - - A4 - - - - - - -', 'D4 - - - - - - - G4 - - - - - - -', 'E4 - - - - - - - C4 - - - - - - -'],
+    bass: ['C3 . G2 . C3 . G2 . C3 . G2 . C3 . E3 .', 'F2 . C3 . F2 . C3 . F2 . C3 . F2 . A2 .', 'G2 . D3 . G2 . D3 . G2 . D3 . G2 . B2 .', 'C3 . G2 . E2 . G2 . C3 . . . . . . .'],
+    drums: 'k . h . s . h . k . h k s . h .',
+  },
+  // océan (niveaux 7 et 8) : calme, en ré majeur, avec des arpèges qui font des bulles
+  ocean: {
+    bpm: 100,
+    lead: ['F#5 - - A5 - - D6 - - A5 - - F#5 - E5 -', 'D5 - - F#5 - - B5 - - A5 - - F#5 - - -', 'G5 - - B5 - - D6 - - E6 - - D6 - B5 -', 'A5 - - - C#6 - - - E6 - - - . . . .'],
+    lead2: ['D4 A4 D5 A4 D4 A4 D5 A4 D4 A4 D5 A4 D4 A4 D5 A4', 'B3 F#4 B4 F#4 B3 F#4 B4 F#4 B3 F#4 B4 F#4 B3 F#4 B4 F#4', 'G3 D4 G4 D4 G3 D4 G4 D4 G3 D4 G4 D4 G3 D4 G4 D4', 'A3 E4 A4 E4 A3 E4 A4 E4 A3 E4 A4 E4 A3 E4 A4 C#5'],
+    bass: ['D2 - - - - - A2 - D3 - - - A2 - - -', 'B1 - - - - - F#2 - B2 - - - F#2 - - -', 'G1 - - - - - D2 - G2 - - - D2 - - -', 'A1 - - - - - E2 - A2 - - - C#3 - - -'],
+    drums: 'k . . h . . s . . h . . k . h .',
+  },
+  // château marin (niveaux 9 et 10) : mystérieux, en ré mineur
+  castle: {
+    bpm: 112,
+    lead: ['D5 - A4 - D5 - F5 - E5 - D5 - C#5 - D5 -', 'F5 - D5 - Bb4 - D5 - F5 - G5 - F5 - D5 -', 'G5 - Bb5 - A5 - G5 - F5 - E5 - D5 - Bb4 -', 'A4 - C#5 - E5 - G5 - F5 - E5 - C#5 - - -'],
+    lead2: ['F4 - - - - - - - A4 - - - - - - -', 'D4 - - - - - - - F4 - - - - - - -', 'Bb3 - - - - - - - D4 - - - - - - -', 'C#4 - - - - - - - E4 - - - - - - -'],
+    bass: ['D2 . D3 . A2 . D3 . D2 . D3 . A2 . D3 .', 'Bb1 . Bb2 . F2 . Bb2 . Bb1 . Bb2 . F2 . Bb2 .', 'G1 . G2 . D2 . G2 . G1 . G2 . D2 . G2 .', 'A1 . A2 . E2 . A2 . A1 . A2 . C#2 . E2 .'],
+    drums: 'k . h . s . h . k . h . s . h h',
+  },
+  // le poisson squelette de la mort : rapide et menaçant
+  skelboss: {
+    bpm: 164,
+    lead: ['E5 . F5 . E5 . B4 . C5 . B4 . F5 - E5 -', 'G5 . F5 . E5 . D5 . C5 . D5 . E5 - - -', 'E6 . D6 . C6 . B5 . Bb5 . A5 . G5 . F5 .', 'E5 . G5 . Bb5 . C#6 . E6 - - - D#6 - - -'],
+    lead2: ['B4 - - - - - - - C5 - - - - - - -', 'B4 - - - - - - - G4 - - - - - - -', 'C5 - - - - - - - F4 - - - - - - -', 'Bb4 - - - - - - - B4 - - - - - - -'],
+    bass: ['E2 E2 E3 E2 F2 F2 F3 F2 E2 E2 E3 E2 F2 F2 F3 F2', 'C2 C2 C3 C2 D2 D2 D3 D2 E2 E2 E3 E2 E2 E2 E3 E2', 'A1 A1 A2 A1 Bb1 Bb1 Bb2 Bb1 A1 A1 A2 A1 F1 F1 F2 F1', 'E2 E2 E3 E2 G2 G2 G3 G2 Bb1 Bb1 Bb2 Bb1 B1 B1 B2 B1'],
+    drums: 'k . s k k . s . k k s . k . s s',
+  },
   boss: {
     bpm: 156,
     lead: ['E5 . G5 . B5 . A5 G5 F#5 . E5 . D5 . F#5 .', 'E5 . G5 . B5 . C6 B5 A5 . G5 . F#5 . D#5 .', 'E6 . D6 . B5 . G5 . A5 . F#5 . D5 . B4 .', 'C5 . E5 . G5 . B5 . A5 - - - D#5 - - -'],

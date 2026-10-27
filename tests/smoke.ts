@@ -90,7 +90,7 @@ if (process.env.DAILY) {
   }
 }
 
-for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || process.env.DAILY ? 0 : LEVELS.length); lv++) {
+for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || process.env.DAILY ? 0 : Number(process.env.TO || LEVELS.length)); lv++) {
   let cleared = 0, time = 0; const causes: Record<string, number> = {};
   for (let seed = 1; seed <= runs; seed++) {
     const w = new World(sfx, { level: lv, seed: seed * 977 + lv, mode });

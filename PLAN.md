@@ -132,7 +132,9 @@ Corrections après le premier essai :
       La date choisit le niveau, le hasard et une règle : TURBO, FRAGILE (2 cœurs, 5 vies),
       PLUIE DE BONUS ou LA HORDE. Essais illimités, tableau des scores du jour (sur l'appareil).
 
-## Étape 10 : finitions
+## Étape 10 : finitions (faite le 27 octobre 2026, sauf les essais sur téléphone)
 
-- [ ] Nouvelles musiques : océan, château, boss squelette.
-- [ ] Réglage de la difficulté avec le robot de test, puis essais sur téléphone.
+- [x] Nouvelles musiques : océan, château, boss squelette (et une musique de victoire pour l'écran de fin).
+- [x] Réglage de la difficulté avec le robot de test : l'Araignée de Fer était plus dure que le boss final
+      (adoucie), les niveaux 6 et 7 trop faciles (un peu plus d'ennemis et d'obstacles).
+- [ ] Essais sur téléphone (par toi).
