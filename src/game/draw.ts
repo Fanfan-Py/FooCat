@@ -238,7 +238,6 @@ function seaFront(scr: Pix, w: World) {
     if ((u * 13) % 17 === 0) scr.put(x, g + 6, dot);
     if ((u * 7) % 41 === 0) scr.put(x, g + 3, P.q);
   }
-  for (const [x0, seed] of [[40, 1], [230, 2], [380, 0]]) scr.blit(FC.coral(seed), FC.wx(x0, w.level.scroll, t, 460, 40), G - 18);
 }
 // ---------- niveau 9 : le château marin ----------
 function decorCastle(scr: Pix, w: World) {

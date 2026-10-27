@@ -70,7 +70,7 @@ export const POINTS = { planet: 300, bonus: 50, wave: 500, belt: 1000, perSecond
 // Vagues d'ennemis possibles
 export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling' | 'scorpion' | 'droneSquad' | 'batShrimp' | 'guitar' | 'comets' | 'crab' | 'jellyBlue' | 'jellyPink' | 'bubbles' | 'hanging';
 // Obstacles possibles
-export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable' | 'ice' | 'drop' | 'jet' | 'algae' | 'herse';
+export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable' | 'ice' | 'drop' | 'jet' | 'algae' | 'herse' | 'coral';
 
 export interface Phase {
   from: number; // part des points du niveau (0 = début, 1 = fin)
@@ -81,6 +81,7 @@ export interface Phase {
   wave: number; // secondes entre deux vagues d'ennemis
   waves: Partial<Record<WaveKind, number>>; // lesquelles, avec leur poids
   gold: number; // part de mouches dorées
+  slalom?: boolean; // obstacles en alternance en haut et en bas : il faut zigzaguer
 }
 
 export interface Level {
@@ -171,22 +172,22 @@ export const LEVELS: Level[] = [
   {
     num: 8, name: 'LA PLANÈTE SOUS-MARINE', points: 24000, decor: 'sea', ground: 154, ceiling: 26, scroll: 36, outro: 'U', water: true,
     phases: [
-      { from: 0, obstacle: 3.6, obstacles: { algae: 1 }, wave: 2.4, waves: { crab: 2, jellyBlue: 1, solo: 1, line: 1 }, gold: 0.1 },
-      { from: 0.2, banner: 'ATTENTION AUX BULLES !', obstacle: 3.2, obstacles: { algae: 1 }, wave: 2.3, waves: { bubbles: 1, jellyBlue: 1, crab: 1, guitar: 1, line: 1 }, gold: 0.2 },
-      { from: 0.45, banner: "LA FORÊT D'ALGUES !", obstacle: 1.7, obstacles: { algae: 1 }, wave: 3.2, waves: { solo: 1, bubbles: 1 }, gold: 0 },
-      { from: 0.62, obstacle: 3.0, obstacles: { algae: 1 }, wave: 2.0, waves: { jellyPink: 1, jellyBlue: 1, crab: 1, guitar: 1, bubbles: 1, batShrimp: 1, line: 1 }, gold: 0.3 },
-      { from: 0.88, banner: 'LE CHÂTEAU EN VUE !', obstacle: 4, obstacles: { algae: 1 }, wave: 1.6, waves: { crab: 2, jellyPink: 1, guitar: 1, batShrimp: 1 }, gold: 0.3 },
+      { from: 0, obstacle: 3.4, obstacles: { algae: 2, coral: 1 }, wave: 2.4, waves: { crab: 2, jellyBlue: 1, solo: 1, line: 1 }, gold: 0.1 },
+      { from: 0.2, banner: 'ATTENTION AUX BULLES !', obstacle: 3.0, obstacles: { algae: 2, coral: 1 }, wave: 2.3, waves: { bubbles: 1, jellyBlue: 1, crab: 1, guitar: 1, line: 1 }, gold: 0.2 },
+      { from: 0.45, banner: "LA FORÊT D'ALGUES !", obstacle: 1.7, obstacles: { algae: 1 }, slalom: true, wave: 3.2, waves: { solo: 1, bubbles: 1 }, gold: 0 },
+      { from: 0.62, obstacle: 2.8, obstacles: { algae: 2, coral: 1 }, wave: 2.0, waves: { jellyPink: 1, jellyBlue: 1, crab: 1, guitar: 1, bubbles: 1, batShrimp: 1, line: 1 }, gold: 0.3 },
+      { from: 0.88, banner: 'LE CHÂTEAU EN VUE !', obstacle: 2.2, obstacles: { algae: 1 }, slalom: true, wave: 1.6, waves: { crab: 2, jellyPink: 1, guitar: 1, batShrimp: 1 }, gold: 0.3 },
     ],
   },
   {
-    num: 9, name: 'LE CHÂTEAU MARIN', points: 32000, decor: 'castle', ground: 156, ceiling: 26, scroll: 40, water: true,
+    num: 9, name: 'LE CHÂTEAU MARIN', points: 28000, decor: 'castle', ground: 156, ceiling: 26, scroll: 40, water: true,
     next: 'LA SUITE ARRIVE BIENTÔT : LE POISSON SQUELETTE DE LA MORT !',
     phases: [
-      { from: 0, obstacle: 4.6, obstacles: { herse: 1, algae: 1 }, wave: 2.6, waves: { hanging: 1, crab: 1, jellyBlue: 1, line: 1 }, gold: 0.1 },
-      { from: 0.2, banner: 'ATTENTION AUX HERSES !', obstacle: 4.0, obstacles: { herse: 1, algae: 1 }, wave: 2.3, waves: { hanging: 2, crab: 1, jellyPink: 1, bubbles: 1, line: 1 }, gold: 0.2 },
+      { from: 0, obstacle: 2.6, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 3.0, waves: { hanging: 1, crab: 1, jellyBlue: 1, line: 1 }, gold: 0.1 },
+      { from: 0.2, banner: 'ATTENTION AUX HERSES !', obstacle: 2.0, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 2.9, waves: { hanging: 2, crab: 1, jellyPink: 1, bubbles: 1, line: 1 }, gold: 0.2 },
       { from: 0.45, banner: 'LES GARDES DU CHÂTEAU !', obstacle: 4.5, obstacles: { algae: 1 }, wave: 2.0, waves: { crab: 2, guitar: 1, jellyBlue: 1, line: 1 }, gold: 0 },
-      { from: 0.62, obstacle: 3.8, obstacles: { herse: 1, algae: 1 }, wave: 2.0, waves: { hanging: 1, jellyBlue: 1, jellyPink: 1, bubbles: 1, guitar: 1, line: 1 }, gold: 0.3 },
-      { from: 0.88, banner: 'LA SALLE DU TRÔNE !', obstacle: 4.4, obstacles: { herse: 1 }, wave: 1.8, waves: { crab: 1, hanging: 2, jellyPink: 1, line: 1 }, gold: 0.3 },
+      { from: 0.62, obstacle: 2.0, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 2.7, waves: { hanging: 1, jellyBlue: 1, jellyPink: 1, bubbles: 1, guitar: 1, line: 1 }, gold: 0.3 },
+      { from: 0.88, banner: 'LA SALLE DU TRÔNE !', obstacle: 2.2, obstacles: { herse: 1, algae: 1 }, slalom: true, wave: 2.4, waves: { crab: 1, hanging: 2, jellyPink: 1, line: 1 }, gold: 0.3 },
     ],
   },
 ];

@@ -303,14 +303,17 @@ export class World implements BossHost {
       }
       return;
     }
+    if (this.phase.slalom) return this.spawnSlalom(speed);
     if (kind === 'algae') { // au sol ou au plafond ; on garde un passage en comptant leur taille maximale
       const top = this.level.ceiling !== null && this.rnd() < 0.45, max = C.ALGAE.min + this.rnd() * (C.ALGAE.max - C.ALGAE.min);
-      const kindA = Math.floor(this.rnd() * 3), probe = algaePix(max, kindA, top, 0);
-      const d = { kind: 'algae' as const, pix: probe, shapes: [{ t: 'r' as const, x: 5, y: 0, w: 6, h: probe.h }] };
-      const y = top ? this.top - 2 : this.floor - probe.h + 2;
-      if (this.obstacles.some(o => o.x > C.W - 30) || !this.passageOk(d, y)) return;
-      this.place(d, y, speed);
-      this.obstacles[this.obstacles.length - 1].grow = { h: max * 0.4, max, kind: kindA, top };
+      this.placeAlgae(top, max, speed, true);
+      return;
+    }
+    if (kind === 'coral') { // petit corail planté dans le sable : on ne passe pas au travers
+      if (!G || this.obstacles.some(o => o.x > C.W - 30)) return;
+      const seed = Math.floor(this.rnd() * 3), pix = FC.coral(seed);
+      const d = { kind: 'coral' as const, pix, shapes: [{ t: 'r' as const, x: 3, y: 2, w: 18, h: 20 }] };
+      if (this.passageOk(d, G - 20)) this.place(d, G - 20, speed);
       return;
     }
     if (kind === 'herse') {
@@ -488,6 +491,28 @@ export class World implements BossHost {
       default:
         return this.spawnFormation(kind, gold);
     }
+  }
+
+  // une algue (qui poussera jusqu'à « max »), au sol ou au plafond
+  private placeAlgae(top: boolean, max: number, speed: number, check: boolean) {
+    const kindA = Math.floor(this.rnd() * 3), probe = algaePix(max, kindA, top, 0);
+    const d = { kind: 'algae' as const, pix: probe, shapes: [{ t: 'r' as const, x: 3, y: 0, w: 10, h: probe.h }] };
+    const y = top ? this.top - 2 : this.floor - probe.h + 2;
+    if (check && (this.obstacles.some(o => o.x > C.W - 30) || !this.passageOk(d, y))) return;
+    this.place(d, y, speed);
+    this.obstacles[this.obstacles.length - 1].grow = { h: check ? max * 0.4 : max, max, kind: kindA, top };
+  }
+
+  // slalom : un obstacle en haut, puis un en bas, puis en haut... il faut zigzaguer entre eux
+  private slalomTop = false;
+  private spawnSlalom(speed: number) {
+    if (this.obstacles.some(o => o.x > C.W - 72)) return; // assez de place entre deux obstacles pour passer
+    this.slalomTop = !this.slalomTop;
+    const max = 56 + this.rnd() * 20; // grandes algues : elles laissent toujours un passage de l'autre côté
+    if (this.slalomTop && this.phase.obstacles.herse && this.rnd() < 0.6) {
+      this.place(herseDef(), this.top - 54, speed);
+      this.obstacles[this.obstacles.length - 1].herse = { offset: this.rnd() * 6 };
+    } else this.placeAlgae(this.slalomTop, max, speed, false);
   }
 
   private spawnFormation(f: C.WaveKind, gold: number) {
@@ -845,7 +870,7 @@ export class World implements BossHost {
         if (o.x < C.W - 10) g.h = Math.min(g.max, g.h + C.ALGAE.grow * dt);
         o.pix = algaePix(g.h, g.kind, g.top, Math.floor(this.t * 3 + g.kind) % 4);
         o.y = g.top ? this.top - 2 : this.floor - o.pix.h + 2;
-        o.shapes = [{ t: 'r', x: 5, y: g.top ? 0 : 3, w: 6, h: o.pix.h - 3 }];
+        o.shapes = [{ t: 'r', x: 3, y: g.top ? 0 : 3, w: 10, h: o.pix.h - 3 }]; // toute la largeur de l'algue
       }
       if (o.herse) o.y = this.top - 64 + 40 + Math.sin((this.t + o.herse.offset) * 1.0) * 30; // la herse monte et descend
       if (o.dead || !this.heroAlive() || h.ghost > 0) continue;
@@ -876,7 +901,7 @@ export class World implements BossHost {
         this.hurt(C.DAMAGE.web, 'toile géante');
       } else if (h.inv <= 0) {
         h.x = Math.max(0, h.x - 10);
-        this.hurt(o.kind === 'fence' || o.kind === 'herse' || o.kind === 'algae' ? C.DAMAGE.web : C.DAMAGE.obstacle, 'obstacle ' + o.kind);
+        this.hurt(o.kind === 'fence' || o.kind === 'herse' || o.kind === 'algae' || o.kind === 'coral' ? C.DAMAGE.web : C.DAMAGE.obstacle, 'obstacle ' + o.kind);
       }
     }
     this.obstacles = this.obstacles.filter(o => !o.dead);

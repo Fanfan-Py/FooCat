@@ -14,11 +14,11 @@ const mode = (process.env.MODE || 'normal') as Mode;
 const runs = Number(process.env.RUNS || 8);
 
 // Robot : cherche la hauteur libre la plus proche devant lui, tire tout le temps
-function robot(w: World, t: number): Controls {
+function robot(w: World, t: number, look = 95): Controls {
   const h = w.hero, cy = h.y + 17;
   const blocked: [number, number][] = [];
   for (const o of w.obstacles) {
-    if (o.x + o.pix.w > h.x && o.x - h.x < 95) { const [a, b] = vrange(o); blocked.push([a - 12, b + 12]); }
+    if (o.x + o.pix.w > h.x && o.x - h.x < look) { const [a, b] = vrange(o); blocked.push([a - 12, b + 12]); }
   }
   // jets de paillettes allumés ou sur le point de l'être
   for (const o of w.obstacles) if (o.jet && jetState(o, w.t) !== 'off') {
@@ -48,6 +48,8 @@ function robot(w: World, t: number): Controls {
     const cost = Math.abs(y - cy) + Math.abs(y - target) * 0.2;
     if (cost < best) { best = cost; target = y; }
   }
+  // coincé entre deux obstacles (slalom) : ne regarde que le plus proche
+  if (best === 1e9 && look > 50) return robot(w, t, 50);
   const dy = Math.max(-1, Math.min(1, (target - cy) / 10));
   const frame = Math.round(t * 60);
   const jaw = !!(b && b.alive && !b.entering) && frame % 120 === 0;
