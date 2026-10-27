@@ -14,7 +14,8 @@ export const MODES = {
 export type Mode = keyof typeof MODES;
 
 export const LIVES_MAX = 5;
-export const DAMAGE = { shot: 1, enemy: 1, obstacle: 2, web: 1 }; // cœurs perdus
+export const DAMAGE = { shot: 1, enemy: 1, obstacle: 2, web: 1, juice: 2 }; // cœurs perdus (jus de fraise : 2)
+export const SLEEP_TIME = 1.5; // une bulle soporifique endort le chat (secondes)
 export const INVINCIBLE_AFTER_HIT = 1.2; // secondes
 export const INVINCIBLE_AFTER_RESPAWN = 2.5;
 export const WEB_SLOW = { time: 1.5, factor: 0.5 }; // une toile ralentit le chat
@@ -56,14 +57,20 @@ export const ENEMIES = {
   batShrimp: { points: 200, hp: 2, drop: 0.12 }, // crevette chauve-souris : vole en grandes vagues
   guitarFish: { points: 300, hp: 4, drop: 0.25 }, // poisson guitare : lance des notes de feu qui ondulent
   comet: { points: 150, hp: 6, drop: 0.05 }, // comète : traverse l'écran en diagonale, très vite
+  crab: { points: 250, hp: 4, drop: 0.2 }, // crabe : marche au fond, saute, lance des maracas qui rebondissent
+  jellyBlue: { points: 200, hp: 3, drop: 0.15 }, // méduse bleue : monte et descend, lance du jus de fraise
+  jellyPink: { points: 250, hp: 3, drop: 0.2 }, // méduse rose : plus rapide, jus de fraise en éventail
+  sleepBubble: { points: 30, hp: 1, drop: 0 }, // bulle soporifique : endort le chat (on peut la crever)
+  hangShrimp: { points: 250, hp: 2, drop: 0.15 }, // crevette accrochée au plafond : se laisse tomber
+  fish: { points: 100, hp: 1, drop: 0.07 }, // petit poisson (en bancs, sous l'eau)
 };
 export type EnemyKind = keyof typeof ENEMIES;
 export const POINTS = { planet: 300, bonus: 50, wave: 500, belt: 1000, perSecond: 10 };
 
 // Vagues d'ennemis possibles
-export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling' | 'scorpion' | 'droneSquad' | 'batShrimp' | 'guitar' | 'comets';
+export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling' | 'scorpion' | 'droneSquad' | 'batShrimp' | 'guitar' | 'comets' | 'crab' | 'jellyBlue' | 'jellyPink' | 'bubbles' | 'hanging';
 // Obstacles possibles
-export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable' | 'ice' | 'drop' | 'jet';
+export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable' | 'ice' | 'drop' | 'jet' | 'algae' | 'herse';
 
 export interface Phase {
   from: number; // part des points du niveau (0 = début, 1 = fin)
@@ -79,11 +86,12 @@ export interface Phase {
 export interface Level {
   num: number; name: string;
   points: number; // points à gagner dans ce niveau pour passer au suivant
-  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean';
+  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle';
   ground: number | null; // hauteur du sol (null = pas de sol)
   ceiling: number | null; // hauteur du plafond (null = pas de plafond)
   outro?: string; // couleur du fondu de fin de niveau
   boss?: boolean; // le niveau se termine en battant le boss
+  water?: boolean; // sous l'eau : les groupes de mouches deviennent des bancs de poissons
   scroll: number; // vitesse de défilement des obstacles (px/s)
   next?: string; // texte de l'écran de fin
   phases: Phase[];
@@ -152,7 +160,6 @@ export const LEVELS: Level[] = [
   },
   {
     num: 7, name: 'VERS LA PLANÈTE AQUATIQUE', points: 28000, decor: 'ocean', ground: null, ceiling: null, scroll: 34, outro: 'B',
-    next: 'LA SUITE ARRIVE BIENTÔT : NIVEAUX 8 À 10',
     phases: [
       { from: 0, obstacle: 4.6, obstacles: { ice: 2, drop: 1 }, wave: 2.4, waves: { guitar: 1, batShrimp: 1, line: 1, solo: 1 }, gold: 0.2 },
       { from: 0.2, banner: 'LES POISSONS GUITARE !', obstacle: 4.0, obstacles: { ice: 2, drop: 1, jet: 1 }, wave: 2.2, waves: { guitar: 2, batShrimp: 1, v: 1, wasps: 1 }, gold: 0.25 },
@@ -161,7 +168,31 @@ export const LEVELS: Level[] = [
       { from: 0.9, banner: 'PLONGEON IMMINENT !', obstacle: 99, obstacles: {}, wave: 1.6, waves: { guitar: 2, batShrimp: 1, line: 1 }, gold: 0.3 },
     ],
   },
+  {
+    num: 8, name: 'LA PLANÈTE SOUS-MARINE', points: 24000, decor: 'sea', ground: 154, ceiling: 26, scroll: 36, outro: 'U', water: true,
+    phases: [
+      { from: 0, obstacle: 3.6, obstacles: { algae: 1 }, wave: 2.4, waves: { crab: 2, jellyBlue: 1, solo: 1, line: 1 }, gold: 0.1 },
+      { from: 0.2, banner: 'ATTENTION AUX BULLES !', obstacle: 3.2, obstacles: { algae: 1 }, wave: 2.3, waves: { bubbles: 1, jellyBlue: 1, crab: 1, guitar: 1, line: 1 }, gold: 0.2 },
+      { from: 0.45, banner: "LA FORÊT D'ALGUES !", obstacle: 1.7, obstacles: { algae: 1 }, wave: 3.2, waves: { solo: 1, bubbles: 1 }, gold: 0 },
+      { from: 0.62, obstacle: 3.0, obstacles: { algae: 1 }, wave: 2.0, waves: { jellyPink: 1, jellyBlue: 1, crab: 1, guitar: 1, bubbles: 1, batShrimp: 1, line: 1 }, gold: 0.3 },
+      { from: 0.88, banner: 'LE CHÂTEAU EN VUE !', obstacle: 4, obstacles: { algae: 1 }, wave: 1.6, waves: { crab: 2, jellyPink: 1, guitar: 1, batShrimp: 1 }, gold: 0.3 },
+    ],
+  },
+  {
+    num: 9, name: 'LE CHÂTEAU MARIN', points: 32000, decor: 'castle', ground: 156, ceiling: 26, scroll: 40, water: true,
+    next: 'LA SUITE ARRIVE BIENTÔT : LE POISSON SQUELETTE DE LA MORT !',
+    phases: [
+      { from: 0, obstacle: 4.6, obstacles: { herse: 1, algae: 1 }, wave: 2.6, waves: { hanging: 1, crab: 1, jellyBlue: 1, line: 1 }, gold: 0.1 },
+      { from: 0.2, banner: 'ATTENTION AUX HERSES !', obstacle: 4.0, obstacles: { herse: 1, algae: 1 }, wave: 2.3, waves: { hanging: 2, crab: 1, jellyPink: 1, bubbles: 1, line: 1 }, gold: 0.2 },
+      { from: 0.45, banner: 'LES GARDES DU CHÂTEAU !', obstacle: 4.5, obstacles: { algae: 1 }, wave: 2.0, waves: { crab: 2, guitar: 1, jellyBlue: 1, line: 1 }, gold: 0 },
+      { from: 0.62, obstacle: 3.8, obstacles: { herse: 1, algae: 1 }, wave: 2.0, waves: { hanging: 1, jellyBlue: 1, jellyPink: 1, bubbles: 1, guitar: 1, line: 1 }, gold: 0.3 },
+      { from: 0.88, banner: 'LA SALLE DU TRÔNE !', obstacle: 4.4, obstacles: { herse: 1 }, wave: 1.8, waves: { crab: 1, hanging: 2, jellyPink: 1, line: 1 }, gold: 0.3 },
+    ],
+  },
 ];
+
+// Algues : elles poussent pendant qu'on avance (pixels par seconde), jusqu'à leur taille maximale
+export const ALGAE = { grow: 22, min: 40, max: 84 };
 
 // Jets de paillettes : allumés « on » secondes, éteints « off » secondes (ils scintillent juste avant)
 export const JET = { on: 1.8, off: 2.4, length: 100, warn: 0.7 };

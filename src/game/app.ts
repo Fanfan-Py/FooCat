@@ -30,7 +30,7 @@ function right(scr: Pix, s: string, x: number, y: number, c: number[], o: any = 
 
 const MODES: C.Mode[] = ['normal', 'difficile'];
 const MODE_NAMES: Record<C.Mode, string> = { normal: 'NORMAL', difficile: 'DIFFICILE' };
-const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'nebula'];
+const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'nebula', 'planet', 'iron'];
 
 // histoire illustrée entre le niveau 5 et le niveau 6
 const STORY = [

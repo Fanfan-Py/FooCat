@@ -208,7 +208,64 @@ function inJet(w: World, x: number, y: number) {
   return w.obstacles.some((o) => o.jet && jetState(o, w.t) === 'on' && jetCircles(o).some(([cx, cy, r]) => (x - cx) ** 2 + (y - cy) ** 2 < (r + 6) ** 2));
 }
 
-const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean };
+// ---------- niveau 8 : la planète sous-marine ----------
+function floatBits(scr: Pix, t: number, n: number) { // petites particules qui remontent
+  for (let k = 0; k < n; k++) {
+    const x = (k * 53 + 20) % scr.w, y = scr.h - ((t * (8 + k % 5) + k * 31) % scr.h);
+    scr.put(x + Math.sin(t + k) * 2, y, FC.alpha(P.W, 110));
+  }
+}
+function decorSea(scr: Pix, w: World) {
+  const d = FC.mk('decorSea', () => ({ bg: FC.bg('n8', C.W, C.H, [[0, '1d7fb8'], [0.5, '0e4f8a'], [1, '0a2a55']]) })), t = w.t;
+  scr.d.set(d.bg.d);
+  for (let k = 0; k < 5; k++) { // rayons de lumière
+    const x = ((k * 83 + t * 6) % 420) - 60;
+    for (let y = 26; y < 150; y++) scr.rect(x + y * 0.45, y, 10, 1, FC.alpha(P.W, 14));
+  }
+  const dark = FC.col('0b3a63');
+  for (let x = 0; x < C.W; x++) { const h = 122 + Math.round(Math.sin((x + t * 10) * 0.04) * 8); scr.rect(x, h, 1, C.H - h, dark); }
+  floatBits(scr, t, 30);
+}
+// devant les obstacles : plafond de roche, sable et coraux
+function seaFront(scr: Pix, w: World) {
+  const t = w.t, off = Math.floor(t * w.level.scroll), top = w.top, G = w.level.ground!;
+  const rock = FC.col('1b2f4f'), rockHi = FC.col('3a5a80'), sand = FC.col('e8c98a'), sandHi = FC.col('fff0c0'), dot = FC.col('c9a46a');
+  for (let x = 0; x < C.W; x++) {
+    const u = x + off, h = top + Math.round(Math.sin(u * 0.07) * 2 + Math.sin(u * 0.19) * 1.5);
+    scr.rect(x, C.HUD_H, 1, h - C.HUD_H, rock); scr.put(x, h, rockHi);
+    const g = G + Math.round(Math.sin(u * 0.05) * 2 + Math.sin(u * 0.13));
+    scr.rect(x, g, 1, C.H - g, sand); scr.put(x, g, sandHi);
+    if ((u * 13) % 17 === 0) scr.put(x, g + 6, dot);
+    if ((u * 7) % 41 === 0) scr.put(x, g + 3, P.q);
+  }
+  for (const [x0, seed] of [[40, 1], [230, 2], [380, 0]]) scr.blit(FC.coral(seed), FC.wx(x0, w.level.scroll, t, 460, 40), G - 18);
+}
+// ---------- niveau 9 : le château marin ----------
+function decorCastle(scr: Pix, w: World) {
+  const wall = FC.mk('seaWall', () => {
+    const p = new FC.Pix(640, C.H), stone = FC.col('2a2d5c'), seam = FC.col('1a1c40'), moss = FC.col('2f8f7a'), glow = FC.alpha(FC.col('7fe0ff'), 120);
+    for (let y = 0; y < C.H; y++) for (let x = 0; x < 640; x++) {
+      const row = Math.floor(y / 12), bx = (x + (row % 2) * 10) % 20;
+      p.put(x, y, y % 12 === 0 || bx === 0 ? seam : (x * 7 + y * 3) % 53 === 0 ? moss : stone);
+    }
+    for (let k = 0; k < 640; k += 160) { // fenêtres en arc qui brillent, colonnes
+      p.ell(k + 80, 70, 16, 22, glow, (_x: number, _y: number, _dx: number, dy: number) => dy < 0.6);
+      p.rect(k + 64, 70, 32, 18, glow);
+      p.rect(k + 40, 0, 10, C.H, FC.col('3a3f78')); p.rect(k + 40, 0, 2, C.H, FC.col('5a60a0'));
+    }
+    return p;
+  }), t = w.t, o = -Math.floor((t * 10) % 640);
+  scr.blit(wall, o, 0); scr.blit(wall, o + 640, 0);
+  floatBits(scr, t, 20);
+}
+function castleFront(scr: Pix, w: World) {
+  const top = w.top, G = w.level.ground!, dark = FC.col('1a1c40'), off = Math.floor(w.t * w.level.scroll);
+  scr.rect(0, C.HUD_H, C.W, top - C.HUD_H, dark); scr.rect(0, top - 1, C.W, 1, P.K);
+  scr.rect(0, G, C.W, C.H - G, dark); scr.rect(0, G, C.W, 1, P.K);
+  for (let x = 0; x < C.W; x++) if ((x + off) % 16 === 0) scr.rect(x, G + 1, 1, C.H - G - 1, P.K);
+}
+
+const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle };
 
 // ---------- le niveau ----------
 export function drawWorld(scr: Pix, w: World) {
@@ -239,6 +296,8 @@ export function drawWorld(scr: Pix, w: World) {
   if (w.level.decor === 'planet') cakeGround(scr, t, w.level.scroll, w.level.ground!);
   if (w.level.decor === 'iron') metalGround(scr, t, w.level.scroll, w.level.ground!);
   if (w.level.decor === 'fortress') fortressBands(scr, w);
+  if (w.level.decor === 'sea') seaFront(scr, w);
+  if (w.level.decor === 'castle') castleFront(scr, w);
 
   for (const b of w.bonuses) scr.blit(FC.spr(BONUS_SPRITE[b.kind]), b.x, b.y);
   const jets = w.obstacles.some((o) => o.jet);
@@ -251,6 +310,8 @@ export function drawWorld(scr: Pix, w: World) {
   for (const s of w.eshots) {
     if (s.kind === 'web') scr.blit(FC.spr('web', Math.floor(t * 8) % 4), s.x, s.y);
     else if (s.kind === 'note') scr.blit(FC.spr('note', Math.floor(t * 8) % 3), s.x, s.y);
+    else if (s.kind === 'juice') scr.blit(FC.spr('juice', Math.floor(t * 8)), s.x, s.y);
+    else if (s.kind === 'maraca') scr.blit(FC.spr('maraca', Math.floor(t * 12)), s.x, s.y);
     else if (s.kind === 'bullet') { scr.rect(s.x - 1, s.y - 1, 5, 5, FC.alpha(P.R, 90)); scr.rect(s.x, s.y, 3, 3, P.R); scr.put(s.x + 1, s.y + 1, P.q); }
     else scr.blit(FC.spr('sugar'), s.x, s.y);
   }
@@ -263,6 +324,13 @@ export function drawWorld(scr: Pix, w: World) {
     FC.trail(scr, h.x + 4, h.y + 25 + by, t);
     scr.blit(heroSprite(heroSkin, Math.floor(t * 5) % 4), h.x, h.y + by, false, op);
     if (h.slow > 0) scr.blit(FC.spr('stuck'), h.x + 8, h.y + 6 + by);
+    if (w.level.decor === 'sea' || w.level.decor === 'castle') for (let k = 0; k < 4; k++) { // bulles du scaphandre
+      const ph = (t * 0.7 + k / 4) % 1;
+      scr.ell(h.x + 24 + Math.sin(ph * 9 + k) * 2, h.y + 2 + by - ph * 34, 1 + ph, 1 + ph, FC.alpha(P.W, 190 * (1 - ph)));
+    }
+    if (h.sleep > 0) { // endormi : des Z qui montent
+      for (let k = 0; k < 3; k++) { const ph = (t * 0.8 + k / 3) % 1; FC.text(scr, 'Z', h.x + 24 + k * 4 + ph * 6, h.y - 2 - ph * 14, FC.alpha(P.W, 255 * (1 - ph)), { outline: P.U }); }
+    }
   }
 
   for (const s of w.shots) {

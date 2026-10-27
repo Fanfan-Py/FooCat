@@ -21,12 +21,14 @@ export interface Shot {
   src?: number; // numéro du tir (les éclats de Piñata gardent celui de leur Piñata)
   touched?: boolean; // ce tir a déjà touché (pour la précision)
 }
-export interface EShot { kind: 'web' | 'sugar' | 'bullet' | 'note'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean; age?: number }
+export interface EShot { kind: 'web' | 'sugar' | 'bullet' | 'note' | 'juice' | 'maraca'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean; age?: number; bounces?: number }
 // elec : zone électrique (clôture) qui s'allume (on secondes) et s'éteint (off secondes)
 export interface Elec { x: number; y: number; w: number; h: number; offset: number; on: number; off: number }
 // jet de paillettes : part du rocher en biais (vers le haut ou vers le bas), s'allume et s'éteint
 export interface Jet { offset: number; down: boolean }
-export interface Obstacle { kind: C.ObstacleKind; pix: Pix; x: number; y: number; shapes: Shape[]; speed: number; dead: boolean; belt: boolean; elec?: Elec; top?: boolean; jet?: Jet }
+// algue qui pousse (h : taille actuelle) ; herse qui monte et descend
+export interface Grow { h: number; max: number; kind: number; top: boolean }
+export interface Obstacle { kind: C.ObstacleKind; pix: Pix; x: number; y: number; shapes: Shape[]; speed: number; dead: boolean; belt: boolean; elec?: Elec; top?: boolean; jet?: Jet; grow?: Grow; herse?: { offset: number } }
 export interface Bonus { kind: BonusKind; x: number; y: number; baseY: number; speed: number; t: number; dead: boolean }
 export interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; color: Color; g: number }
 export interface Popup { text: string; x: number; y: number; t: number }
@@ -73,9 +75,12 @@ const BOXES: Record<EnemyKind, Box> = {
   drone: { x: 5, y: 5, w: 17, h: 11 }, turret: { x: 3, y: 4, w: 16, h: 10 }, spiderling: { x: 1, y: 2, w: 13, h: 8 },
   scorpion: { x: 1, y: 5, w: 22, h: 12 },
   batShrimp: { x: 2, y: 11, w: 24, h: 12 }, guitarFish: { x: 2, y: 3, w: 26, h: 12 }, comet: { x: 29, y: 1, w: 10, h: 10 },
+  crab: { x: 2, y: 7, w: 22, h: 11 }, jellyBlue: { x: 2, y: 2, w: 16, h: 14 }, jellyPink: { x: 2, y: 2, w: 16, h: 14 },
+  sleepBubble: { x: 2, y: 2, w: 14, h: 14 }, hangShrimp: { x: 2, y: 5, w: 24, h: 12 }, fish: { x: 1, y: 2, w: 14, h: 7 },
 };
 export function enemyBox(e: Enemy): Box {
   if (e.kind === 'mint') return { x: e.x + 1, y: e.y + 1, w: e.size * 2 + 1, h: e.size * 2 + 1 };
+  if (e.kind === 'hangShrimp' && e.stage > 0) { const b = BOXES.batShrimp; return { x: e.x + b.x, y: e.y + b.y, w: b.w, h: b.h }; }
   const b = BOXES[e.kind];
   return { x: e.x + b.x, y: e.y + b.y, w: b.w, h: b.h };
 }
@@ -84,6 +89,7 @@ export function enemyCenter(e: Enemy): [number, number] { const b = enemyBox(e);
 export function enemySprite(e: Enemy, t: number): Pix {
   switch (e.kind) {
     case 'fly': case 'flyGold': return FC.spr(e.kind, Math.floor(t * 12 + e.phase) % 2);
+    case 'fish': return FC.spr('smallFish', Math.floor(t * 6 + e.phase) % 2);
     case 'spider': case 'hanger': return FC.spr('spider', Math.floor(t * 4 + e.phase) % 2);
     case 'wasp': return FC.spr('wasp', Math.floor(t * 14 + e.phase) % 2);
     case 'ant': return FC.spr('ant', Math.floor(t * 8 + e.phase) % 2);
@@ -95,6 +101,10 @@ export function enemySprite(e: Enemy, t: number): Pix {
     case 'batShrimp': return FC.spr('batShrimp', Math.floor(t * 8 + e.phase) % 2);
     case 'guitarFish': return FC.spr('guitarFish', Math.floor(t * 6 + e.phase) % 2);
     case 'comet': return FC.spr('comet', Math.floor(t * 10));
+    case 'crab': return FC.spr('crab', Math.floor(t * 6 + e.phase) % 2);
+    case 'jellyBlue': case 'jellyPink': return FC.spr(e.kind, Math.floor(t * 4 + e.phase) % 4);
+    case 'sleepBubble': return FC.spr('sleepBubble', Math.floor(t * 2 + e.phase) % 2);
+    case 'hangShrimp': return e.stage > 0 ? FC.spr('batShrimp', Math.floor(t * 8 + e.phase) % 2) : FC.spr('batShrimpHang', 0);
   }
 }
 
@@ -231,4 +241,15 @@ export function jetCircles(o: Obstacle): [number, number, number][] {
   const g = jetOrigin(o), out: [number, number, number][] = [];
   for (let d = 12; d <= C.JET.length; d += 11) out.push([g.x + g.dx * d, g.y + g.dy * d, 4 + d * 0.05]);
   return out;
+}
+
+// dessin d'une algue de hauteur h (arrondie à 4 pixels), à l'endroit ou à l'envers (plafond)
+export function algaePix(h: number, kind: number, top: boolean, f: number): Pix {
+  const hq = Math.max(8, Math.round(h / 4) * 4);
+  return top ? FC.mk('algF' + hq + '_' + kind + '_' + f, () => FC.flipV(FC.algae(hq, kind, f))) : FC.algae(hq, kind, f);
+}
+// herse du château (elle descend du plafond)
+export function herseDef(): ObstacleDef {
+  const pix = FC.portcullis(64);
+  return { kind: 'herse', pix, shapes: [{ t: 'r', x: 1, y: 0, w: 28, h: 64 }] };
 }

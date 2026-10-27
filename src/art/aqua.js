@@ -271,5 +271,14 @@
     p.ell(e[0][0], e[0][1], 1.6, 1.6, BONE); p.ell(e[1][0], e[1][1], 1.6, 1.6, BONE);
     return p.outline(P.K);
   };
+  // petit poisson jaune (les bancs de poissons remplacent les mouches sous l'eau)
+  S.smallFish = function (f) {
+    var p = new Pix(16, 11), w = f % 2;
+    p.tri(10, 5.5, 15, 1 + w, 15, 10 - w, P.o);
+    p.ell(7, 5.5, 5.5, 4, function (x, y, dx, dy) { return dy > 0.4 ? P.Y : P.y; });
+    p.line(6, 2, 6, 9, P.o);
+    p.rect(3, 4, 2, 2, P.K); p.put(3, 4, P.W);
+    return p.outline(P.K);
+  };
   FC.SEA = SEA;
 })(typeof window !== 'undefined' ? window : globalThis);

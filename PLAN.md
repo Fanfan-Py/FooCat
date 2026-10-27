@@ -81,7 +81,7 @@ Maquettes : https://claude.ai/artifact/XtWEHV1D6kjwZ7Kc3LLC86 (en bas de la plan
 - [x] Histoire illustrée en 4 cases entre le niveau 5 et le niveau 6 (Échap pour la passer).
 - [x] Ailes de la crevette chauve-souris agrandies.
 
-## Étape 7 : niveaux 8 et 9, la planète aquatique
+## Étape 7 : niveaux 8 et 9, la planète aquatique (faite le 27 octobre 2026)
 
 | Niveau | Décor | Obstacles | Monstres | Fin |
 |---|---|---|---|---|
@@ -89,9 +89,11 @@ Maquettes : https://claude.ai/artifact/XtWEHV1D6kjwZ7Kc3LLC86 (en bas de la plan
 | 9. Le château marin | couloirs de corail et de pierre | algues, bulles soporifiques, herses | méduses, crabes gardes, crevettes accrochées au plafond | salle du trône |
 
 Ajouts demandés après les maquettes :
-- [ ] Les **crabes sautent** (comme les fourmis).
-- [ ] Les **maracas des crabes rebondissent** sur le sol.
-- [ ] Les **algues s'allongent** (elles poussent pendant qu'on avance).
+- [x] Les **crabes sautent** (comme les fourmis).
+- [x] Les **maracas des crabes rebondissent** sur le sol (deux fois).
+- [x] Les **algues s'allongent** (elles poussent pendant qu'on avance).
+- [x] Niveaux 8 et 9 jouables : bulles soporifiques, méduses, crabes, herses, crevettes accrochées au plafond,
+      bancs de petits poissons à la place des mouches sous l'eau.
 
 ## Étape 8 : niveau 10, le poisson squelette de la mort
 

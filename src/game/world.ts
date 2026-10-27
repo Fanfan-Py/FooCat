@@ -5,7 +5,7 @@ import {
   Box, Shape, Enemy, Shot, EShot, Obstacle, Bonus, Particle, Popup, Message, ObstacleDef,
   WeaponKind, BonusKind, EnemyKind, newEnemy, overlap, hitObstacle, shapeCenter, vrange, enemyBox, enemyCenter,
   planetDefs, beltDefs, lollipopDef, cottonDef, webDef, fenceDef, pillarDef, cableDef, cablePoint, elecOn, pickWeighted,
-  iceDef, dropDef, jetRockDef, jetState, jetCircles, boxEllipse,
+  iceDef, dropDef, jetRockDef, jetState, jetCircles, boxEllipse, algaePix, herseDef,
 } from './things';
 import { Boss, BossHost } from './boss';
 
@@ -94,7 +94,7 @@ export class World implements BossHost {
     this.hero = {
       x: C.HERO_START.x, y: C.HERO_START.y, energy: this.mode.energy, energyMax: this.mode.energy,
       lives: carry ? carry.lives : this.mode.lives,
-      inv: C.INVINCIBLE_AFTER_RESPAWN, slow: 0, ghost: 0, dead: 0, fireCD: 0, jawCD: 0, shotCount: 0,
+      inv: C.INVINCIBLE_AFTER_RESPAWN, slow: 0, ghost: 0, dead: 0, sleep: 0, fireCD: 0, jawCD: 0, shotCount: 0,
       weapon: 'verm' as WeaponKind,
       // (une ancienne sauvegarde n'a pas encore de Piñatas : on en donne le stock de départ)
       ammo: carry ? { ...carry.ammo, pinata: carry.ammo.pinata ?? W.pinata.start } : { verm: W.verm.start, drag: W.drag.start, pinata: W.pinata.start, jaw: W.jaw.start },
@@ -157,6 +157,7 @@ export class World implements BossHost {
       return;
     }
     if (this.state !== 'play') return;
+    if (h.sleep > 0) { h.sleep -= dt; return; } // endormi par une bulle : ni mouvement ni tir
     const sp = C.HERO_SPEED * (h.slow > 0 ? C.WEB_SLOW.factor : 1);
     let dx = c.dx, dy = c.dy;
     const len = Math.hypot(dx, dy); if (len > 1) { dx /= len; dy /= len; }
@@ -302,6 +303,22 @@ export class World implements BossHost {
       }
       return;
     }
+    if (kind === 'algae') { // au sol ou au plafond ; on garde un passage en comptant leur taille maximale
+      const top = this.level.ceiling !== null && this.rnd() < 0.45, max = C.ALGAE.min + this.rnd() * (C.ALGAE.max - C.ALGAE.min);
+      const kindA = Math.floor(this.rnd() * 3), probe = algaePix(max, kindA, top, 0);
+      const d = { kind: 'algae' as const, pix: probe, shapes: [{ t: 'r' as const, x: 5, y: 0, w: 6, h: probe.h }] };
+      const y = top ? this.top - 2 : this.floor - probe.h + 2;
+      if (this.obstacles.some(o => o.x > C.W - 30) || !this.passageOk(d, y)) return;
+      this.place(d, y, speed);
+      this.obstacles[this.obstacles.length - 1].grow = { h: max * 0.4, max, kind: kindA, top };
+      return;
+    }
+    if (kind === 'herse') {
+      if (this.obstacles.some(o => o.x > C.W - 40)) return;
+      this.place(herseDef(), this.top - 54, speed);
+      this.obstacles[this.obstacles.length - 1].herse = { offset: this.rnd() * 6 };
+      return;
+    }
     if (kind === 'ice' || kind === 'drop') {
       const d = kind === 'ice' ? iceDef(this.rnd) : dropDef(this.rnd);
       for (let tries = 0; tries < 8; tries++) {
@@ -395,6 +412,28 @@ export class World implements BossHost {
         for (let i = 0; i < n; i++) this.enemies.push(newEnemy('comet', C.W + 10 + R() * 120, top - 6 + R() * 50, { vx: -(150 + R() * 50) * sp, vy: (55 + R() * 40) * sp, phase: R() * 6 }));
         return;
       }
+      case 'crab': {
+        if (!G) return this.spawnFormation('solo', gold);
+        const n = 1 + Math.floor(R() * (1 + this.progress));
+        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('crab', C.W + 6 + i * 44, G - 17, { phase: R() * 6, shootT: 1.2 + R() * 1.5, holdT: 0.5 + R() }));
+        return;
+      }
+      case 'jellyBlue': case 'jellyPink': {
+        if (this.enemies.filter(e => e.kind === 'jellyBlue' || e.kind === 'jellyPink').length >= 2) return this.spawnFormation('solo', gold);
+        return void this.enemies.push(newEnemy(kind, C.W + 6, top + 26 + R() * (playBottom - top - 56), {
+          phase: R() * 6, speed: 40, amp: kind === 'jellyPink' ? 26 : 18, holdX: 180 + R() * 100, holdT: 6 + R() * 2, shootT: 1.5,
+        }));
+      }
+      case 'bubbles': { // 2 à 3 bulles soporifiques qui montent du fond
+        const n = 1 + Math.floor(R() * 2);
+        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('sleepBubble', 150 + R() * 170, playBottom + 4 + i * 20, { phase: R() * 6, speed: 13 + R() * 7 }));
+        return;
+      }
+      case 'hanging': { // crevettes accrochées au plafond
+        const n = 1 + Math.floor(R() * 2);
+        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('hangShrimp', C.W + 6 + i * 50, top - 4, { phase: R() * 6 }));
+        return;
+      }
       case 'scorpion': {
         if (!G) return this.spawnFormation('solo', gold);
         const n = 1 + Math.floor(R() * (1 + this.progress));
@@ -466,7 +505,7 @@ export class World implements BossHost {
     const id = ++this.groupSeq;
     if (pts.length > 1) this.groups.set(id, { left: pts.length, ok: true });
     pts.forEach(([dx, dy], i) => {
-      const kind: EnemyKind = R() < gold ? 'flyGold' : 'fly';
+      const kind: EnemyKind = this.level.water ? 'fish' : R() < gold ? 'flyGold' : 'fly';
       this.enemies.push(newEnemy(kind, C.W + 6 + dx, baseY + dy, { phase: i * wave + (f === 'swarm' ? R() * 6 : 0), speed, amp, group: id }));
     });
   }
@@ -482,7 +521,7 @@ export class World implements BossHost {
     for (const e of this.enemies) {
       e.flash = Math.max(0, e.flash - dt);
       switch (e.kind) {
-        case 'fly': case 'flyGold':
+        case 'fly': case 'flyGold': case 'fish':
           e.x -= e.speed * dt * (cleared ? 2 : 1);
           e.y = e.baseY + Math.sin(this.t * 2.6 + e.phase) * e.amp;
           break;
@@ -563,6 +602,54 @@ export class World implements BossHost {
             this.aimShot('bullet', e.x + 3, e.y + 2, (70 + 18 * p) * m.speed);
           }
           break;
+        case 'crab': { // marche au fond, saute, lance des maracas qui rebondissent
+          e.x -= (this.level.scroll + 8) * dt;
+          e.holdT -= dt;
+          if (e.vy !== 0 || e.y < e.baseY) {
+            e.vy += 330 * dt; e.y += e.vy * dt;
+            if (e.y >= e.baseY) { e.y = e.baseY; e.vy = 0; }
+          } else if (e.holdT <= 0) {
+            const near = e.x > h.x + 30 && e.x - h.x < 120 && h.y + 30 > this.floor - 80;
+            e.vy = near ? -160 : -105; e.holdT = 1.4 + this.rnd() * 1.2;
+            this.sfx.play('hop');
+          }
+          e.shootT -= dt;
+          if (e.shootT <= 0 && this.canAim(e) && e.x < C.W - 20) {
+            e.shootT = 4.2 / m.enemyFire;
+            const [hx, hy] = this.heroCenter(), g = 120, T = 1.45, sx = e.x + 4, sy = e.y;
+            this.eshots.push({ kind: 'maraca', x: sx, y: sy, vx: (hx - sx + (this.rnd() - 0.5) * 50) / T, vy: (hy - sy - 0.5 * g * T * T) / T, g, dead: false, bounces: 2 });
+            this.sfx.play('throw');
+          }
+          break;
+        }
+        case 'jellyBlue': case 'jellyPink': { // monte et descend lentement, lance du jus de fraise
+          if (e.x > e.holdX && e.holdT > 0) e.x -= e.speed * dt;
+          else {
+            e.holdT -= dt;
+            if (e.holdT <= 0) e.x -= 60 * dt;
+            e.shootT -= dt;
+            if (e.shootT <= 0 && e.holdT > 0 && this.canAim(e)) {
+              const pink = e.kind === 'jellyPink';
+              e.shootT = (pink ? 3.2 : 2.8) / m.enemyFire;
+              this.fanJuice(e.x + 4, e.y + 12, pink ? [-18, 0, 18] : [0], (58 + 14 * p) * m.speed);
+            }
+          }
+          e.y = e.baseY + Math.sin(this.t * (e.kind === 'jellyPink' ? 1.4 : 0.9) + e.phase) * e.amp;
+          break;
+        }
+        case 'sleepBubble': // monte doucement en ondulant
+          e.x -= this.level.scroll * 0.6 * dt; e.y -= e.speed * dt; e.x += Math.sin(this.t * 2 + e.phase) * 0.3;
+          if (e.y < this.top - 10) this.removeEnemy(e, false);
+          break;
+        case 'hangShrimp': // accrochée au plafond ; se laisse tomber quand le chat passe dessous
+          if (e.stage === 0) {
+            e.x -= this.level.scroll * dt;
+            if (e.x - (h.x + 20) < 90 && e.x > h.x && this.state === 'play') { e.stage = 1; e.vy = 10; e.vx = -40; this.sfx.play('dive'); } // elle tombe devant le chat
+          } else if (e.stage === 1) {
+            e.vy += 110 * dt; e.x += e.vx * dt; e.y += e.vy * dt;
+            if (e.y > e.baseY + 60) { e.stage = 2; e.baseY = e.y; }
+          } else { e.x -= 75 * dt; e.y = e.baseY + Math.sin(this.t * 2.4 + e.phase) * 14; }
+          break;
         case 'batShrimp': // vole en grandes vagues
           e.x -= e.speed * dt * (cleared ? 2 : 1);
           e.y = e.baseY + Math.sin(this.t * 2.2 + e.phase) * e.amp;
@@ -603,6 +690,10 @@ export class World implements BossHost {
       if (e.x < -32 || e.x > C.W + 220 || e.y < -40 || e.y > C.H + 40) { this.removeEnemy(e, false); continue; }
       // contact avec le chat
       if (!e.dead && this.heroAlive() && h.inv <= 0 && overlap(hb, enemyBox(e))) {
+        if (e.kind === 'sleepBubble') { // la bulle éclate et le chat s'endort, sans perdre de cœur
+          this.killEnemy(e, false, false); h.sleep = C.SLEEP_TIME; this.hitLog['bulle soporifique'] = (this.hitLog['bulle soporifique'] || 0) + 1;
+          this.sfx.play('yawn'); continue;
+        }
         this.killEnemy(e, false);
         this.hurt(C.DAMAGE.enemy, 'contact ' + e.kind);
       }
@@ -628,6 +719,16 @@ export class World implements BossHost {
     this.sfx.play(kind === 'web' ? 'web' : 'pew');
   }
 
+  // jus de fraise des méduses (un seul jet, ou trois en éventail)
+  private fanJuice(x: number, y: number, degs: number[], v: number) {
+    const [hx, hy] = this.heroCenter(), base = Math.atan2(hy - y, hx - x);
+    for (const d of degs) {
+      const a = base + d * Math.PI / 180;
+      this.eshots.push({ kind: 'juice', x, y, vx: Math.cos(a) * v, vy: Math.sin(a) * v, g: 0, dead: false });
+    }
+    this.sfx.play('splash');
+  }
+
   // un morceau de sucre lancé en cloche vers le chat
   private lobSugar(sx: number, sy: number) {
     const h = this.hero, g = 110, T = 1.5, tx = h.x + 20 + (this.rnd() - 0.5) * 36, ty = h.y + 16 + (this.rnd() - 0.5) * 24;
@@ -640,13 +741,17 @@ export class World implements BossHost {
     for (const s of this.eshots) {
       s.vy += s.g * dt; s.x += s.vx * dt; s.y += s.vy * dt;
       if (s.kind === 'note') { s.age = (s.age || 0) + dt; s.y += Math.cos(s.age * 7) * 34 * dt; } // la note ondule
+      if (s.kind === 'maraca' && s.y > this.floor - 10 && s.vy > 0 && (s.bounces ?? 0) > 0) { // les maracas rebondissent
+        s.y = this.floor - 10; s.vy = -s.vy * 0.5; s.bounces = (s.bounces ?? 0) - 1; this.sfx.play('bounce');
+      }
       if (s.x < -12 || s.x > C.W + 12 || s.y < -40 || s.y > this.floor) s.dead = true;
       const b = s.kind === 'web' ? { x: s.x + 2, y: s.y + 2, w: 7, h: 7 } : s.kind === 'bullet' ? { x: s.x, y: s.y, w: 3, h: 3 }
-        : s.kind === 'note' ? { x: s.x + 2, y: s.y + 2, w: 8, h: 10 } : { x: s.x, y: s.y, w: 5, h: 5 };
+        : s.kind === 'note' ? { x: s.x + 2, y: s.y + 2, w: 8, h: 10 } : s.kind === 'juice' ? { x: s.x + 1, y: s.y, w: 7, h: 5 }
+          : s.kind === 'maraca' ? { x: s.x + 1, y: s.y + 1, w: 6, h: 9 } : { x: s.x, y: s.y, w: 5, h: 5 };
       if (!s.dead && this.heroAlive() && h.inv <= 0 && overlap(hb, b)) {
         s.dead = true;
         if (s.kind === 'web') h.slow = C.WEB_SLOW.time;
-        this.hurt(C.DAMAGE.shot, 'tir ' + s.kind);
+        this.hurt(s.kind === 'juice' ? C.DAMAGE.juice : C.DAMAGE.shot, 'tir ' + s.kind);
       }
     }
     this.eshots = this.eshots.filter(s => !s.dead);
@@ -676,7 +781,7 @@ export class World implements BossHost {
         if (s.dead) break;
       }
       for (const e of this.eshots) { // un tir détruit les morceaux de sucre
-        if (e.dead || e.kind !== 'sugar' || !overlap(sb, { x: e.x - 1, y: e.y - 1, w: 7, h: 7 })) continue;
+        if (e.dead || (e.kind !== 'sugar' && e.kind !== 'maraca') || !overlap(sb, { x: e.x - 1, y: e.y - 1, w: 7, h: 7 })) continue;
         e.dead = true; this.score += 10; this.burst(e.x + 2, e.y + 2, 6, [FC.P.W, FC.P.v], 40);
         if (s.kind === 'verm' || s.kind === 'drag' || s.kind === 'shard') s.dead = true;
         if (s.kind === 'pinata') { s.dead = true; this.pinataBurst(s, null, born); }
@@ -735,6 +840,14 @@ export class World implements BossHost {
     for (const o of this.obstacles) {
       o.x -= o.speed * dt;
       if (o.x + o.pix.w < -4) o.dead = true;
+      if (o.grow) { // l'algue pousse dès qu'elle entre dans l'écran
+        const g = o.grow;
+        if (o.x < C.W - 10) g.h = Math.min(g.max, g.h + C.ALGAE.grow * dt);
+        o.pix = algaePix(g.h, g.kind, g.top, Math.floor(this.t * 3 + g.kind) % 4);
+        o.y = g.top ? this.top - 2 : this.floor - o.pix.h + 2;
+        o.shapes = [{ t: 'r', x: 5, y: g.top ? 0 : 3, w: 6, h: o.pix.h - 3 }];
+      }
+      if (o.herse) o.y = this.top - 64 + 40 + Math.sin((this.t + o.herse.offset) * 1.0) * 30; // la herse monte et descend
       if (o.dead || !this.heroAlive() || h.ghost > 0) continue;
       if (o.jet && h.inv <= 0 && jetState(o, this.t) === 'on' && jetCircles(o).some(([cx, cy, r]) => boxEllipse(hb, cx, cy, r, r))) {
         this.flash = 0.2; this.flashColor = [255, 120, 200, 255];
@@ -763,7 +876,7 @@ export class World implements BossHost {
         this.hurt(C.DAMAGE.web, 'toile géante');
       } else if (h.inv <= 0) {
         h.x = Math.max(0, h.x - 10);
-        this.hurt(o.kind === 'fence' ? C.DAMAGE.web : C.DAMAGE.obstacle, 'obstacle ' + o.kind);
+        this.hurt(o.kind === 'fence' || o.kind === 'herse' || o.kind === 'algae' ? C.DAMAGE.web : C.DAMAGE.obstacle, 'obstacle ' + o.kind);
       }
     }
     this.obstacles = this.obstacles.filter(o => !o.dead);
@@ -891,7 +1004,7 @@ export class World implements BossHost {
 
   private loseLife() {
     const h = this.hero;
-    h.energy = 0; h.lives--; h.dead = 1.4; h.slow = 0; h.ghost = 0; this.stats.livesLost++;
+    h.energy = 0; h.lives--; h.dead = 1.4; h.slow = 0; h.ghost = 0; h.sleep = 0; this.stats.livesLost++;
     this.burst(h.x + 20, h.y + 16, 50, FC.RAINBOW.concat([FC.P.W, FC.P.P]), 110);
     this.eshots = [];
     this.sfx.play('lose');
