@@ -405,7 +405,7 @@ export function drawHud(scr: Pix, w: World) {
   scr.blit(FC.spr('lifeIcon'), 90, 2);
   FC.text(scr, 'x' + Math.max(0, h.lives), 101, 4, P.W);
   // progression vers le niveau suivant
-  const nx = FC.text(scr, 'NIV.' + w.level.num, 114, 4, P.q);
+  const nx = FC.text(scr, w.label, 114, 4, P.q);
   const bw = 40, bx = nx + 4;
   scr.rect(bx, 4, bw + 2, 5, P.k);
   const fill = Math.round(bw * w.progress);

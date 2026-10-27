@@ -1,13 +1,13 @@
-// Tableau des meilleurs scores : enregistré sur l'appareil (pas de compte), un classement par mode.
-import type { Mode } from './config';
+// Tableau des meilleurs scores : enregistré sur l'appareil (pas de compte), un classement par mode
+// (et un par jour pour le défi du jour).
 
 export interface ScoreEntry { name: string; score: number; level: number; won?: boolean; date: string }
 export const TOP = 10;
 export const NAME_MAX = 12;
 
-function key(mode: Mode) { return 'foocat.scores.' + mode; }
+function key(mode: string) { return 'foocat.scores.' + mode; }
 
-export function loadScores(mode: Mode): ScoreEntry[] {
+export function loadScores(mode: string): ScoreEntry[] {
   try {
     const v = JSON.parse(localStorage.getItem(key(mode)) || '[]');
     return Array.isArray(v) ? v.filter((e) => e && typeof e.score === 'number' && typeof e.name === 'string').slice(0, TOP) : [];
@@ -15,14 +15,14 @@ export function loadScores(mode: Mode): ScoreEntry[] {
 }
 
 // ce score entre-t-il dans le top 10 ?
-export function qualifies(mode: Mode, score: number) {
+export function qualifies(mode: string, score: number) {
   if (score <= 0) return false;
   const list = loadScores(mode);
   return list.length < TOP || score > list[list.length - 1].score;
 }
 
 // ajoute le score ; renvoie sa place (1 = premier) ou 0 s'il n'entre pas
-export function addScore(mode: Mode, e: ScoreEntry): number {
+export function addScore(mode: string, e: ScoreEntry): number {
   const list = loadScores(mode).concat(e).sort((a, b) => b.score - a.score).slice(0, TOP);
   try { localStorage.setItem(key(mode), JSON.stringify(list)); } catch { /* stockage indisponible */ }
   return list.indexOf(e) + 1;

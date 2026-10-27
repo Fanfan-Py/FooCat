@@ -3,6 +3,12 @@
 Jeu de tir à défilement horizontal : un chat licorne dans une soucoupe donut.
 Marche dans le navigateur sur PC, Mac, iPhone et Android.
 
+Quatre modes, au choix sur la ligne « MODE » de l'accueil :
+- **Normal** et **Difficile** : les 10 niveaux, avec deux boss.
+- **Infini** : des zones sans fin (les niveaux sans boss, en boucle), de plus en plus dures.
+- **Défi du jour** : le même niveau, le même hasard et la même règle spéciale pour tout le monde
+  pendant une journée (réglages dans `src/game/modes.ts`), avec un tableau des scores du jour.
+
 ## Jouer pendant le développement
 
     npm install
@@ -63,7 +69,8 @@ fréquence, avec quel message). Ajouter un niveau = ajouter une entrée à cette
 nouveau décor ou un nouvel ennemi demande en plus un peu de dessin et de code.
 
 `npm test` fait jouer un robot sur chaque niveau et indique ce qui le touche le plus
-(`CAUSES=1 npm test`), pour régler la difficulté.
+(`CAUSES=1 npm test`), pour régler la difficulté. `ENDLESS=1 npm test` mesure jusqu'où il va
+en mode infini, `DAILY=1 npm test` essaie les défis des 7 prochains jours.
 
 ## Commandes
 

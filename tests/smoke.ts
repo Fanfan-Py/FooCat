@@ -5,6 +5,7 @@ import { World, Controls } from '../src/game/world';
 import { vrange, jetCircles, jetState } from '../src/game/things';
 import { App, AppInput } from '../src/game/app';
 import { W, H, LEVELS, Mode } from '../src/game/config';
+import { endlessZone, dailySetup } from '../src/game/modes';
 import { savePng } from './png';
 
 const sfx = { play() { } };
@@ -62,7 +63,34 @@ function robot(w: World, t: number, look = 95): Controls {
   };
 }
 
-for (let lv = Number(process.env.FROM || 0); lv < LEVELS.length; lv++) {
+// mode infini (ENDLESS=1) : jusqu'où va le robot ? défi du jour (DAILY=1) : 7 jours de suite
+if (process.env.ENDLESS) {
+  for (let seed = 1; seed <= runs; seed++) {
+    let zone = 1, w = new World(sfx, { setup: endlessZone(1), seed }), t = 0, total = 0;
+    while (total < 3600) {
+      w.update(STEP, robot(w, t)); t += STEP; total += STEP;
+      if (w.state === 'over') break;
+      if (w.state === 'cleared' && w.stateT > 3) { zone++; w = new World(sfx, { setup: endlessZone(zone), seed: seed * 31 + zone, carry: w.carry() }); t = 0; }
+    }
+    console.log(`infini partie ${seed} : zone ${zone} (${endlessZone(zone).level.name}), score ${w.score}, ${Math.round(total / 60)} min`);
+  }
+}
+if (process.env.DAILY) {
+  const d0 = new Date(2026, 9, 27);
+  for (let k = 0; k < 7; k++) {
+    const d = new Date(d0.getTime() + k * 86400000), date = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const s = dailySetup(date);
+    let ok = 0, time = 0;
+    for (let r = 0; r < runs; r++) {
+      const w = new World(sfx, { setup: s, seed: (s.seed ?? 0) + r }); let t = 0; // le robot joue un peu différemment à chaque essai
+      while (t < 900 && w.state !== 'over' && !(w.state === 'cleared' && w.stateT > 3)) { w.update(STEP, robot(w, t + r)); t += STEP; }
+      if (w.state === 'cleared') ok++; time += t;
+    }
+    console.log(`défi du ${date} : ${s.level.name} · ${s.rule.name} — réussi ${ok}/${runs}, ${Math.round(time / runs)} s`);
+  }
+}
+
+for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || process.env.DAILY ? 0 : LEVELS.length); lv++) {
   let cleared = 0, time = 0; const causes: Record<string, number> = {};
   for (let seed = 1; seed <= runs; seed++) {
     const w = new World(sfx, { level: lv, seed: seed * 977 + lv, mode });

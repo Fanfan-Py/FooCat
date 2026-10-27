@@ -9,6 +9,7 @@ import {
 } from './things';
 import { Boss, BossHost } from './boss';
 import { SkelBoss, SkelHost } from './skel';
+import { Setup, ModeCfg } from './modes';
 
 export type { WeaponKind } from './things';
 export const WEAPON_ORDER: WeaponKind[] = ['verm', 'drag', 'pinata', 'rain'];
@@ -46,7 +47,8 @@ export function shotBox(s: Shot): Box {
   return { x: s.x + 1, y: s.y - h / 2 + 1, w: w - 1, h: h - 2 };
 }
 
-export interface WorldOptions { level?: number; seed?: number; mode?: C.Mode; carry?: Carry }
+// setup : niveau et difficulté sur mesure (mode infini, défi du jour)
+export interface WorldOptions { level?: number; seed?: number; mode?: C.Mode; carry?: Carry; setup?: Setup }
 
 export class World implements BossHost, SkelHost {
   t = 0;
@@ -55,7 +57,8 @@ export class World implements BossHost, SkelHost {
   readonly startScore: number;
   readonly levelIndex: number;
   readonly level: C.Level;
-  mode: (typeof C.MODES)[C.Mode];
+  mode: ModeCfg;
+  readonly label: string; // affiché dans le bandeau du haut (NIV.3, ZONE 4, DÉFI)
   state: 'play' | 'dying' | 'over' | 'cleared' = 'play';
   stateT = 0;
   flash = 0;
@@ -87,9 +90,10 @@ export class World implements BossHost, SkelHost {
 
   constructor(private sfx: Sfx, o: WorldOptions = {}) {
     this.rnd = FC.rng(o.seed ?? Date.now() % 100000);
-    this.levelIndex = Math.min(o.level ?? 0, C.LEVELS.length - 1);
-    this.level = C.LEVELS[this.levelIndex];
-    this.mode = C.MODES[o.mode ?? 'normal'];
+    this.levelIndex = o.setup ? o.setup.levelIndex : Math.min(o.level ?? 0, C.LEVELS.length - 1);
+    this.level = o.setup ? o.setup.level : C.LEVELS[this.levelIndex];
+    this.mode = o.setup ? o.setup.mode : C.MODES[o.mode ?? 'normal'];
+    this.label = o.setup ? o.setup.label : 'NIV.' + this.level.num;
     const W = C.WEAPONS, carry = o.carry;
     this.score = this.startScore = carry ? carry.score : 0;
     this.hero = {
@@ -250,7 +254,7 @@ export class World implements BossHost, SkelHost {
       const fight = !!this.boss?.alive;
       const kind = fight ? pickWeighted({ verm: 3, drag: 2, pinata: 2, heart: 1, jaw: 1 }, this.rnd) as BonusKind : undefined;
       this.spawnBonus(C.W + 4, this.top + 16 + this.rnd() * (this.floor - this.top - 50), this.level.scroll * 0.8, kind);
-      T.bonus = (fight ? 6 : C.BONUS_EVERY) * (0.8 + this.rnd() * 0.4);
+      T.bonus = (fight ? 6 : C.BONUS_EVERY / (this.mode.bonus ?? 1)) * (0.8 + this.rnd() * 0.4);
     }
   }
 

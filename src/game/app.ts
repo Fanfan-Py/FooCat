@@ -5,6 +5,7 @@ import * as C from './config';
 import { World, Controls, Sfx, Carry } from './world';
 import { drawWorld, setHeroSkin } from './draw';
 import { loadScores, qualifies, addScore, cleanName, checkName } from './scores';
+import { GameMode, endlessZone, dailySetup, today } from './modes';
 import {
   Settings, loadSettings, saveSettings, Stats, loadStats, saveStats, ACHIEVEMENTS, loadUnlocked, saveUnlocked,
   loadStars, saveStars, SKINS, skinUnlockedBy, loadSkin, saveSkin, heroSprite,
@@ -28,8 +29,10 @@ function center(scr: Pix, s: string, y: number, c: number[], o: any = {}, cx = C
 }
 function right(scr: Pix, s: string, x: number, y: number, c: number[], o: any = {}) { FC.text(scr, s, x - FC.textWidth(s), y, c, o); }
 
-const MODES: C.Mode[] = ['normal', 'difficile'];
-const MODE_NAMES: Record<C.Mode, string> = { normal: 'NORMAL', difficile: 'DIFFICILE' };
+const MODES: GameMode[] = ['normal', 'difficile', 'infini', 'defi'];
+const MODE_NAMES: Record<GameMode, string> = { normal: 'NORMAL', difficile: 'DIFFICILE', infini: 'INFINI', defi: 'DÉFI DU JOUR' };
+// le défi du jour a un tableau des scores par jour
+function scoreKey(m: GameMode) { return m === 'defi' ? 'defi.' + today() : m; }
 const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'nebula', 'planet', 'iron', 'iron'];
 
 // histoire illustrée entre le niveau 5 et le niveau 6
@@ -93,7 +96,9 @@ export class App {
   // ou en touchant 5 fois le logo sur le site)
   dev = load('foocat.dev') === 1;
   choice = 0; // niveau choisi à l'accueil (mode développeur)
-  mode: C.Mode = 'normal';
+  mode: GameMode = 'normal';
+  private zone = 1; // zone atteinte en mode infini
+  private daily = dailySetup();
   touch = false;
   settings: Settings = loadSettings();
   settingsVersion = 0; // augmente à chaque changement (main.ts replace les boutons si besoin)
@@ -108,8 +113,8 @@ export class App {
   // tableau des scores
   private pendingScore: { score: number; level: number; won: boolean; then: After } | null = null;
   private scoresThen: After = 'title'; // où aller en quittant le tableau
-  private scoresMode: C.Mode = 'normal';
-  private highlight: { mode: C.Mode; rank: number } | null = null;
+  private scoresMode: GameMode = 'normal';
+  private highlight: { mode: GameMode; rank: number } | null = null;
   lastName = loadText('foocat.name');
   // réglages, succès, soucoupes
   private settingsFrom: 'title' | 'pause' = 'title';
@@ -138,13 +143,14 @@ export class App {
   // sauvegarde « Continuer » : le début du dernier niveau atteint, pour chaque mode
   get saveKey() { return 'foocat.save.' + this.mode; }
   get saved(): { level: number; carry: Carry } | null {
+    if (this.special) return null;
     try { const v = JSON.parse(localStorage.getItem(this.saveKey) || 'null'); return v && typeof v.level === 'number' ? v : null; } catch { return null; }
   }
   private writeSave(v: { level: number; carry: Carry } | null) {
     try { if (v) localStorage.setItem(this.saveKey, JSON.stringify(v)); else localStorage.removeItem(this.saveKey); } catch { /* stockage indisponible */ }
   }
-  get bestKey() { return this.mode === 'normal' ? 'foocat.best' : 'foocat.best.' + this.mode; }
-  get best() { const top = loadScores(this.mode)[0]; return Math.max(load(this.bestKey), top ? top.score : 0); }
+  get bestKey() { return this.mode === 'normal' ? 'foocat.best' : 'foocat.best.' + scoreKey(this.mode); }
+  get best() { const top = loadScores(scoreKey(this.mode))[0]; return Math.max(load(this.bestKey), top ? top.score : 0); }
 
   private go(s: State, menu: string[] | null = null, y0 = 0) {
     this.state = s; this.stateT = 0;
@@ -154,12 +160,35 @@ export class App {
   }
   private startLevel(i: number, carry?: Carry) {
     // on repart toujours avec au moins les vies de départ du mode
-    if (carry) carry = { ...carry, lives: Math.max(carry.lives, C.MODES[this.mode].lives) };
-    this.world = new World(this.sfx, { level: i, carry, mode: this.mode });
+    if (carry) carry = { ...carry, lives: Math.max(carry.lives, C.MODES[this.baseMode].lives) };
+    this.world = new World(this.sfx, { level: i, carry, mode: this.baseMode });
     this.levelStart = this.world.carry();
     if (!this.devRun) this.writeSave(i > 0 ? { level: i, carry: this.levelStart } : null);
     this.go('play'); this.sfx.play('start');
     this.sfx.music?.(THEMES[i] ?? 'space');
+  }
+  // mode infini et défi du jour
+  get special() { return this.mode === 'infini' || this.mode === 'defi'; }
+  get baseMode(): C.Mode { return this.mode === 'difficile' ? 'difficile' : 'normal'; }
+  private startEndless(zone: number, carry?: Carry) {
+    const setup = endlessZone(zone);
+    this.zone = zone; this.devRun = false; this.levelStart = null;
+    this.world = new World(this.sfx, { setup, carry });
+    this.go('play'); this.sfx.play(zone > 1 ? 'level' : 'start');
+    this.sfx.music?.(THEMES[setup.levelIndex] ?? 'space');
+  }
+  private startDaily() {
+    this.daily = dailySetup(); // (la date a pu changer depuis l'ouverture du jeu)
+    this.devRun = false; this.levelStart = null;
+    this.world = new World(this.sfx, { setup: this.daily, seed: this.daily.seed });
+    this.go('play'); this.sfx.play('start');
+    this.sfx.music?.(THEMES[this.daily.levelIndex] ?? 'space');
+  }
+  // rejouer après un game over (ou depuis la pause)
+  private restart() {
+    if (this.mode === 'infini') this.startEndless(1);
+    else if (this.mode === 'defi') this.startDaily();
+    else if (this.world) this.startLevel(this.world.levelIndex, this.levelStart ?? undefined);
   }
   private record() { if (this.world && this.world.score > this.best) save(this.bestKey, this.world.score); }
 
@@ -176,13 +205,17 @@ export class App {
         w.update(dt, this.settings.autoFire ? { ...c, fire: true } : c);
         this.readEvents(w);
         if (w.state === 'over') { this.record(); this.sfx.music?.(null); this.afterGame('over'); }
-        if (w.state === 'cleared' && w.stateT > 3) this.levelDone(w);
+        if (w.state === 'cleared' && w.stateT > 3) {
+          if (this.mode === 'infini') { this.record(); this.startEndless(this.zone + 1, w.carry()); } // zone suivante, sans pause
+          else if (this.mode === 'defi') { this.record(); this.sfx.music?.(null); this.afterGame('end', true); }
+          else this.levelDone(w);
+        }
         break;
       case 'pause': {
         if (c.pause) { this.resume(); break; }
         const i = this.menu!.handle(c);
         if (i === 0) this.resume();
-        else if (i === 1 && w) this.startLevel(w.levelIndex, this.levelStart ?? undefined);
+        else if (i === 1 && w) this.restart();
         else if (i === 2) this.openSettings('pause');
         else if (i === 3) { this.sfx.pauseMusic?.(false); this.afterGame('title'); }
         break;
@@ -194,7 +227,7 @@ export class App {
         const i = this.menu!.handle(c);
         if (i === 1) this.go('title');
         else if (i === 0) {
-          if (this.state === 'over') this.startLevel(w.levelIndex, this.levelStart ?? undefined);
+          if (this.state === 'over') this.restart();
           else if (w.levelIndex + 1 === STORY_BEFORE) this.openStory(w.carry());
           else if (w.levelIndex + 1 < C.LEVELS.length) this.startLevel(w.levelIndex + 1, w.carry());
           else { if (!this.devRun) this.writeSave(null); this.afterGame('end', true); }
@@ -276,8 +309,8 @@ export class App {
   private afterGame(then: After, won = false) {
     const w = this.world;
     if (this.statsDirty) { saveStats(this.stats); this.statsDirty = false; }
-    if (w && !this.devRun && qualifies(this.mode, w.score)) {
-      this.pendingScore = { score: w.score, level: w.level.num, won, then };
+    if (w && !this.devRun && qualifies(scoreKey(this.mode), w.score)) {
+      this.pendingScore = { score: w.score, level: this.mode === 'infini' ? this.zone : w.level.num, won: won && this.mode !== 'defi', then };
       this.state = 'name'; this.stateT = 0; this.menu = null;
       this.sfx.play('level');
       return;
@@ -287,7 +320,8 @@ export class App {
   private finish(then: After) {
     if (then === 'over') {
       const w = this.world!;
-      this.go('over', ['REJOUER LE NIVEAU ' + w.level.num, "RETOUR À L'ACCUEIL"], 124);
+      const again = this.mode === 'infini' ? 'REJOUER' : this.mode === 'defi' ? 'REJOUER LE DÉFI' : 'REJOUER LE NIVEAU ' + w.level.num;
+      this.go('over', [again, "RETOUR À L'ACCUEIL"], 124);
       this.stateT = 1; // le menu est tout de suite utilisable
     } else this.go(then);
   }
@@ -300,7 +334,7 @@ export class App {
     if (err) return err;
     this.lastName = name;
     try { localStorage.setItem('foocat.name', name); } catch { /* stockage indisponible */ }
-    const rank = addScore(this.mode, { name, score: p.score, level: p.level, won: p.won, date: new Date().toISOString().slice(0, 10) });
+    const rank = addScore(scoreKey(this.mode), { name, score: p.score, level: p.level, won: p.won, date: new Date().toISOString().slice(0, 10) });
     this.highlight = { mode: this.mode, rank };
     this.pendingScore = null;
     this.openScores(p.then);
@@ -314,10 +348,12 @@ export class App {
 
   // ---------- accueil ----------
   private titleMenu() {
+    this.daily = dailySetup(); // le défi change à minuit
     const sv = this.saved, items: string[] = [], acts: string[] = [];
     const add = (label: string, act: string) => { items.push(label); acts.push(act); };
     if (sv) add('CONTINUER : NIVEAU ' + (sv.level + 1), 'continue');
-    add(this.dev ? 'JOUER LE NIVEAU ' + (this.choice + 1) : 'NOUVELLE PARTIE', 'new');
+    add(this.mode === 'infini' ? 'JOUER EN MODE INFINI' : this.mode === 'defi' ? 'JOUER LE DÉFI DU JOUR'
+      : this.dev ? 'JOUER LE NIVEAU ' + (this.choice + 1) : 'NOUVELLE PARTIE', 'new');
     add('MODE : ' + MODE_NAMES[this.mode], 'mode');
     add('MEILLEURS SCORES', 'scores');
     add('SUCCÈS ' + this.unlocked.size + '/' + ACHIEVEMENTS.length, 'succes');
@@ -360,6 +396,8 @@ export class App {
     else if (a === 'skins') { this.sel = Math.max(0, SKINS.findIndex((s) => s.id === this.skin)); this.go('skins'); }
     else if (a === 'settings') this.openSettings('title');
     else if (a === 'continue' && sv) { this.devRun = false; this.startLevel(sv.level, sv.carry); }
+    else if (this.mode === 'infini') this.startEndless(1);
+    else if (this.mode === 'defi') this.startDaily();
     else if (this.dev && this.choice === STORY_BEFORE) { this.devRun = true; this.openStory(); }
     else { this.devRun = this.dev && this.choice > 0; this.startLevel(this.dev ? this.choice : 0); }
   }
@@ -484,8 +522,9 @@ export class App {
     if (this.state === 'end') return this.drawEnd(scr);
     drawWorld(scr, w);
     if (this.state === 'play' && w.t < 2.6 && Math.floor(w.t * 4) % 4 !== 3) {
-      center(scr, 'NIVEAU ' + w.level.num, 64, P.W, { sc: 2, outline: P.K });
+      center(scr, this.mode === 'infini' ? w.label : this.mode === 'defi' ? 'DÉFI DU JOUR' : 'NIVEAU ' + w.level.num, 64, P.W, { sc: 2, outline: P.K });
       center(scr, w.level.name, 84, P.q, { outline: P.K });
+      if (this.mode === 'defi') center(scr, this.daily.rule.name + ' : ' + this.daily.rule.desc, 96, P.y, { outline: P.K });
     }
     if (this.state === 'name') { // derrière le formulaire du pseudonyme
       scr.rect(0, 0, C.W, C.H, FC.alpha(P.K, 190));
@@ -625,6 +664,15 @@ export class App {
   private drawEnd(scr: Pix) {
     this.drawTitleBackground(scr);
     const w = this.world!;
+    if (this.mode === 'defi') { // défi du jour réussi
+      center(scr, 'DÉFI RÉUSSI !', 36, P.y, { sc: 3, outline: P.K });
+      center(scr, 'DÉFI DU ' + this.daily.date.split('-').reverse().join('/') + ' · ' + w.level.name + ' · ' + this.daily.rule.name, 72, P.W, { outline: P.K });
+      center(scr, 'SCORE ' + w.score, 92, P.y, { sc: 2, outline: P.K });
+      center(scr, 'MEILLEUR SCORE DU JOUR ' + this.best, 114, P.q, { outline: P.K });
+      center(scr, 'REVIENS DEMAIN POUR UN NOUVEAU DÉFI !', 136, P.v, { outline: P.K });
+      if (this.stateT > 1 && this.t % 1.2 < 0.8) center(scr, (this.touch ? 'TOUCHE' : 'ENTRÉE') + " POUR REVENIR À L'ACCUEIL", 152, P.W, { outline: P.K });
+      return;
+    }
     center(scr, 'BRAVO !', 40, P.y, { sc: 3, outline: P.K });
     center(scr, 'TU AS TERMINÉ LES ' + C.LEVELS.length + ' NIVEAUX EN MODE ' + MODE_NAMES[this.mode], 72, P.W, { outline: P.K });
     center(scr, w.level.next ?? '', 84, P.q, { outline: P.K });
@@ -635,7 +683,7 @@ export class App {
 
   private drawScores(scr: Pix) {
     this.drawTitleBackground(scr);
-    const t = this.t, a = Math.floor(t * 3) % 2, list = loadScores(this.scoresMode);
+    const t = this.t, a = Math.floor(t * 3) % 2, list = loadScores(scoreKey(this.scoresMode));
     center(scr, 'MEILLEURS SCORES', 8, P.y, { sc: 2, outline: P.P });
     center(scr, 'MODE ' + MODE_NAMES[this.scoresMode], 30, this.scoresMode === 'normal' ? P.b : P.P, { outline: P.K });
     FC.text(scr, '<', 100 - a, 30, P.y, { outline: P.K }); FC.text(scr, '>', 216 + a, 30, P.y, { outline: P.K });
@@ -647,7 +695,7 @@ export class App {
       const c = hl ? P.W : medal[i] ?? P.v;
       right(scr, (i + 1) + '.', 76, y, c, { outline: P.K });
       FC.text(scr, e.name, 82, y, P.W, { outline: P.K });
-      FC.text(scr, e.won ? 'FIN' : 'NIV.' + e.level, 172, y, P.q, { outline: P.K });
+      FC.text(scr, this.scoresMode === 'infini' ? 'ZONE ' + e.level : e.won ? 'FIN' : 'NIV.' + e.level, 172, y, P.q, { outline: P.K });
       right(scr, String(e.score), 262, y, c, { outline: P.K });
     });
     if (this.stateT > 0.5 && t % 1.2 < 0.8) center(scr, this.touch ? 'TOUCHE POUR CONTINUER' : 'ENTRÉE POUR CONTINUER', 166, P.W, { outline: P.K });
@@ -679,6 +727,8 @@ export class App {
       FC.text(scr, '<', 128 - a, 150, P.o, { outline: P.K }); FC.text(scr, '>', 290 + a, 150, P.o, { outline: P.K });
     }
     if (this.notice) center(scr, this.notice.text, 160, P.y, { outline: P.K });
+    else if (this.mode === 'defi') center(scr, "AUJOURD'HUI : " + this.daily.level.name + ' · ' + this.daily.rule.name, 160, P.q, { outline: P.K });
+    else if (this.mode === 'infini') center(scr, 'DES ZONES SANS FIN, DE PLUS EN PLUS DURES', 160, P.q, { outline: P.K });
     center(scr, 'MEILLEUR SCORE (' + MODE_NAMES[this.mode] + ') ' + this.best, 170, P.y);
   }
 }

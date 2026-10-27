@@ -123,10 +123,14 @@ Corrections après le premier essai :
 - **Algues** : plusieurs tailles, au sol et au plafond, elles ondulent ; le casse-dents les coupe.
 - Sous l'eau, le dôme du chat devient un **scaphandre** d'où s'échappent des bulles.
 
-## Étape 9 : mode infini et défi du jour
+## Étape 9 : mode infini et défi du jour (faite le 27 octobre 2026)
 
-- [ ] **Mode infini** : on enchaîne les vagues aussi longtemps que possible.
-- [ ] **Défi du jour** : le même parcours pour tout le monde pendant une journée.
+- [x] **Mode infini** : on enchaîne les vagues aussi longtemps que possible.
+      Des « zones » d'environ 1 min 30 (les 8 niveaux sans boss, en boucle), chacune un peu plus dure ;
+      les cœurs se remplissent à chaque zone ; tableau des scores à part (avec la zone atteinte).
+- [x] **Défi du jour** : le même parcours pour tout le monde pendant une journée.
+      La date choisit le niveau, le hasard et une règle : TURBO, FRAGILE (2 cœurs, 5 vies),
+      PLUIE DE BONUS ou LA HORDE. Essais illimités, tableau des scores du jour (sur l'appareil).
 
 ## Étape 10 : finitions
 
