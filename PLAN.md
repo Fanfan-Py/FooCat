@@ -99,6 +99,7 @@ Corrections après le premier essai :
 - [x] Niveau 8 : les **petites algues et les coraux sont des obstacles** (on ne passe plus au travers).
 - [x] Niveau 8 : la forêt d'algues a des **grandes algues en haut ET en bas**, en alternance.
 - [x] Niveau 9 : **herses et algues en même temps**, en haut et en bas, pour obliger le chat à faire du slalom.
+- [x] Niveau 8 un peu plus difficile : plus de monstres et d'obstacles.
 
 ## Étape 8 : niveau 10, le poisson squelette de la mort
 

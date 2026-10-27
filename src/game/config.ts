@@ -172,10 +172,10 @@ export const LEVELS: Level[] = [
   {
     num: 8, name: 'LA PLANÈTE SOUS-MARINE', points: 24000, decor: 'sea', ground: 154, ceiling: 26, scroll: 36, outro: 'U', water: true,
     phases: [
-      { from: 0, obstacle: 3.4, obstacles: { algae: 2, coral: 1 }, wave: 2.4, waves: { crab: 2, jellyBlue: 1, solo: 1, line: 1 }, gold: 0.1 },
-      { from: 0.2, banner: 'ATTENTION AUX BULLES !', obstacle: 3.0, obstacles: { algae: 2, coral: 1 }, wave: 2.3, waves: { bubbles: 1, jellyBlue: 1, crab: 1, guitar: 1, line: 1 }, gold: 0.2 },
-      { from: 0.45, banner: "LA FORÊT D'ALGUES !", obstacle: 1.7, obstacles: { algae: 1 }, slalom: true, wave: 3.2, waves: { solo: 1, bubbles: 1 }, gold: 0 },
-      { from: 0.62, obstacle: 2.8, obstacles: { algae: 2, coral: 1 }, wave: 2.0, waves: { jellyPink: 1, jellyBlue: 1, crab: 1, guitar: 1, bubbles: 1, batShrimp: 1, line: 1 }, gold: 0.3 },
+      { from: 0, obstacle: 3.1, obstacles: { algae: 2, coral: 1 }, wave: 2.2, waves: { crab: 2, jellyBlue: 1, solo: 1, line: 1 }, gold: 0.1 },
+      { from: 0.2, banner: 'ATTENTION AUX BULLES !', obstacle: 2.8, obstacles: { algae: 2, coral: 1 }, wave: 2.1, waves: { bubbles: 1, jellyBlue: 1, crab: 1, guitar: 1, line: 1 }, gold: 0.2 },
+      { from: 0.45, banner: "LA FORÊT D'ALGUES !", obstacle: 1.7, obstacles: { algae: 1 }, slalom: true, wave: 2.9, waves: { solo: 1, bubbles: 1 }, gold: 0 },
+      { from: 0.62, obstacle: 2.6, obstacles: { algae: 2, coral: 1 }, wave: 1.85, waves: { jellyPink: 1, jellyBlue: 1, crab: 1, guitar: 1, bubbles: 1, batShrimp: 1, line: 1 }, gold: 0.3 },
       { from: 0.88, banner: 'LE CHÂTEAU EN VUE !', obstacle: 2.2, obstacles: { algae: 1 }, slalom: true, wave: 1.6, waves: { crab: 2, jellyPink: 1, guitar: 1, batShrimp: 1 }, gold: 0.3 },
     ],
   },
