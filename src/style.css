@@ -1,0 +1,42 @@
+:root {
+  color-scheme: dark;
+  --bg: #070722;
+  --focus: #ffe680;
+  --ink: #ffffff;
+  --btn: rgba(255, 255, 255, 0.14);
+  --btn-line: rgba(255, 255, 255, 0.45);
+  --fire: rgba(255, 79, 154, 0.75);
+  --swap: rgba(111, 208, 255, 0.6);
+  --special: rgba(255, 154, 60, 0.7);
+}
+html, body { margin: 0; height: 100%; background: var(--bg); overflow: hidden; }
+body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+#stage { position: fixed; inset: 0; }
+#safe { position: fixed; inset: 0; visibility: hidden; pointer-events: none;
+  padding: env(safe-area-inset-top, 0px) env(safe-area-inset-right, 0px) env(safe-area-inset-bottom, 0px) env(safe-area-inset-left, 0px); }
+#screen { position: absolute; image-rendering: pixelated; image-rendering: crisp-edges; display: block; }
+
+#stick { position: fixed; width: 112px; height: 112px; margin: -56px 0 0 -56px; border-radius: 50%;
+  border: 2px solid var(--btn-line); background: var(--btn); opacity: 0.35; pointer-events: none; transition: opacity .15s; }
+#stick.active { opacity: 0.6; transition: none; }
+#knob { position: absolute; left: 50%; top: 50%; width: 48px; height: 48px; margin: -24px 0 0 -24px; border-radius: 50%;
+  background: rgba(255, 255, 255, 0.7); }
+
+.tbtn { position: fixed; transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid rgba(27, 16, 48, 0.8);
+  color: var(--ink); display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0;
+  font: 700 10px/1 ui-rounded, system-ui, sans-serif; letter-spacing: .04em; background: var(--btn); touch-action: none; cursor: pointer; }
+.tbtn svg { width: 40%; height: 40%; fill: none; stroke: currentColor; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+.tbtn.fire { background: var(--fire); }
+.tbtn.swap { background: var(--swap); color: #1b1030; }
+.tbtn.special { background: var(--special); color: #1b1030; }
+.tbtn.small svg { width: 55%; height: 55%; }
+.tbtn.down { filter: brightness(1.35); }
+.tbtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
+#touch.overlay .tbtn { opacity: 0.55; }
+#b-sound .cross { display: none; }
+#b-sound.muted .cross { display: inline; }
+#b-sound.muted .wave { display: none; }
+
+#rotate { position: fixed; inset: 0; background: var(--bg); color: var(--ink); display: flex; align-items: center; justify-content: center;
+  text-align: center; font: 700 20px/1.4 ui-rounded, system-ui, sans-serif; padding: 24px; }
+#rotate[hidden], #touch[hidden] { display: none; }
