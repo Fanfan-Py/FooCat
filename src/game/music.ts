@@ -69,9 +69,11 @@ export class Music {
   private step = 0;
   private next = 0;
   private name: string | null = null;
+  private vol = 0.7; // volume choisi dans les réglages (0 à 1)
+  private paused = false;
 
   constructor(private ctx: AudioContext, dest: AudioNode) {
-    this.out = ctx.createGain(); this.out.gain.value = 0.55; this.out.connect(dest);
+    this.out = ctx.createGain(); this.out.gain.value = 0.55 * this.vol; this.out.connect(dest);
     this.noise = ctx.createBuffer(1, ctx.sampleRate, ctx.sampleRate);
     const d = this.noise.getChannelData(0);
     for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
@@ -92,7 +94,8 @@ export class Music {
     this.step = 0; this.next = this.ctx.currentTime + 0.06;
   }
 
-  pause(paused: boolean) { this.out.gain.setTargetAtTime(paused ? 0 : 0.55, this.ctx.currentTime, 0.05); }
+  pause(paused: boolean) { this.paused = paused; this.out.gain.setTargetAtTime(paused ? 0 : 0.55 * this.vol, this.ctx.currentTime, 0.05); }
+  setVolume(v: number) { this.vol = v; this.pause(this.paused); }
 
   private tick() {
     if (this.ctx.state !== 'running' || !this.tracks.length) return;

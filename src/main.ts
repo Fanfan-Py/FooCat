@@ -29,7 +29,11 @@ const btn = {
 };
 let hint = { x: 70, y: 0 };
 
+// commandes gaucher : tout est inversé de gauche à droite
+let mirror = false, layoutVersion = -1;
+const mx = (x: number) => (mirror ? window.innerWidth - x : x);
 function place(el: HTMLElement, x: number, y: number, size: number) {
+  x = mx(x);
   el.style.left = x + 'px'; el.style.top = y + 'px'; el.style.width = el.style.height = size + 'px';
 }
 
@@ -51,6 +55,7 @@ let laidOut = { w: 0, h: 0 };
 function layout() {
   const { w: vw, h: vh } = screenSize(), ins = insets();
   laidOut = { w: vw, h: vh };
+  mirror = app.settings.leftHanded; layoutVersion = app.settingsVersion;
   const aw = vw - ins.l - ins.r, ah = vh - ins.t - ins.b; // zone utilisable
   let s = Math.min(aw / W, ah / H);
   // sur un écran tactile sans place autour du jeu (iPhone SE…), on réduit un peu le jeu
@@ -85,6 +90,7 @@ function layout() {
     place(btn.pause, right - 26, top + ch * 0.1 + 26, 38); place(btn.sound, right - 70, top + ch * 0.1 + 26, 38);
     hint = { x: ins.l + 70, y: bottom - 70 };
   }
+  hint.x = mx(hint.x);
   if (!stickId) { stick.style.left = hint.x + 'px'; stick.style.top = hint.y + 'px'; }
   rotate.hidden = !(app.touch && vh > vw);
 }
@@ -111,11 +117,11 @@ $('stage').addEventListener('pointerdown', (e) => {
   if ((e.target as HTMLElement).closest('.tbtn')) return;
   if (app.state !== 'play') { tapAt(e.clientX, e.clientY); return; }
   if (e.pointerType !== 'touch') return;
-  const vw = window.innerWidth;
-  if (e.clientX < vw * 0.45 && stickId === null) {
-    // le joystick apparaît sous le pouce
+  const vw = window.innerWidth, onStickSide = mirror ? e.clientX > vw * 0.55 : e.clientX < vw * 0.45;
+  if (onStickSide && stickId === null) {
+    // le joystick apparaît sous le pouce (à gauche, ou à droite pour les gauchers)
     stickId = e.pointerId;
-    stickX = Math.max(58, Math.min(e.clientX, vw * 0.45));
+    stickX = mirror ? Math.min(vw - 58, Math.max(e.clientX, vw * 0.55)) : Math.max(58, Math.min(e.clientX, vw * 0.45));
     stickY = Math.max(58, Math.min(e.clientY, window.innerHeight - 58));
     stick.style.left = stickX + 'px'; stick.style.top = stickY + 'px';
     stick.classList.add('active');
@@ -204,7 +210,7 @@ function frame(now: number) {
   if (n === 5) acc = 0;
   syncNameForm();
   const sz = screenSize();
-  if (sz.w !== laidOut.w || sz.h !== laidOut.h) layout(); // la taille a changé sans prévenir
+  if (sz.w !== laidOut.w || sz.h !== laidOut.h || layoutVersion !== app.settingsVersion) layout(); // taille ou réglages changés
   app.draw(scr);
   img.data.set(scr.d);
   ctx.putImageData(img, 0, 0);

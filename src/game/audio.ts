@@ -45,6 +45,10 @@ export class SoundFx implements Sfx {
   private wanted: string | null = null; // thème demandé avant que le son soit autorisé
   private mute = false;
   private silent: HTMLAudioElement | null = null;
+  private fx: GainNode | null = null; // volume des effets
+  private volMusic = 0.7;
+  private volFx = 0.8;
+  private vibe = true;
   private last: Record<string, number> = {};
 
   get muted() { return this.mute; }
@@ -53,6 +57,11 @@ export class SoundFx implements Sfx {
   // musique : un thème par décor (null = silence)
   music(theme: string | null) { this.wanted = theme; this.mus?.play(theme); this.mus?.pause(false); }
   pauseMusic(paused: boolean) { this.mus?.pause(paused); }
+  setVolumes(music: number, sfx: number) {
+    this.volMusic = music; this.volFx = sfx;
+    this.mus?.setVolume(music); if (this.fx) this.fx.gain.value = sfx;
+  }
+  setVibrate(on: boolean) { this.vibe = on; }
 
   // les navigateurs n'autorisent le son qu'après un geste du joueur :
   // on appelle unlock() à chaque toucher, clic ou touche du clavier
@@ -69,7 +78,8 @@ export class SoundFx implements Sfx {
       this.ctx = new AC();
       this.master = this.ctx.createGain(); this.master.gain.value = this.mute ? 0 : 1;
       this.master.connect(this.ctx.destination);
-      this.mus = new Music(this.ctx, this.master);
+      this.fx = this.ctx.createGain(); this.fx.gain.value = this.volFx; this.fx.connect(this.master);
+      this.mus = new Music(this.ctx, this.master); this.mus.setVolume(this.volMusic);
       this.mus.play(this.wanted);
     }
     const ctx = this.ctx;
@@ -81,9 +91,12 @@ export class SoundFx implements Sfx {
   }
 
   play(name: string) {
+    // vibrations (téléphones Android) quand le chat est touché ou que ça explose
+    const buzz: Record<string, number | number[]> = { hurt: 60, lose: [120, 60, 200], bomb: 90, break: 40 };
+    if (this.vibe && !this.mute && buzz[name] && 'vibrate' in navigator) { try { navigator.vibrate(buzz[name]); } catch { /* non disponible */ } }
     const ctx = this.ctx, s = SOUNDS[name];
     if (!ctx || this.mute || !s || ctx.state !== 'running') return;
-    const out = this.master!;
+    const out = this.fx!;
     const now = ctx.currentTime;
     if (now - (this.last[name] || 0) < 0.035) return; // évite la saturation
     this.last[name] = now;

@@ -19,7 +19,10 @@ export interface Controls {
   swap: boolean; // changer d'arme, appuyé à cette image
   select: number; // -1, ou 0..2 pour choisir une arme
 }
-export interface Sfx { play(name: string): void; music?(theme: string | null): void; pauseMusic?(paused: boolean): void }
+export interface Sfx {
+  play(name: string): void; music?(theme: string | null): void; pauseMusic?(paused: boolean): void;
+  setVolumes?(music: number, sfx: number): void; setVibrate?(on: boolean): void;
+}
 
 // Ce qu'on garde d'un niveau à l'autre
 export interface Carry { score: number; lives: number; ammo: { verm: number; drag: number; pinata: number; jaw: number } }
@@ -66,6 +69,11 @@ export class World implements BossHost {
   parts: Particle[] = [];
   popups: Popup[] = [];
   hits = 0; // nombre de coups reçus
+  // pour le bilan de fin de niveau et les succès
+  stats = { kills: 0, shots: 0, hitShots: 0, bonuses: 0, livesLost: 0 };
+  events: { type: string; kind?: string; by?: string }[] = []; // lus (puis vidés) par l'application
+  private shotSeq = 0;
+  private pinataKills = new Map<number, number>();
   hitLog: Record<string, number> = {}; // d'où viennent les coups (pour régler la difficulté)
   private phaseIdx = -1;
   private timers = { obstacle: 3.5, wave: 2.5, bonus: C.BONUS_EVERY };
@@ -172,7 +180,7 @@ export class World implements BossHost {
     if (c.fire && h.fireCD <= 0) this.fire(h.weapon);
     if (c.special && h.jawCD <= 0 && h.ammo.jaw > 0) {
       const J = C.WEAPONS.jaw;
-      h.ammo.jaw--; h.jawCD = 1 / J.rate;
+      h.ammo.jaw--; h.jawCD = 1 / J.rate; this.stats.shots++;
       this.shots.push({ kind: 'jaw', x: h.x + 32, y: h.y + 9, vx: J.speed, vy: 0, dmg: J.dmg, life: 4, age: 0, frame: 0, bounces: 0, hit: [], dead: false });
       this.sfx.play('jaw');
     }
@@ -181,7 +189,8 @@ export class World implements BossHost {
   private fire(k: WeaponKind) {
     const h = this.hero;
     h.shotCount++;
-    const shot = (o: Partial<Shot>) => this.shots.push({ kind: k, x: 0, y: 0, vx: 0, vy: 0, dmg: 1, life: 2, age: 0, frame: 0, bounces: 0, hit: [], dead: false, ...o });
+    this.stats.shots++;
+    const shot = (o: Partial<Shot>) => this.shots.push({ kind: k, x: 0, y: 0, vx: 0, vy: 0, dmg: 1, life: 2, age: 0, frame: 0, bounces: 0, hit: [], dead: false, src: ++this.shotSeq, ...o });
     if (k === 'verm') {
       const V = C.WEAPONS.verm, a = rad((this.rnd() * 2 - 1) * V.spread);
       h.fireCD = 1 / V.rate; h.ammo.verm--;
@@ -252,6 +261,7 @@ export class World implements BossHost {
       if (this.hits === B.hitsAtStart) {
         this.score += C.POINTS.belt;
         this.say('TRAVERSÉE PARFAITE ! +' + C.POINTS.belt);
+        this.events.push({ type: 'belt' });
         this.sfx.play('level');
       }
     }
@@ -602,9 +612,10 @@ export class World implements BossHost {
       for (const e of this.enemies) {
         if (e.dead || s.hit.includes(e) || !overlap(sb, enemyBox(e))) continue;
         e.hp -= s.dmg; e.flash = 0.08;
+        if (!s.touched && s.kind !== 'shard') { s.touched = true; this.stats.hitShots++; }
         if (s.kind === 'jaw' || s.kind === 'rain') s.hit.push(e); else s.dead = true;
         if (s.kind === 'pinata') this.pinataBurst(s, e, born);
-        if (e.hp <= 0) this.killEnemy(e, true); else this.sfx.play('hit');
+        if (e.hp <= 0) this.killEnemy(e, true, true, s); else this.sfx.play('hit');
         if (s.dead) break;
       }
       for (const e of this.eshots) { // un tir détruit les morceaux de sucre
@@ -636,7 +647,7 @@ export class World implements BossHost {
       const a = i / PI.shards * Math.PI * 2 + this.rnd() * 0.4;
       out.push({
         kind: 'shard', x: cx - 2, y: cy - 2, vx: Math.cos(a) * PI.shardSpeed, vy: Math.sin(a) * PI.shardSpeed,
-        dmg: PI.shardDmg, life: PI.shardLife, age: 0, frame: i, bounces: 0, hit: touched ? [touched] : [], dead: false,
+        dmg: PI.shardDmg, life: PI.shardLife, age: 0, frame: i, bounces: 0, hit: touched ? [touched] : [], dead: false, src: s.src,
       });
     }
     this.burst(cx, cy, 14, [FC.P.P, FC.P.W, FC.P.y, FC.P.q], 60);
@@ -717,6 +728,7 @@ export class World implements BossHost {
   private take(b: Bonus) {
     const h = this.hero, W = C.WEAPONS;
     this.score += C.POINTS.bonus;
+    this.stats.bonuses++; this.events.push({ type: 'bonus' });
     let label = '';
     switch (b.kind) {
       case 'verm': h.ammo.verm = Math.min(W.verm.max, h.ammo.verm + W.verm.pickup); label = '+' + W.verm.pickup + ' VERMICELLES'; break;
@@ -751,12 +763,22 @@ export class World implements BossHost {
         this.score += C.POINTS.wave;
         this.popups.push({ text: 'VAGUE +' + C.POINTS.wave, x: Math.max(2, Math.min(e.x, C.W - 50)), y: e.y - 10, t: 0 });
         this.sfx.play('wave');
+        this.events.push({ type: 'wave' });
       }
     }
   }
 
-  private killEnemy(e: Enemy, scored: boolean, sound = true) {
+  private killEnemy(e: Enemy, scored: boolean, sound = true, by?: Shot) {
     if (e.dead) return;
+    if (scored) {
+      this.stats.kills++;
+      this.events.push({ type: 'kill', kind: e.kind, by: by?.kind });
+      if (by && by.src && (by.kind === 'pinata' || by.kind === 'shard')) { // combien d'ennemis pour une même Piñata ?
+        const n = (this.pinataKills.get(by.src) || 0) + 1;
+        this.pinataKills.set(by.src, n);
+        if (n === 5) this.events.push({ type: 'pinata5' });
+      }
+    }
     const [cx, cy] = enemyCenter(e);
     const colors = e.kind === 'flyGold' || e.kind === 'wasp' ? [FC.P.y, FC.P.Y, FC.P.W] : e.kind === 'mint' ? [FC.P.r, FC.P.W] : FC.SPRINKLES;
     this.burst(cx, cy, e.kind === 'spider' || e.kind === 'hanger' ? 18 : 10, colors, 60);
@@ -778,6 +800,7 @@ export class World implements BossHost {
   }
 
   private breakObstacle(o: Obstacle) {
+    this.events.push({ type: 'break' });
     if (o.kind === 'web') { this.tear(o); this.score += C.POINTS.planet; return; }
     o.dead = true;
     const [cx, cy] = shapeCenter(o), J = C.WEAPONS.jaw;
@@ -806,7 +829,7 @@ export class World implements BossHost {
 
   private loseLife() {
     const h = this.hero;
-    h.energy = 0; h.lives--; h.dead = 1.4; h.slow = 0; h.ghost = 0;
+    h.energy = 0; h.lives--; h.dead = 1.4; h.slow = 0; h.ghost = 0; this.stats.livesLost++;
     this.burst(h.x + 20, h.y + 16, 50, FC.RAINBOW.concat([FC.P.W, FC.P.P]), 110);
     this.eshots = [];
     this.sfx.play('lose');
@@ -838,6 +861,7 @@ export class World implements BossHost {
     const core = overlap(sb, b.coreBox()), body = b.hitsBody(sb);
     if (!core && !((s.kind === 'jaw' || s.kind === 'pinata') && body)) return;
     if (core || s.kind === 'jaw') {
+      if (!s.touched && s.kind !== 'shard') { s.touched = true; this.stats.hitShots++; }
       const killed = b.damage(s.dmg);
       this.score += s.dmg * 5;
       this.burst(sb.x + sb.w / 2, sb.y + sb.h / 2, 4, [FC.P.q, FC.P.W, FC.P.P], 40);
@@ -849,6 +873,7 @@ export class World implements BossHost {
   }
 
   private bossDefeated() {
+    this.events.push({ type: 'boss' });
     this.score += C.BOSS.points;
     this.say("L'ARAIGNÉE DE FER EST VAINCUE !");
     for (const e of this.enemies) this.killEnemy(e, true, false);

@@ -52,13 +52,15 @@ Jeu en ligne : https://fanfan-py.github.io/FooCat/
       pour accepter « Constance » ou « Violette ». Liste dans src/game/scores.ts.
 - [ ] Plus tard, si on le souhaite : classement partagé en ligne entre tous les joueurs.
 
-## Étape 4 : réglages et récompenses
+## Étape 4 : réglages et récompenses (faite le 27 octobre 2026)
 
-- [ ] Écran **Réglages** : volume de la musique et des effets, tir automatique,
+- [x] Écran **Réglages** (accueil et pause) : volume de la musique et des effets, tir automatique,
       commandes inversées pour les gauchers, vibrations (Android).
-- [ ] **Bilan de fin de niveau** : ennemis vaincus, précision, bonus ramassés, 1 à 3 étoiles.
-- [ ] **Succès** à débloquer (finir un niveau sans être touché, vaincre 500 mouches…).
-- [ ] **Apparences de soucoupe** à gagner (donut chocolat, fraise, arc-en-ciel…).
+- [x] **Bilan de fin de niveau** : ennemis vaincus, précision, bonus ramassés, coups reçus, temps,
+      et 1 à 3 étoiles (2 étoiles : 4 coups reçus au plus ; 3 étoiles : 1 coup au plus).
+- [x] **13 succès** à débloquer (accueil → « Succès »), annoncés pendant le jeu.
+- [x] **8 soucoupes** (accueil → « Soucoupes ») : Fraise au départ ; Chocolat, Menthe, Citron, Réglisse,
+      Myrtille, Or et Arc-en-ciel se gagnent avec des succès.
 
 ## Étape 5 : maquettes du monde aquatique
 

@@ -18,6 +18,8 @@ export interface Enemy {
 export interface Shot {
   kind: WeaponKind | 'jaw' | 'shard'; x: number; y: number; vx: number; vy: number; dmg: number;
   life: number; age: number; frame: number; bounces: number; hit: Enemy[]; dead: boolean; hitBoss?: boolean;
+  src?: number; // numéro du tir (les éclats de Piñata gardent celui de leur Piñata)
+  touched?: boolean; // ce tir a déjà touché (pour la précision)
 }
 export interface EShot { kind: 'web' | 'sugar' | 'bullet'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean }
 // elec : zone électrique (clôture) qui s'allume (on secondes) et s'éteint (off secondes)
