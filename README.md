@@ -51,6 +51,9 @@ sont dans `src/game/config.ts`.
 4. Terres de fer : clôtures électriques qui s'allument et s'éteignent, tourelles, drones-araignées.
 5. La forteresse : piliers, mini-araignées de métal, puis le boss, l'Araignée de Fer
    (seul son cœur rose est fragile ; 3 phases : toiles, mini-araignées, laser des yeux).
+6. Retour dans l'espace : comètes, jets de paillettes (piège qui peut cacher des monstres),
+   crevettes chauve-souris. Une histoire en 4 cases le précède.
+7. Vers la planète aquatique : blocs de glace, gouttes géantes, poissons guitare et leurs notes de feu.
 
 Chaque niveau est décrit dans la liste `LEVELS` de `src/game/config.ts` : son nom, ses points
 à gagner, son décor, la présence d'un sol, et ses étapes (quels ennemis et obstacles, à quelle

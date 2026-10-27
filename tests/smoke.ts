@@ -2,7 +2,7 @@
 // pour vérifier que rien ne plante et mesurer la durée et la difficulté.
 import { FC } from '../src/art';
 import { World, Controls } from '../src/game/world';
-import { vrange } from '../src/game/things';
+import { vrange, jetCircles, jetState } from '../src/game/things';
 import { App, AppInput } from '../src/game/app';
 import { W, H, LEVELS, Mode } from '../src/game/config';
 import { savePng } from './png';
@@ -19,6 +19,10 @@ function robot(w: World, t: number): Controls {
   const blocked: [number, number][] = [];
   for (const o of w.obstacles) {
     if (o.x + o.pix.w > h.x && o.x - h.x < 95) { const [a, b] = vrange(o); blocked.push([a - 12, b + 12]); }
+  }
+  // jets de paillettes allumés ou sur le point de l'être
+  for (const o of w.obstacles) if (o.jet && jetState(o, w.t) !== 'off') {
+    for (const [cx, cy, r] of jetCircles(o)) if (Math.abs(cx - (h.x + 20)) < 40) blocked.push([cy - r - 12, cy + r + 12]);
   }
   // prévoit où seront les tirs ennemis et les guêpes dans la seconde qui vient
   for (const s of w.eshots) {

@@ -21,10 +21,12 @@ export interface Shot {
   src?: number; // numéro du tir (les éclats de Piñata gardent celui de leur Piñata)
   touched?: boolean; // ce tir a déjà touché (pour la précision)
 }
-export interface EShot { kind: 'web' | 'sugar' | 'bullet'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean }
+export interface EShot { kind: 'web' | 'sugar' | 'bullet' | 'note'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean; age?: number }
 // elec : zone électrique (clôture) qui s'allume (on secondes) et s'éteint (off secondes)
 export interface Elec { x: number; y: number; w: number; h: number; offset: number; on: number; off: number }
-export interface Obstacle { kind: C.ObstacleKind; pix: Pix; x: number; y: number; shapes: Shape[]; speed: number; dead: boolean; belt: boolean; elec?: Elec; top?: boolean }
+// jet de paillettes : part du rocher en biais (vers le haut ou vers le bas), s'allume et s'éteint
+export interface Jet { offset: number; down: boolean }
+export interface Obstacle { kind: C.ObstacleKind; pix: Pix; x: number; y: number; shapes: Shape[]; speed: number; dead: boolean; belt: boolean; elec?: Elec; top?: boolean; jet?: Jet }
 export interface Bonus { kind: BonusKind; x: number; y: number; baseY: number; speed: number; t: number; dead: boolean }
 export interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; color: Color; g: number }
 export interface Popup { text: string; x: number; y: number; t: number }
@@ -70,6 +72,7 @@ const BOXES: Record<EnemyKind, Box> = {
   wasp: { x: 2, y: 3, w: 18, h: 9 }, ant: { x: 2, y: 3, w: 18, h: 12 }, mint: { x: 0, y: 0, w: 0, h: 0 },
   drone: { x: 5, y: 5, w: 17, h: 11 }, turret: { x: 3, y: 4, w: 16, h: 10 }, spiderling: { x: 1, y: 2, w: 13, h: 8 },
   scorpion: { x: 1, y: 5, w: 22, h: 12 },
+  batShrimp: { x: 2, y: 11, w: 24, h: 12 }, guitarFish: { x: 2, y: 3, w: 26, h: 12 }, comet: { x: 29, y: 1, w: 10, h: 10 },
 };
 export function enemyBox(e: Enemy): Box {
   if (e.kind === 'mint') return { x: e.x + 1, y: e.y + 1, w: e.size * 2 + 1, h: e.size * 2 + 1 };
@@ -89,6 +92,9 @@ export function enemySprite(e: Enemy, t: number): Pix {
     case 'turret': return FC.turret(e.flash > 0 || e.shootT < 0.25 ? 1 : 0);
     case 'spiderling': return FC.spr('spiderling', Math.floor(t * 8 + e.phase) % 2);
     case 'scorpion': return FC.spr('scorpion', Math.floor(t * 6 + e.phase) % 2);
+    case 'batShrimp': return FC.spr('batShrimp', Math.floor(t * 8 + e.phase) % 2);
+    case 'guitarFish': return FC.spr('guitarFish', Math.floor(t * 6 + e.phase) % 2);
+    case 'comet': return FC.spr('comet', Math.floor(t * 10));
   }
 }
 
@@ -193,4 +199,36 @@ export function cableDef(rnd: () => number): ObstacleDef {
 export function cablePoint(o: Obstacle, f: number): [number, number] {
   const L = o.pix.w - 4, sag = o.pix.h - 10, x = f * L;
   return [o.x + 2 + x, o.y + 3 + sag * (1 - Math.pow((x - L / 2) / (L / 2), 2))];
+}
+
+// bloc de glace (en losange)
+export function iceDef(rnd: () => number): ObstacleDef {
+  const r = [8, 10, 12][Math.floor(rnd() * 3)], pix = FC.iceBlock(r);
+  return { kind: 'ice', pix, shapes: [{ t: 'e', cx: r + 1, cy: r + 1, rx: r * 0.72, ry: r * 0.72 }] };
+}
+// goutte d'eau géante
+export function dropDef(rnd: () => number): ObstacleDef {
+  const r = [7, 9][Math.floor(rnd() * 2)], pix = FC.waterDrop(r);
+  return { kind: 'drop', pix, shapes: [{ t: 'e', cx: r + 2, cy: r * 2 + 1, rx: r * 0.9, ry: r * 0.9 }, { t: 'e', cx: r + 2, cy: r, rx: r * 0.4, ry: r * 0.7 }] };
+}
+// rocher d'où jaillit un jet de paillettes
+export function jetRockDef(): ObstacleDef {
+  const pix = FC.cakePlanet(14, 'M', 'm', 5);
+  return { kind: 'jet', pix, shapes: [{ t: 'e', cx: pix.w / 2, cy: pix.h / 2, rx: 12.6, ry: 12.6 }] };
+}
+// le jet : allumé, en avertissement (il scintille), ou éteint
+export function jetState(o: Obstacle, t: number): 'on' | 'warn' | 'off' {
+  const ph = (t + o.jet!.offset) % (C.JET.on + C.JET.off);
+  return ph < C.JET.on ? 'on' : ph > C.JET.on + C.JET.off - C.JET.warn ? 'warn' : 'off';
+}
+// la bouche du jet et sa direction (en biais vers la gauche)
+export function jetOrigin(o: Obstacle): { x: number; y: number; dx: number; dy: number } {
+  const down = o.jet!.down;
+  return { x: o.x + o.pix.w / 2 - 4, y: down ? o.y + o.pix.h - 4 : o.y + 4, dx: -0.68, dy: down ? 0.74 : -0.74 };
+}
+// cercles qui couvrent le jet (pour savoir si on le touche)
+export function jetCircles(o: Obstacle): [number, number, number][] {
+  const g = jetOrigin(o), out: [number, number, number][] = [];
+  for (let d = 12; d <= C.JET.length; d += 11) out.push([g.x + g.dx * d, g.y + g.dy * d, 4 + d * 0.05]);
+  return out;
 }

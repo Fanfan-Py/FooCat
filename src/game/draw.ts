@@ -2,7 +2,7 @@
 import { FC, Pix, Color } from '../art';
 import * as C from './config';
 import { World, WEAPON_ORDER, rainStage } from './world';
-import { enemySprite, elecOn, elecSoon, cablePoint } from './things';
+import { enemySprite, elecOn, elecSoon, cablePoint, jetState, jetOrigin, jetCircles, enemyCenter } from './things';
 import { heroSprite } from './rewards';
 
 // apparence de la soucoupe choisie par le joueur
@@ -166,7 +166,49 @@ function fortressBands(scr: Pix, w: World) {
   for (let x = 0; x < C.W; x++) if ((x + off) % 6 < 2) scr.rect(x, G + 4, 1, C.H - G - 4, P.N);
 }
 
-const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress };
+// ---------- niveau 6 : retour dans l'espace ----------
+function decorSpace2(scr: Pix, w: World) {
+  const d = FC.mk('decorSpace2', () => {
+    const tint = FC.col('0f1f4a');
+    return { bg: FC.bg('n6', C.W, C.H, [[0, '050a1f'], [0.6, '0f1f4a'], [1, '1d3a6e']]), stars: FC.stars(61, C.W, C.H, 150), ocean: far(FC.oceanPlanet(14), tint, 0.4) };
+  }), t = w.t;
+  scr.d.set(d.bg.d);
+  FC.drawStars(scr, d.stars, t, [3, 9, 20]);
+  scr.blit(d.ocean, C.W - 70 - Math.round(w.progress * 30), 22);
+  for (let c = 0; c < 2; c++) { // comètes au loin (décor)
+    const ph = (t * 0.12 + c / 2) % 1;
+    scr.blit(FC.spr('comet', Math.floor(t * 8)), 360 - ph * 460, 30 + c * 60 + ph * 50, false, 0.35);
+  }
+}
+// ---------- niveau 7 : vers la planète aquatique ----------
+function decorOcean(scr: Pix, w: World) {
+  const d = FC.mk('decorOcean', () => ({ bg: FC.bg('n7', C.W, C.H, [[0, '06142e'], [0.6, '0d3360'], [1, '1a5a8a']]), stars: FC.stars(71, C.W, C.H, 120), ocean: FC.oceanPlanet(92) }));
+  const t = w.t;
+  scr.d.set(d.bg.d);
+  FC.drawStars(scr, d.stars, t, [3, 8, 18]);
+  let k = w.progress; if (w.state === 'cleared') k = 1 + w.stateT * 0.5;
+  scr.blit(d.ocean, Math.round(C.W + 10 - k * 120), -6);
+}
+
+// jet de paillettes : il jaillit en biais du rocher, scintille juste avant, et peut cacher des monstres
+function drawJet(scr: Pix, o: any, t: number) {
+  const st = jetState(o, t), g = jetOrigin(o);
+  if (st === 'off') return;
+  if (st === 'warn') { for (let k = 0; k < 8; k++) scr.put(g.x - 5 + ((k * 5 + Math.floor(t * 20)) % 11), g.y + g.dy * (2 + (k % 3)), FC.alpha(FC.RAINBOW[k % 6], 220)); return; }
+  const L = C.JET.length, px = -g.dy, py = g.dx; // direction en travers du jet
+  for (let i = 0; i < 360; i++) {
+    const ph = (((i * 37) % 100) / 100 + t * 0.9) % 1, spread = (i % 11 - 5) * (1.5 + ph * 5);
+    const x = g.x + g.dx * ph * L + px * spread * 0.9, y = g.y + g.dy * ph * L + py * spread * 0.9;
+    const c = FC.alpha(i % 5 ? FC.RAINBOW[i % 6] : P.W, 240 * (1 - ph * 0.5));
+    scr.put(x, y, c); if (i % 3 === 0) scr.put(x + 1, y, c);
+  }
+}
+// un monstre est-il caché dans un jet allumé ?
+function inJet(w: World, x: number, y: number) {
+  return w.obstacles.some((o) => o.jet && jetState(o, w.t) === 'on' && jetCircles(o).some(([cx, cy, r]) => (x - cx) ** 2 + (y - cy) ** 2 < (r + 6) ** 2));
+}
+
+const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean };
 
 // ---------- le niveau ----------
 export function drawWorld(scr: Pix, w: World) {
@@ -199,12 +241,16 @@ export function drawWorld(scr: Pix, w: World) {
   if (w.level.decor === 'fortress') fortressBands(scr, w);
 
   for (const b of w.bonuses) scr.blit(FC.spr(BONUS_SPRITE[b.kind]), b.x, b.y);
+  const jets = w.obstacles.some((o) => o.jet);
   for (const e of w.enemies) {
     if (e.kind === 'hanger') scr.line(e.x + 11, top, e.x + 11, e.y + 4, FC.alpha(P.W, 190));
-    scr.blit(enemySprite(e, t), e.x, e.y, false, e.flash > 0 ? 0.4 : 1);
+    const hidden = jets && inJet(w, ...enemyCenter(e));
+    scr.blit(enemySprite(e, t), e.x, e.y, false, hidden ? 0.3 : e.flash > 0 ? 0.4 : 1);
   }
+  for (const o of w.obstacles) if (o.jet) drawJet(scr, o, t); // les paillettes passent par-dessus les monstres
   for (const s of w.eshots) {
     if (s.kind === 'web') scr.blit(FC.spr('web', Math.floor(t * 8) % 4), s.x, s.y);
+    else if (s.kind === 'note') scr.blit(FC.spr('note', Math.floor(t * 8) % 3), s.x, s.y);
     else if (s.kind === 'bullet') { scr.rect(s.x - 1, s.y - 1, 5, 5, FC.alpha(P.R, 90)); scr.rect(s.x, s.y, 3, 3, P.R); scr.put(s.x + 1, s.y + 1, P.q); }
     else scr.blit(FC.spr('sugar'), s.x, s.y);
   }

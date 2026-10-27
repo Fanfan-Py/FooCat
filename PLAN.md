@@ -15,7 +15,7 @@ Jeu en ligne : https://fanfan-py.github.io/FooCat/
 - **Jets de paillettes** : un **piège du décor**, qui peut **cacher des monstres**.
 - Autres idées retenues : écran Réglages, bilan de fin de niveau, succès, apparences de soucoupe,
   mode infini et défi du jour. Pas de tutoriel pour le moment.
-- Histoire illustrée entre les mondes : **à voir**, d'abord une maquette.
+- Histoire illustrée entre les mondes : **oui** (4 cases entre le niveau 5 et le niveau 6).
 
 ## Étape 1 : corrections et réglages (faite le 27 octobre 2026)
 
@@ -70,12 +70,16 @@ Maquettes : https://claude.ai/artifact/XtWEHV1D6kjwZ7Kc3LLC86 (en bas de la plan
       et une page des personnages aquatiques. **À valider.** Les dessins sont déjà dans src/art/aqua.js.
 - [x] Maquette d'une histoire illustrée en 4 cases entre le niveau 5 et le niveau 6. **À décider.**
 
-## Étape 6 : niveaux 6 et 7, retour dans l'espace
+## Étape 6 : niveaux 6 et 7, retour dans l'espace (faite le 27 octobre 2026)
 
 | Niveau | Décor | Obstacles | Monstres | Fin |
 |---|---|---|---|---|
 | 6. Retour dans l'espace | espace, comètes | pluie de comètes, astéroïdes-bonbons, jets de paillettes | crevettes chauve-souris, et les anciens | — |
 | 7. Vers la planète aquatique | la planète bleue grossit | blocs de glace, gouttes géantes, jets de paillettes | poissons guitare, crevettes chauve-souris | plongeon dans l'océan |
+
+- [x] Niveaux 6 et 7 jouables (avec les comètes, les jets de paillettes et les poissons guitare).
+- [x] Histoire illustrée en 4 cases entre le niveau 5 et le niveau 6 (Échap pour la passer).
+- [x] Ailes de la crevette chauve-souris agrandies.
 
 ## Étape 7 : niveaux 8 et 9, la planète aquatique
 
@@ -83,6 +87,11 @@ Maquettes : https://claude.ai/artifact/XtWEHV1D6kjwZ7Kc3LLC86 (en bas de la plan
 |---|---|---|---|---|
 | 8. La planète sous-marine | fonds marins, sable, coraux, rayons de lumière | algues au sol et au plafond, bulles soporifiques | crabes, méduses, poissons guitare | entrée du château |
 | 9. Le château marin | couloirs de corail et de pierre | algues, bulles soporifiques, herses | méduses, crabes gardes, crevettes accrochées au plafond | salle du trône |
+
+Ajouts demandés après les maquettes :
+- [ ] Les **crabes sautent** (comme les fourmis).
+- [ ] Les **maracas des crabes rebondissent** sur le sol.
+- [ ] Les **algues s'allongent** (elles poussent pendant qu'on avance).
 
 ## Étape 8 : niveau 10, le poisson squelette de la mort
 

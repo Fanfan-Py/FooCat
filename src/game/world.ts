@@ -5,6 +5,7 @@ import {
   Box, Shape, Enemy, Shot, EShot, Obstacle, Bonus, Particle, Popup, Message, ObstacleDef,
   WeaponKind, BonusKind, EnemyKind, newEnemy, overlap, hitObstacle, shapeCenter, vrange, enemyBox, enemyCenter,
   planetDefs, beltDefs, lollipopDef, cottonDef, webDef, fenceDef, pillarDef, cableDef, cablePoint, elecOn, pickWeighted,
+  iceDef, dropDef, jetRockDef, jetState, jetCircles, boxEllipse,
 } from './things';
 import { Boss, BossHost } from './boss';
 
@@ -301,6 +302,22 @@ export class World implements BossHost {
       }
       return;
     }
+    if (kind === 'ice' || kind === 'drop') {
+      const d = kind === 'ice' ? iceDef(this.rnd) : dropDef(this.rnd);
+      for (let tries = 0; tries < 8; tries++) {
+        const y = this.top + 4 + this.rnd() * (this.floor - this.top - d.pix.h - 8);
+        if (this.passageOk(d, y)) { this.place(d, y, speed); return; }
+      }
+      return;
+    }
+    if (kind === 'jet') { // rocher posé en bas (jet vers le haut) ou en haut (jet vers le bas)
+      const d = jetRockDef(), down = this.rnd() < 0.5;
+      const y = down ? this.top - d.pix.h * 0.45 : this.floor - d.pix.h * 0.55;
+      if (this.obstacles.some(o => o.x > C.W - 60)) return;
+      this.place(d, y, speed);
+      this.obstacles[this.obstacles.length - 1].jet = { offset: this.rnd() * 4, down };
+      return;
+    }
     if (kind === 'web') {
       const d = webDef(this.rnd);
       for (let tries = 0; tries < 6; tries++) {
@@ -360,6 +377,22 @@ export class World implements BossHost {
         if (!G) return this.spawnFormation('solo', gold);
         const n = 1 + Math.floor(R() * (1 + this.progress));
         for (let i = 0; i < n; i++) this.enemies.push(newEnemy('turret', C.W + 6 + i * 70, G - 13, { shootT: 1 + R() * 1.5 }));
+        return;
+      }
+      case 'batShrimp': { // 1 à 3 crevettes qui volent en grandes vagues
+        const n = 1 + Math.floor(R() * (2 + this.progress));
+        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('batShrimp', C.W + 6 + i * 30, top + 40 + R() * (playBottom - top - 70), { phase: R() * 6 + i, speed: (55 + R() * 14) * sp, amp: 14 + R() * 12 }));
+        return;
+      }
+      case 'guitar': {
+        if (this.enemies.filter(e => e.kind === 'guitarFish').length >= 3) return this.spawnFormation('solo', gold);
+        return void this.enemies.push(newEnemy('guitarFish', C.W + 6, top + 20 + R() * (playBottom - top - 40), {
+          phase: R() * 6, speed: 55, amp: 10, holdX: 190 + R() * 90, holdT: 5 + R() * 2, shootT: 1.2,
+        }));
+      }
+      case 'comets': { // comètes qui tombent en diagonale
+        const n = 1 + Math.floor(R() * 2);
+        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('comet', C.W + 10 + R() * 120, top - 6 + R() * 50, { vx: -(150 + R() * 50) * sp, vy: (55 + R() * 40) * sp, phase: R() * 6 }));
         return;
       }
       case 'scorpion': {
@@ -530,6 +563,28 @@ export class World implements BossHost {
             this.aimShot('bullet', e.x + 3, e.y + 2, (70 + 18 * p) * m.speed);
           }
           break;
+        case 'batShrimp': // vole en grandes vagues
+          e.x -= e.speed * dt * (cleared ? 2 : 1);
+          e.y = e.baseY + Math.sin(this.t * 2.2 + e.phase) * e.amp;
+          break;
+        case 'comet':
+          e.x += e.vx * dt; e.y += e.vy * dt;
+          break;
+        case 'guitarFish': // s'arrête, ondule et lance des notes de feu
+          if (e.x > e.holdX && e.holdT > 0) e.x -= e.speed * dt;
+          else {
+            e.holdT -= dt;
+            if (e.holdT <= 0) e.x -= 70 * dt;
+            e.shootT -= dt;
+            if (e.shootT <= 0 && e.holdT > 0 && this.canAim(e)) {
+              e.shootT = lerp(2.8, 2.0, p) / m.enemyFire;
+              const [hx, hy] = this.heroCenter(), sx = e.x, sy = e.y + 4, d = Math.hypot(hx - sx, hy - sy) || 1, v = 60 * m.speed;
+              this.eshots.push({ kind: 'note', x: sx, y: sy, vx: (hx - sx) / d * v, vy: (hy - sy) / d * v, g: 0, dead: false, age: 0 });
+              this.sfx.play('note');
+            }
+          }
+          e.y = e.baseY + Math.sin(this.t * 1.8 + e.phase) * e.amp;
+          break;
         case 'scorpion': // marche au sol, sa queue tire 3 balles en éventail
           e.x -= (this.level.scroll + 10) * dt;
           e.shootT -= dt;
@@ -584,8 +639,10 @@ export class World implements BossHost {
     const h = this.hero, hb = this.heroBox();
     for (const s of this.eshots) {
       s.vy += s.g * dt; s.x += s.vx * dt; s.y += s.vy * dt;
+      if (s.kind === 'note') { s.age = (s.age || 0) + dt; s.y += Math.cos(s.age * 7) * 34 * dt; } // la note ondule
       if (s.x < -12 || s.x > C.W + 12 || s.y < -40 || s.y > this.floor) s.dead = true;
-      const b = s.kind === 'web' ? { x: s.x + 2, y: s.y + 2, w: 7, h: 7 } : s.kind === 'bullet' ? { x: s.x, y: s.y, w: 3, h: 3 } : { x: s.x, y: s.y, w: 5, h: 5 };
+      const b = s.kind === 'web' ? { x: s.x + 2, y: s.y + 2, w: 7, h: 7 } : s.kind === 'bullet' ? { x: s.x, y: s.y, w: 3, h: 3 }
+        : s.kind === 'note' ? { x: s.x + 2, y: s.y + 2, w: 8, h: 10 } : { x: s.x, y: s.y, w: 5, h: 5 };
       if (!s.dead && this.heroAlive() && h.inv <= 0 && overlap(hb, b)) {
         s.dead = true;
         if (s.kind === 'web') h.slow = C.WEB_SLOW.time;
@@ -679,6 +736,11 @@ export class World implements BossHost {
       o.x -= o.speed * dt;
       if (o.x + o.pix.w < -4) o.dead = true;
       if (o.dead || !this.heroAlive() || h.ghost > 0) continue;
+      if (o.jet && h.inv <= 0 && jetState(o, this.t) === 'on' && jetCircles(o).some(([cx, cy, r]) => boxEllipse(hb, cx, cy, r, r))) {
+        this.flash = 0.2; this.flashColor = [255, 120, 200, 255];
+        this.hurt(C.DAMAGE.web, 'paillettes');
+        continue;
+      }
       if (o.elec && h.inv <= 0 && elecOn(o, this.t) && overlap(hb, { x: o.x + o.elec.x, y: o.y + o.elec.y, w: o.elec.w, h: o.elec.h })) {
         this.flash = 0.2; this.flashColor = [255, 230, 80, 255];
         this.hurt(C.DAMAGE.web, 'électricité');

@@ -18,7 +18,7 @@ export interface AppInput extends Controls {
 }
 
 type After = 'over' | 'end' | 'title';
-type State = 'title' | 'play' | 'pause' | 'over' | 'done' | 'end' | 'name' | 'scores' | 'settings' | 'succes' | 'skins';
+type State = 'title' | 'play' | 'pause' | 'over' | 'done' | 'end' | 'name' | 'scores' | 'settings' | 'succes' | 'skins' | 'story';
 function loadText(key: string): string { try { return localStorage.getItem(key) || ''; } catch { return ''; } }
 function load(key: string): number { try { return Number(localStorage.getItem(key)) || 0; } catch { return 0; } }
 function save(key: string, n: number) { try { localStorage.setItem(key, String(n)); } catch { /* stockage indisponible */ } }
@@ -30,7 +30,26 @@ function right(scr: Pix, s: string, x: number, y: number, c: number[], o: any = 
 
 const MODES: C.Mode[] = ['normal', 'difficile'];
 const MODE_NAMES: Record<C.Mode, string> = { normal: 'NORMAL', difficile: 'DIFFICILE' };
-const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron'];
+const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'nebula'];
+
+// histoire illustrée entre le niveau 5 et le niveau 6
+const STORY = [
+  { scene: 'story1', text: "L'ARAIGNÉE DE FER EST VAINCUE ! LE CHAT LICORNE S'ÉCHAPPE DE LA FORTERESSE." },
+  { scene: 'story2', text: "DANS L'ESPACE FLOTTE UNE BOUTEILLE... À L'INTÉRIEUR, UN MESSAGE : AU SECOURS !" },
+  { scene: 'story3', text: 'UNE PLANÈTE AQUATIQUE EST MENACÉE PAR LE TERRIBLE POISSON SQUELETTE DE LA MORT.' },
+  { scene: 'story4', text: "LE CHAT LICORNE N'HÉSITE PAS : CAP SUR L'OCÉAN DES ÉTOILES ! PLOUF !" },
+];
+const STORY_BEFORE = 5; // l'histoire se montre avant le niveau 6 (numéro 5 en partant de 0)
+// coupe un texte en lignes qui tiennent dans la largeur donnée
+function wrap(text: string, width: number): string[] {
+  const lines: string[] = []; let cur = '';
+  for (const word of text.split(' ')) {
+    const next = cur ? cur + ' ' + word : word;
+    if (FC.textWidth(next) > width && cur) { lines.push(cur); cur = word; } else cur = next;
+  }
+  if (cur) lines.push(cur);
+  return lines;
+}
 
 // petit menu vertical : flèches haut/bas + Entrée, ou toucher une ligne
 class Menu {
@@ -104,6 +123,7 @@ export class App {
   private bilan: { stars: number; kills: number; acc: number; bonuses: number; hits: number; time: number } | null = null;
   private titleStars = FC.stars(3, C.W, C.H, 120);
   private bigHero: Record<string, Pix> = {};
+  private story = { idx: 0, carry: undefined as Carry | undefined, scenes: [] as any[], pix: null as Pix | null };
 
   constructor(private sfx: Sfx) {
     if (!SKINS.some((s) => s.id === this.skin) || !this.skinOpen(this.skin)) this.skin = 'classic';
@@ -175,6 +195,7 @@ export class App {
         if (i === 1) this.go('title');
         else if (i === 0) {
           if (this.state === 'over') this.startLevel(w.levelIndex, this.levelStart ?? undefined);
+          else if (w.levelIndex + 1 === STORY_BEFORE) this.openStory(w.carry());
           else if (w.levelIndex + 1 < C.LEVELS.length) this.startLevel(w.levelIndex + 1, w.carry());
           else { if (!this.devRun) this.writeSave(null); this.afterGame('end', true); }
         }
@@ -194,6 +215,13 @@ export class App {
       case 'settings': this.updateSettings(c); break;
       case 'succes': this.updateSucces(c); break;
       case 'skins': this.updateSkins(c); break;
+      case 'story':
+        if (c.pause) { this.startLevel(STORY_BEFORE, this.story.carry); break; } // Échap : passer l'histoire
+        if (this.stateT > 0.6 && (c.confirm || c.tapX >= 0)) {
+          if (++this.story.idx >= STORY.length) this.startLevel(STORY_BEFORE, this.story.carry);
+          else { this.stateT = 0; this.sfx.play('swap'); }
+        }
+        break;
     }
   }
 
@@ -332,12 +360,33 @@ export class App {
     else if (a === 'skins') { this.sel = Math.max(0, SKINS.findIndex((s) => s.id === this.skin)); this.go('skins'); }
     else if (a === 'settings') this.openSettings('title');
     else if (a === 'continue' && sv) { this.devRun = false; this.startLevel(sv.level, sv.carry); }
+    else if (this.dev && this.choice === STORY_BEFORE) { this.devRun = true; this.openStory(); }
     else { this.devRun = this.dev && this.choice > 0; this.startLevel(this.dev ? this.choice : 0); }
   }
 
   private toggleMode() {
     this.mode = MODES[(MODES.indexOf(this.mode) + 1) % MODES.length];
     this.sfx.play('swap'); this.titleMenu();
+  }
+
+  // ---------- histoire illustrée ----------
+  private openStory(carry?: Carry) {
+    this.story.idx = 0; this.story.carry = carry;
+    if (!this.story.scenes.length) this.story.scenes = STORY.map((p) => FC.scenes[p.scene]());
+    this.go('story'); this.sfx.music?.('title');
+  }
+  private drawStory(scr: Pix) {
+    scr.d.fill(0); scr.rect(0, 0, C.W, C.H, P.K);
+    const sc = this.story.scenes[this.story.idx], panel = this.story.pix ?? (this.story.pix = new FC.Pix(150, 84));
+    sc.draw(panel, this.stateT + this.story.idx * 3);
+    scr.rect(8, 2, 304, 172, P.W); // bord blanc de la case de BD
+    scr.blit(panel.scale(2), 10, 4);
+    const lines = wrap(STORY[this.story.idx].text, 284);
+    const by = 172 - lines.length * 8 - 6;
+    scr.rect(14, by, 292, lines.length * 8 + 6, P.y); scr.rect(14, by, 292, 1, P.K); scr.rect(14, by + lines.length * 8 + 5, 292, 1, P.K);
+    lines.forEach((l, i) => center(scr, l, by + 4 + i * 8, P.K));
+    FC.text(scr, (this.story.idx + 1) + '/' + STORY.length, 16, 8, P.W, { outline: P.K });
+    if (this.stateT > 0.6 && this.t % 1.2 < 0.8) FC.text(scr, this.touch ? 'TOUCHE >' : 'ENTRÉE >', 266, 8, P.W, { outline: P.K });
   }
 
   // ---------- pause ----------
@@ -429,6 +478,7 @@ export class App {
     if (this.state === 'settings') return this.drawSettings(scr);
     if (this.state === 'succes') return this.drawSucces(scr);
     if (this.state === 'skins') return this.drawSkins(scr);
+    if (this.state === 'story') return this.drawStory(scr);
     if (this.state === 'title' || !this.world) return this.drawTitle(scr);
     const w = this.world;
     if (this.state === 'end') return this.drawEnd(scr);

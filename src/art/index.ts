@@ -4,6 +4,8 @@ import './sprites.js';
 import './decor.js';
 import './scenes.js';
 import './extra.js';
+import './aqua.js';
+import './story.js';
 
 export type Pix = { w: number; h: number; d: Uint8ClampedArray; [k: string]: any };
 export type Color = number[];

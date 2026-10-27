@@ -73,16 +73,21 @@
 
   // ---------- crevette chauve-souris ----------
   S.batShrimp = function (f) {
-    var p = new Pix(28, 22), b = new Pix(28, 22), up = f % 2 === 0;
+    var p = new Pix(32, 30), b = new Pix(32, 30), up = f % 2 === 0, oy = 4;
     // grandes ailes de chauve-souris (membrane violette, doigts plus foncés)
-    if (up) { p.tri(7, 11, 22, 11, 17, 0, P.U); p.tri(9, 11, 20, 11, 12, 2, P.U); p.tri(10, 11, 19, 11, 16, 3, P.u); p.line(17, 0, 14, 11, P.K); p.line(12, 2, 13, 11, P.K); }
-    else { p.tri(7, 11, 22, 11, 17, 21, P.U); p.tri(9, 11, 20, 11, 12, 19, P.U); p.tri(10, 11, 19, 11, 16, 18, P.u); p.line(17, 21, 14, 11, P.K); }
+    if (up) {
+      p.tri(5, 15, 27, 15, 20, 0, P.U); p.tri(5, 15, 18, 15, 9, 1, P.U); p.tri(9, 15, 25, 15, 19, 4, P.u); p.tri(8, 15, 16, 15, 10, 5, P.u);
+      p.line(20, 0, 15, 15, P.K); p.line(9, 1, 12, 15, P.K); p.put(20, 0, P.W); p.put(9, 1, P.W);
+    } else {
+      p.tri(5, 15, 27, 15, 20, 29, P.U); p.tri(5, 15, 18, 15, 9, 28, P.U); p.tri(9, 15, 25, 15, 19, 26, P.u); p.tri(8, 15, 16, 15, 10, 25, P.u);
+      p.line(20, 29, 15, 15, P.K); p.line(9, 28, 12, 15, P.K);
+    }
     // corps de crevette, recourbé
     var seg = [[5, 11, 3.2], [8.5, 11.5, 3.2], [12, 12, 3], [15, 13, 2.7], [17.5, 14.5, 2.3], [19.5, 16, 2]];
-    for (var i = 0; i < seg.length; i++) b.ell(seg[i][0], seg[i][1], seg[i][2], seg[i][2] * 0.9, i % 2 ? P.q : P.p);
-    b.tri(19, 16, 25, 14, 25, 20, P.P); // queue en éventail
-    b.rect(3, 10, 2, 2, P.K); b.put(3, 10, P.W); // œil
-    b.line(2, 9, 0, 4, P.P); b.line(3, 8, 2, 3, P.P); // antennes
+    for (var i = 0; i < seg.length; i++) b.ell(seg[i][0], seg[i][1] + oy, seg[i][2], seg[i][2] * 0.9, i % 2 ? P.q : P.p);
+    b.tri(19, 16 + oy, 25, 14 + oy, 25, 20 + oy, P.P); // queue en éventail
+    b.rect(3, 10 + oy, 2, 2, P.K); b.put(3, 10 + oy, P.W); // œil
+    b.line(2, 9 + oy, 0, 4 + oy, P.P); b.line(3, 8 + oy, 2, 3 + oy, P.P); // antennes
     b.outline(P.K);
     p.blit(b, 0, 0);
     return p;
