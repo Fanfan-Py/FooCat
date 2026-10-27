@@ -62,10 +62,13 @@ Jeu en ligne : https://fanfan-py.github.io/FooCat/
 - [x] **8 soucoupes** (accueil → « Soucoupes ») : Fraise au départ ; Chocolat, Menthe, Citron, Réglisse,
       Myrtille, Or et Arc-en-ciel se gagnent avec des succès.
 
-## Étape 5 : maquettes du monde aquatique
+## Étape 5 : maquettes du monde aquatique (faite le 27 octobre 2026)
 
-- [ ] Nouveaux décors et monstres ajoutés à la planche de maquettes, pour validation.
-- [ ] Maquette d'une petite histoire illustrée entre les mondes (à décider ensuite).
+Maquettes : https://claude.ai/artifact/XtWEHV1D6kjwZ7Kc3LLC86 (en bas de la planche).
+
+- [x] Nouveaux décors et monstres ajoutés à la planche de maquettes : niveaux 6 à 10 (le boss en 2 phases)
+      et une page des personnages aquatiques. **À valider.** Les dessins sont déjà dans src/art/aqua.js.
+- [x] Maquette d'une histoire illustrée en 4 cases entre le niveau 5 et le niveau 6. **À décider.**
 
 ## Étape 6 : niveaux 6 et 7, retour dans l'espace
 
