@@ -78,6 +78,7 @@ export const ENEMIES = {
   miniScorp: { points: 200, hp: 2, drop: 0.1 }, // mini-scorpion volant : se place n'importe où, vise, puis fonce
   phoenix: { points: 400, hp: 3, drop: 0.25 }, // phénix-poussin : renaît de ses cendres, sauf si on tire sur les cendres
   golem: { points: 600, hp: 14, drop: 0.4 }, // golem de lave : lent et très solide
+  miniScorpSkel: { points: 150, hp: 2, drop: 0.08 }, // mini-scorpion squelette (escorte du Scorpion de feu, 3e forme)
 };
 export type EnemyKind = keyof typeof ENEMIES;
 export const POINTS = { planet: 300, bonus: 50, wave: 500, belt: 1000, perSecond: 10 };
@@ -102,11 +103,11 @@ export interface Phase {
 export interface Level {
   num: number; name: string;
   points: number; // points à gagner dans ce niveau pour passer au suivant
-  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne' | 'space3' | 'approach' | 'vulcano' | 'cave';
+  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne' | 'space3' | 'approach' | 'vulcano' | 'cave' | 'volcanoThrone';
   ground: number | null; // hauteur du sol (null = pas de sol)
   ceiling: number | null; // hauteur du plafond (null = pas de plafond)
   outro?: string; // couleur du fondu de fin de niveau
-  boss?: 'spider' | 'skel'; // le niveau se termine en battant ce boss
+  boss?: 'spider' | 'skel' | 'scorp'; // le niveau se termine en battant ce boss
   water?: boolean; // sous l'eau : les groupes de mouches deviennent des bancs de poissons
   fire?: boolean; // monde Vulcano : les groupes de mouches deviennent des lucioles de feu
   scroll: number; // vitesse de défilement des obstacles (px/s)
@@ -247,13 +248,22 @@ export const LEVELS: Level[] = [
   },
   {
     num: 14, name: "DANS L'ANTRE DU VOLCAN", points: 34000, decor: 'cave', ground: 154, ceiling: 26, scroll: 38, fire: true, outro: 'r',
-    next: 'LA SUITE ARRIVE BIENTÔT : LE SCORPION VOLANT DE FEU !',
     phases: [
       { from: 0, obstacle: 3.4, obstacles: { lavaFall: 2, fireRock: 1 }, wave: 2.2, waves: { miniScorps: 1, line: 1, fireballs: 1 }, gold: 0.2 },
       { from: 0.2, banner: 'LES COULÉES DE LAVE !', obstacle: 2.8, obstacles: { lavaFall: 3 }, wave: 2.4, waves: { miniScorps: 1, phoenix: 1, line: 1 }, gold: 0.2 },
       { from: 0.45, banner: 'LES MINI-SCORPIONS !', obstacle: 3.2, obstacles: { lavaFall: 2, fireRock: 1 }, wave: 1.8, waves: { miniScorps: 2, phoenix: 1, fireballs: 1, line: 1 }, gold: 0.25 },
       { from: 0.7, banner: 'LES GOLEMS DE LAVE !', obstacle: 3.0, obstacles: { lavaFall: 2 }, wave: 2.0, waves: { golem: 1, miniScorps: 2, phoenix: 1, magma: 1 }, gold: 0.3 },
       { from: 0.9, banner: 'DERNIER EFFORT !', obstacle: 2.8, obstacles: { lavaFall: 2, fireRock: 1 }, wave: 1.6, waves: { miniScorps: 2, fireballs: 1, golem: 1, phoenix: 1 }, gold: 0.35 },
+    ],
+  },
+  {
+    num: 15, name: 'LA SALLE DU TRÔNE DU VOLCAN', points: 12000, decor: 'volcanoThrone', ground: 158, ceiling: 24, scroll: 40, fire: true, boss: 'scorp',
+    next: 'LA SUITE ARRIVE BIENTÔT : LE VAISSEAU DES BOSS !',
+    phases: [
+      { from: 0, obstacle: 3.4, obstacles: { lavaFall: 1, fireRock: 1 }, wave: 2.2, waves: { miniScorps: 1, emberBats: 1, line: 1 }, gold: 0.2 },
+      { from: 0.4, banner: 'LES GARDES DU SCORPION !', obstacle: 3.8, obstacles: { lavaFall: 1 }, wave: 1.8, waves: { scouts: 1, salamanders: 1, phoenix: 1, line: 1 }, gold: 0.25 },
+      { from: 0.75, obstacle: 4.0, obstacles: { fireRock: 1 }, wave: 1.6, waves: { emberBats: 2, miniScorps: 1, fireballs: 1 }, gold: 0.3 },
+      { from: 1, event: 'boss', banner: 'LE SCORPION VOLANT DE FEU !', obstacle: 99, obstacles: {}, wave: 99, waves: {}, gold: 0 },
     ],
   },
 ];
@@ -276,6 +286,8 @@ export const JET = { on: 1.8, off: 2.4, length: 100, warn: 0.7 };
 export const BOSS = { hp: 420, points: 10000, contact: 2, laser: 2 };
 // Le boss du niveau 10 : le poisson squelette (sa jauge se remplit une fois quand l'armure casse)
 export const SKEL = { hp: 200, points: 15000, contact: 2 };
+// Le boss du niveau 15 : le Scorpion volant de feu (3 formes ; hp pour chacune) ; breath : longueur du jet de feu
+export const SCORP = { hp: 100, points: 20000, contact: 2, fire: 1, breath: 80 };
 
 // La ceinture de donuts : des colonnes de planètes avec un passage qui ondule
 export const BELT = { columns: 10, every: 1.5, gap: 64, speed: 36, flies: 0.7 }; // flies : chance d'une mouche dans le passage, à chaque colonne

@@ -18,11 +18,11 @@ export const saveSettings = (s: Settings) => write('foocat.settings', s);
 // dailyWins : défis du jour réussis (dailyLast : date du dernier, AAAAMMJJ) ; cleanBosses : boss vaincus sans perdre de vie
 export interface Stats {
   flies: number; waves: number; bonuses: number; rainbowKills: number; jawBreaks: number;
-  stars: number; bestZone: number; dailyWins: number; dailyLast: number; cleanSpider: number; cleanSkel: number; cleanBosses: number;
+  stars: number; bestZone: number; dailyWins: number; dailyLast: number; cleanSpider: number; cleanSkel: number; cleanScorp: number; cleanBosses: number;
 }
 const DEFAULT_STATS: Stats = {
   flies: 0, waves: 0, bonuses: 0, rainbowKills: 0, jawBreaks: 0,
-  stars: 0, bestZone: 0, dailyWins: 0, dailyLast: 0, cleanSpider: 0, cleanSkel: 0, cleanBosses: 0,
+  stars: 0, bestZone: 0, dailyWins: 0, dailyLast: 0, cleanSpider: 0, cleanSkel: 0, cleanScorp: 0, cleanBosses: 0,
 };
 export const loadStats = () => read<Stats>('foocat.stats', DEFAULT_STATS);
 export const saveStats = (s: Stats) => write('foocat.stats', s);
@@ -37,6 +37,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'nolife', name: 'SANS UNE ÉGRATIGNURE', desc: 'FINIR UN NIVEAU SANS PERDRE DE VIE', skin: 'licorice' },
   { id: 'boss', name: 'ARAIGNÉE AU TAPIS', desc: "VAINCRE L'ARAIGNÉE DE FER", skin: 'blueberry' },
   { id: 'skel', name: 'ARÊTES EN MIETTES', desc: 'VAINCRE LE POISSON SQUELETTE DE LA MORT' },
+  { id: 'scorp', name: 'TROIS FOIS VAINCU', desc: 'VAINCRE LE SCORPION VOLANT DE FEU' },
   { id: 'score100k', name: '100 000 POINTS', desc: 'ATTEINDRE 100 000 POINTS DANS UNE PARTIE', skin: 'gold' },
   { id: 'hard', name: 'CHAMPION DE LA GALAXIE', desc: 'VAINCRE LE BOSS EN MODE DIFFICILE', skin: 'rainbow' },
   { id: 'stars3', name: 'TROIS ÉTOILES', desc: 'OBTENIR 3 ÉTOILES SUR UN NIVEAU' },
@@ -51,7 +52,7 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'collection', name: 'COLLECTIONNEUR', desc: '3 ÉTOILES SUR LES ' + LEVELS.length + ' NIVEAUX', cat: 'dore', goal: { stat: 'stars', n: LEVELS.length * 3 } },
   { id: 'marathon', name: 'MARATHON', desc: 'ATTEINDRE LA ZONE 15 EN MODE INFINI', cat: 'galaxie', goal: { stat: 'bestZone', n: 15 } },
   { id: 'fidele', name: 'FIDÈLE', desc: 'RÉUSSIR 7 DÉFIS DU JOUR', cat: 'fantome', goal: { stat: 'dailyWins', n: 7 } },
-  { id: 'chasseur', name: 'CHASSEUR DE BOSS', desc: 'VAINCRE LES 2 BOSS SANS PERDRE DE VIE', cat: 'squelette', goal: { stat: 'cleanBosses', n: 2 } },
+  { id: 'chasseur', name: 'CHASSEUR DE BOSS', desc: 'VAINCRE LES 3 BOSS SANS PERDRE DE VIE', cat: 'squelette', goal: { stat: 'cleanBosses', n: 3 } },
 ];
 
 // meilleures étoiles de chaque niveau (tous modes confondus), additionnées

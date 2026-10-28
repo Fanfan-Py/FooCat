@@ -246,6 +246,31 @@ function caveFront(scr: Pix, w: World) {
   for (let x = 0; x < C.W; x++) { const ly = C.H - 6 + Math.round(Math.sin((x + off) * 0.2 + t * 2)); scr.rect(x, ly, 1, C.H - ly, (x + off) % 9 === 0 ? LV.y : LV.r); } // rivière de lave
 }
 
+// ---------- niveau 15 : la salle du trône du volcan ----------
+function decorVolcanoThrone(scr: Pix, w: World) {
+  const d = FC.mk('decorVThrone', () => ({ bg: FC.bg('n15', C.W, C.H, [[0, '0c0610'], [0.6, '1e0c18'], [1, '4a1010']]) }));
+  const t = w.t, off = Math.floor(t * 12);
+  scr.d.set(d.bg.d);
+  // le trône au fond
+  const tx = 132 - Math.round(w.progress * 20);
+  scr.rect(tx, 40, 56, 118, FC.col('1a0e18')); scr.tri(tx, 40, tx + 28, 16, tx + 56, 40, FC.col('1a0e18')); scr.rect(tx + 10, 60, 36, 40, FC.col('2a1420'));
+  scr.ell(tx + 28, 36, 6, 6, FC.alpha(LV.r, 120 + Math.round(Math.sin(t * 3) * 60)));
+  // colonnes d'obsidienne avec des veines de lave
+  for (let k = -1; k < 5; k++) {
+    const x = 24 + k * 90 - (off % 90);
+    scr.rect(x - 9, 14, 18, 146, FC.col('140a14')); scr.rect(x - 9, 14, 3, 146, FC.col('3a2a40'));
+    for (let y = 20; y < 160; y += 2) scr.put(x + Math.round(Math.sin(y * 0.12 + k) * 3), y, (y + Math.floor(t * 10)) % 12 < 2 ? LV.y : FC.alpha(LV.r, 150));
+  }
+}
+function volcanoThroneFront(scr: Pix, w: World) { // plafond d'obsidienne, fossé de lave
+  const top = w.top, G = w.level.ground!, t = w.t, off = Math.floor(t * w.level.scroll);
+  scr.rect(0, C.HUD_H, C.W, top - C.HUD_H, FC.col('140a14')); scr.rect(0, top - 1, C.W, 1, FC.col('3a2a40'));
+  for (let x = 0; x < C.W; x++) {
+    const h = G + Math.round(Math.sin((x + off) * 0.13 + t * 2) * 1.5 + Math.sin((x + off) * 0.05 - t) * 1);
+    scr.put(x, h, LV.y); scr.rect(x, h + 1, 1, 2, LV.o); scr.rect(x, h + 3, 1, C.H - h - 3, (x + off) % 9 === 0 ? LV.o : LV.r);
+  }
+}
+
 // ---------- niveau 7 : vers la planète aquatique ----------
 function decorOcean(scr: Pix, w: World) {
   const d = FC.mk('decorOcean', () => ({ bg: FC.bg('n7', C.W, C.H, [[0, '06142e'], [0.6, '0d3360'], [1, '1a5a8a']]), stars: FC.stars(71, C.W, C.H, 120), ocean: FC.oceanPlanet(92) }));
@@ -347,7 +372,7 @@ function decorThrone(scr: Pix, w: World) {
   floatBits(scr, t, 40);
 }
 
-const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone, space3: decorSpace3, approach: decorApproach, vulcano: decorVulcano, cave: decorCave };
+const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone, space3: decorSpace3, approach: decorApproach, vulcano: decorVulcano, cave: decorCave, volcanoThrone: decorVolcanoThrone };
 
 // ---------- le niveau ----------
 export function drawWorld(scr: Pix, w: World) {
@@ -383,6 +408,7 @@ export function drawWorld(scr: Pix, w: World) {
   if (w.level.decor === 'castle' || w.level.decor === 'throne') castleFront(scr, w);
   if (w.level.decor === 'vulcano') vulcanoGround(scr, w);
   if (w.level.decor === 'cave') caveFront(scr, w);
+  if (w.level.decor === 'volcanoThrone') volcanoThroneFront(scr, w);
 
   for (const b of w.bonuses) scr.blit(FC.spr(BONUS_SPRITE[b.kind]), b.x, b.y);
   const jets = w.obstacles.some((o) => o.jet);
@@ -546,6 +572,7 @@ function drawSkel(scr: Pix, w: World) {
 function drawBoss(scr: Pix, w: World) {
   const b = w.boss!, t = w.t;
   if (b.kind === 'skel') return drawSkel(scr, w);
+  if (b.kind === 'scorp') return drawScorp(scr, w);
   if (b.dead) return;
   const f = Math.floor(t * 4) % 2;
   scr.blit(FC.spr('boss', f), b.x, b.y, false, b.flash > 0 || (b.dying > 0 && Math.floor(t * 16) % 2) ? 0.5 : 1);
@@ -562,14 +589,31 @@ function drawBoss(scr: Pix, w: World) {
   }
 }
 
+function drawScorp(scr: Pix, w: World) {
+  const b = w.boss!, t = w.t;
+  if (b.kind !== 'scorp' || b.dead) return;
+  // sa charge est annoncée par une ligne rouge
+  if (b.move === 'warn' && Math.floor(t * 12) % 2) for (let x = 0; x < b.x; x += 4) { scr.put(x, b.dashY + 38, P.R); scr.put(x + 1, b.dashY + 38, P.R); }
+  const shake = b.move === 'warn' || b.move === 'break' ? Math.round(Math.sin(t * 60) * 1.5) : 0;
+  const [cx, cy] = b.core();
+  if (b.alive) scr.ell(cx + shake, cy, 11 + Math.sin(t * 6) * 2, 10, FC.alpha(b.form === 'skel' ? FC.col('3dff7a') : LV.y, 45)); // la tête, point faible
+  scr.blit(FC.fireScorp(b.form, Math.floor(t * 10)), b.x + shake, b.y, b.facingRight, b.flash > 0 || (b.dying > 0 && Math.floor(t * 16) % 2) ? 0.5 : 1);
+  if (b.breath === 'warn') FC.fireJet(scr, b.x + 2, b.y + 40, 0, t, true);
+  if (b.breath === 'fire') FC.fireJet(scr, b.x + 2, b.y + 40, C.SCORP.breath, t);
+  if (b.move === 'behind' && Math.floor(t * 4) % 2) FC.text(scr, '!', b.x + ScorpBossW - 8, b.y + 4, P.y, { sc: 2, outline: P.K });
+}
+const ScorpBossW = 100;
+
 function drawBossBar(scr: Pix, w: World) {
   const b = w.boss!;
   scr.rect(0, 165, C.W, 15, FC.alpha(P.K, 200));
-  const armor = b.kind === 'skel' && b.armored;
-  const nx = FC.text(scr, b.name + (armor ? ' · ARMURE' : ''), 6, 170, P.W);
+  const armor = (b.kind === 'skel' && b.armored) || (b.kind === 'scorp' && b.form === 'iron');
+  const label = b.kind === 'scorp' ? b.name + ' ' + (b.formIdx + 1) + '/3' : b.name + (armor ? ' · ARMURE' : '');
+  const nx = FC.text(scr, label, 6, 170, P.W);
   const bw = C.W - nx - 16, fill = Math.round((bw - 2) * b.hp / b.maxHp);
+  const col = b.kind === 'scorp' ? [P.M, LV.o, FC.col('3dff7a')][b.formIdx] : armor ? P.M : P.R;
   scr.rect(nx + 8, 169, bw, 7, P.K); scr.rect(nx + 9, 170, bw - 2, 5, FC.col('4a1020'));
-  scr.rect(nx + 9, 170, fill, 5, armor ? P.M : P.R); scr.rect(nx + 9, 170, fill, 1, armor ? P.W : P.p);
+  scr.rect(nx + 9, 170, fill, 5, col); scr.rect(nx + 9, 170, fill, 1, armor ? P.W : P.p);
   // repères des phases (araignée)
   if (b.kind === 'spider') { scr.rect(nx + 9 + Math.round((bw - 2) * 0.33), 169, 1, 7, P.W); scr.rect(nx + 9 + Math.round((bw - 2) * 0.66), 169, 1, 7, P.W); }
 }

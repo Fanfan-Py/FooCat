@@ -9,6 +9,7 @@ import {
 } from './things';
 import { Boss, BossHost } from './boss';
 import { SkelBoss, SkelHost } from './skel';
+import { ScorpBoss, ScorpHost } from './scorp';
 import { Setup, ModeCfg } from './modes';
 
 export type { WeaponKind } from './things';
@@ -50,9 +51,9 @@ export function shotBox(s: Shot): Box {
 // setup : niveau et difficulté sur mesure (mode infini, défi du jour)
 export interface WorldOptions { level?: number; seed?: number; mode?: C.Mode; carry?: Carry; setup?: Setup }
 
-export class World implements BossHost, SkelHost {
+export class World implements BossHost, SkelHost, ScorpHost {
   t = 0;
-  boss: Boss | SkelBoss | null = null;
+  boss: Boss | SkelBoss | ScorpBoss | null = null;
   score: number;
   readonly startScore: number;
   readonly levelIndex: number;
@@ -229,7 +230,8 @@ export class World implements BossHost, SkelHost {
       this.phaseIdx++;
       const cur = ph[this.phaseIdx];
       if (cur.banner) this.say(cur.banner);
-      if (cur.event === 'boss' && !this.boss) { this.boss = this.level.boss === 'skel' ? new SkelBoss(this.top, this.floor, this.mode.bossHp ?? 1) : new Boss(this.mode.bossHp ?? 1); this.sfx.play('alarm'); this.sfx.music?.(this.level.boss === 'skel' ? 'skelboss' : 'boss'); }
+      if (cur.event === 'boss' && !this.boss) { const hpMul = this.mode.bossHp ?? 1;
+        this.boss = this.level.boss === 'skel' ? new SkelBoss(this.top, this.floor, hpMul) : this.level.boss === 'scorp' ? new ScorpBoss(this.top, this.floor, hpMul) : new Boss(hpMul); this.sfx.play('alarm'); this.sfx.music?.(this.level.boss === 'spider' ? 'boss' : 'skelboss'); }
       if (cur.event === 'belt' && !this.belt.done) {
         Object.assign(this.belt, { active: true, col: 0, timer: 2.2, hitsAtStart: this.hits });
         this.sfx.play('alarm');
@@ -806,7 +808,7 @@ export class World implements BossHost, SkelHost {
           }
           break;
         }
-        case 'miniScorp': { // va se placer (stage 0), s'arrête et vise (stage 1), puis fonce (stage 2)
+        case 'miniScorp': case 'miniScorpSkel': { // va se placer (stage 0), s'arrête et vise (stage 1), puis fonce (stage 2)
           if (e.stage === 0) {
             const dx = e.holdX - e.x, dy = e.amp - e.y, d = Math.hypot(dx, dy);
             if (d < 3 || cleared) e.stage = 1;
@@ -1268,8 +1270,10 @@ export class World implements BossHost, SkelHost {
     if (b.hitsBody(hb)) {
       h.x = Math.max(0, h.x - 14);
       if (b.kind === 'skel') { h.y += h.y + 17 < b.y + 44 ? -10 : 10; this.hurt(C.SKEL.contact, b.move === 'dash' ? 'morsure' : 'contact boss'); }
+      else if (b.kind === 'scorp') { h.y += h.y + 17 < b.y + 38 ? -10 : 10; this.hurt(C.SCORP.contact, b.move === 'dash' ? 'charge du scorpion' : 'contact boss'); }
       else this.hurt(C.BOSS.contact, 'contact boss');
     } else if (b.kind === 'spider' && b.laser === 'fire' && overlap(hb, b.laserBox())) this.hurt(C.BOSS.laser, 'laser');
+    else if (b.kind === 'scorp' && b.breath === 'fire' && overlap(hb, b.breathBox())) this.hurt(C.SCORP.fire, 'jet de feu du scorpion');
   }
 
   // un tir du chat contre le boss : seul le cœur est fragile, sauf pour le casse-dents
@@ -1292,10 +1296,10 @@ export class World implements BossHost, SkelHost {
   }
 
   private bossDefeated() {
-    const skel = this.boss?.kind === 'skel';
-    this.events.push({ type: 'boss', kind: this.boss?.kind });
-    this.score += skel ? C.SKEL.points : C.BOSS.points;
-    this.say(skel ? 'LE POISSON SQUELETTE EST VAINCU !' : "L'ARAIGNÉE DE FER EST VAINCUE !");
+    const kind = this.boss?.kind;
+    this.events.push({ type: 'boss', kind });
+    this.score += kind === 'skel' ? C.SKEL.points : kind === 'scorp' ? C.SCORP.points : C.BOSS.points;
+    this.say(kind === 'skel' ? 'LE POISSON SQUELETTE EST VAINCU !' : kind === 'scorp' ? 'LE SCORPION DE FEU EST VAINCU !' : "L'ARAIGNÉE DE FER EST VAINCUE !");
     for (const e of this.enemies) this.killEnemy(e, true, false);
     this.eshots = [];
   }
@@ -1342,6 +1346,37 @@ export class World implements BossHost, SkelHost {
     this.burst(x, y, 50, [FC.P.M, FC.P.m, FC.P.n, FC.P.W], 120, 120);
     this.flash = 0.3; this.flashColor = [255, 255, 255, 255];
     this.say("L'ARMURE EST BRISÉE !");
+    this.sfx.play('break');
+  }
+  // le Scorpion volant de feu
+  bossFireballs(x: number, y: number, n: number, toRight: boolean) { // boules de feu en cloche, vers le chat
+    const [hx, hy] = this.heroCenter(), g = 90, T = 1.6;
+    for (let i = 0; i < n; i++) {
+      const tx = hx + (i - (n - 1) / 2) * 44, ty = hy + (this.rnd() - 0.5) * 20;
+      this.eshots.push({ kind: 'fireball', x: x - 8, y: y - 8, vx: (tx - x) / T, vy: (ty - y - 0.5 * g * T * T) / T, g, dead: false });
+    }
+    if (toRight) this.say('ATTENTION, DERRIÈRE TOI !');
+    this.sfx.play('throw');
+  }
+  bossEscort(form: number, x: number, y: number) { // éclaireurs, chauves-souris de braise, puis mini-scorpions squelettes
+    if (this.enemies.length > 8) return;
+    if (form === 0) { // 2 éclaireurs qui plongent l'un après l'autre
+      const y0 = this.top + 30 + this.rnd() * (this.floor - this.top - 80);
+      for (let i = 0; i < 2; i++) this.enemies.push(newEnemy('scout', C.W + 6 + i * 16, y0 + i * 18, { phase: i, speed: 78 * this.mode.speed, holdX: 150 + i * 40 }));
+    }
+    else if (form === 1) this.spawnWave('emberBats', 0);
+    else {
+      const n = 2 + Math.floor((1 - (this.boss?.hp ?? 0) / (this.boss?.maxHp ?? 1)) * 2.5);
+      for (let i = 0; i < n; i++) this.enemies.push(newEnemy('miniScorpSkel', x, y + (i - (n - 1) / 2) * 20, {
+        phase: this.rnd() * 6, holdX: 120 + this.rnd() * 150, amp: this.top + 10 + this.rnd() * (this.floor - this.top - 40), holdT: 1.0 + i * 0.5,
+      }));
+    }
+  }
+  bossShell(x: number, y: number, form: number) { // la carapace vole en éclats
+    const cols = form === 0 ? [FC.P.M, FC.P.m, FC.P.n, FC.P.W] : [FC.P.o, FC.P.y, FC.P.r, FC.P.W];
+    this.burst(x, y, 60, cols, 130, 120);
+    this.flash = 0.3; this.flashColor = [255, 255, 255, 255];
+    this.say(form === 0 ? "L'ARMURE DE FER EST BRISÉE !" : 'LA CARAPACE DE FEU S\'ÉTEINT !');
     this.sfx.play('break');
   }
   bossExplosion(x: number, y: number, big: boolean) {

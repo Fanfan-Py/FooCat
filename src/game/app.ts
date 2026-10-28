@@ -51,7 +51,7 @@ function migrateModes() {
 }
 // le défi du jour a un tableau des scores par jour
 function scoreKey(m: GameMode) { return m === 'defi' ? 'defi.' + today() : m; }
-const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle', 'space', 'iron'];
+const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle', 'space', 'iron', 'planet', 'iron', 'castle'];
 
 // histoires en BD, montrées avant certains niveaux (numéro du niveau en partant de 0)
 type Panel = { scene: string; text: string };
@@ -309,10 +309,10 @@ export class App {
       else if (ev.type === 'belt') this.unlock('belt');
       else if (ev.type === 'pinata5') this.unlock('pinata');
       else if (ev.type === 'boss') {
-        this.unlock(ev.kind === 'skel' ? 'skel' : 'boss'); if (this.mode === 'difficile') this.unlock('hard');
+        this.unlock(ev.kind === 'skel' ? 'skel' : ev.kind === 'scorp' ? 'scorp' : 'boss'); if (this.mode === 'difficile') this.unlock('hard');
         if (w.stats.livesLost === 0) { // vaincu sans perdre de vie
-          if (ev.kind === 'skel') this.stats.cleanSkel = 1; else this.stats.cleanSpider = 1;
-          this.stats.cleanBosses = this.stats.cleanSpider + this.stats.cleanSkel;
+          if (ev.kind === 'skel') this.stats.cleanSkel = 1; else if (ev.kind === 'scorp') this.stats.cleanScorp = 1; else this.stats.cleanSpider = 1;
+          this.stats.cleanBosses = this.stats.cleanSpider + this.stats.cleanSkel + this.stats.cleanScorp;
         }
       }
     }
@@ -528,7 +528,7 @@ export class App {
     if (c.up) this.sel = (this.sel + n - 1) % n;
     if (c.down) this.sel = (this.sel + 1) % n;
     if (c.tapX >= 0) {
-      const row = this.succPage ? Math.floor((c.tapY - 36 + 3) / 17) : Math.floor((c.tapY - 34 + 1) / 8);
+      const row = this.succPage ? Math.floor((c.tapY - 36 + 3) / 17) : Math.floor((c.tapY - 34 + 1) / 7);
       if (row >= 0 && row < n && c.tapY < 142) this.sel = row; else this.go('title');
       return;
     }
@@ -695,7 +695,7 @@ export class App {
     FC.text(scr, '<', 160 - hw / 2 - 10 - a2, 22, P.y, { outline: P.K }); FC.text(scr, '>', 160 + hw / 2 + 6 + a2, 22, P.y, { outline: P.K });
     list.forEach((a, i) => {
       const got = this.unlocked.has(a.id), on = i === this.sel;
-      const y = p2 ? 36 + i * 17 : 34 + i * 8, h = p2 ? 16 : 7, ty = p2 ? y + 3 : y;
+      const y = p2 ? 36 + i * 17 : 34 + i * 7, h = p2 ? 16 : 7, ty = p2 ? y + 3 : y;
       if (on) scr.rect(30, y - (p2 ? 3 : 1), 262, h, FC.alpha(P.P, 170)); else if (p2) scr.rect(30, y - 3, 262, h, FC.alpha(P.K, 120));
       scr.rect(34, ty, 5, 5, got ? P.g : P.k);
       if (got) { scr.put(35, ty + 2, P.W); scr.put(36, ty + 3, P.W); scr.put(37, ty + 1, P.W); }

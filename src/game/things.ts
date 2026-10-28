@@ -82,7 +82,7 @@ const BOXES: Record<EnemyKind, Box> = {
   crab: { x: 2, y: 7, w: 22, h: 11 }, jellyBlue: { x: 2, y: 2, w: 16, h: 14 }, jellyPink: { x: 2, y: 2, w: 16, h: 14 },
   sleepBubble: { x: 2, y: 2, w: 14, h: 14 }, hangShrimp: { x: 2, y: 5, w: 24, h: 12 }, fish: { x: 1, y: 2, w: 14, h: 7 }, miniSkel: { x: 1, y: 1, w: 16, h: 9 },
   firefly: { x: 1, y: 1, w: 9, h: 8 }, salamander: { x: 1, y: 3, w: 26, h: 9 }, magmaSnake: { x: 1, y: 1, w: 12, h: 10 },
-  miniScorp: { x: 1, y: 6, w: 20, h: 10 }, phoenix: { x: 2, y: 5, w: 16, h: 12 }, golem: { x: 3, y: 3, w: 26, h: 30 },
+  miniScorp: { x: 1, y: 6, w: 20, h: 10 }, miniScorpSkel: { x: 1, y: 6, w: 20, h: 10 }, phoenix: { x: 2, y: 5, w: 16, h: 12 }, golem: { x: 3, y: 3, w: 26, h: 30 },
   sorbet: { x: 5, y: 3, w: 15, h: 17 }, scout: { x: 2, y: 6, w: 22, h: 9 }, emberBat: { x: 6, y: 4, w: 12, h: 10 }, dragonet: { x: 2, y: 6, w: 24, h: 12 },
 };
 export function enemyBox(e: Enemy): Box {
@@ -113,6 +113,7 @@ export function enemySprite(e: Enemy, t: number): Pix {
     case 'salamander': return FC.spr('salamander', Math.floor(t * 8 + e.phase) % 2);
     case 'magmaSnake': return FC.spr('magmaHead', Math.floor(t * 6));
     case 'miniScorp': return FC.spr('miniScorp', Math.floor(t * 12 + e.phase) % 2);
+    case 'miniScorpSkel': return FC.spr('miniScorpSkel', Math.floor(t * 12 + e.phase) % 2);
     case 'phoenix': return e.stage === 1 ? FC.spr('ashes', Math.floor(t * 4)) : FC.spr('phoenix', Math.floor(t * 8 + e.phase) % 2);
     case 'golem': return FC.spr('golem', Math.floor(t * 4 + e.phase) % 2);
     case 'scout': return FC.spr('scout', Math.floor(t * 10 + e.phase) % 2);

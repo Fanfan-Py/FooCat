@@ -4,7 +4,7 @@ Jeu de tir à défilement horizontal : un chat licorne dans une soucoupe donut.
 Marche dans le navigateur sur PC, Mac, iPhone et Android.
 
 Cinq modes, au choix sur la ligne « MODE » de l'accueil :
-- **Facile**, **Normal** (le mode de départ) et **Difficile** : les 12 niveaux (16 à terme), avec leurs boss.
+- **Facile**, **Normal** (le mode de départ) et **Difficile** : les 15 niveaux (16 à terme), avec leurs trois boss.
   Plus le mode est dur, plus les ennemis sont nombreux, rapides et résistants, et les obstacles nombreux
   (réglages dans `MODES`, dans `src/game/config.ts`).
 - **Infini** : des zones sans fin (les niveaux sans boss, en boucle), de plus en plus dures.

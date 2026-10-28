@@ -47,6 +47,8 @@ function robot(w: World, t: number, look = 95): Controls {
     target = b.core()[1] - 3; // vise le cœur du boss
     if (b.kind === 'spider' && b.laser !== 'idle') blocked.push([b.laserY - 16, b.laserY + 16]);
     if (b.kind === 'skel' && b.charging) blocked.push([b.y + 14, b.y + 74]); // s'écarte de la charge
+    if (b.kind === 'scorp' && b.charging) blocked.push([b.dashY + 8, b.dashY + 70]);
+    if (b.kind === 'scorp' && b.breath !== 'none' && !b.facingRight) blocked.push([b.y + 22, b.y + 58]); // le jet de feu
   }
   const lo = band === 'bas' ? w.floor - 54 : 26, hi = band === 'haut' ? w.top + 40 : w.floor - 14;
   if (band) target = (lo + hi) / 2;
@@ -61,7 +63,7 @@ function robot(w: World, t: number, look = 95): Controls {
   const frame = Math.round(t * 60);
   const jaw = !!(b && b.alive && !b.entering) && frame % 120 === 0;
   const fight = !!(b && b.alive && !b.entering);
-  let wantX = fight ? (b!.kind === 'skel' ? 40 : h.weapon === 'rain' ? 120 : 90) : 40; // pendant l'araignée, il s'approche ; il garde ses distances avec le poisson
+  let wantX = fight ? (b!.kind !== 'spider' ? 40 : h.weapon === 'rain' ? 120 : 90) : 40; // pendant l'araignée, il s'approche ; il garde ses distances avec le poisson
   // coulées de lave : reculer si elle va brûler devant, la traverser si elle reste éteinte assez longtemps
   let retreat = 1e9;
   for (const o of w.obstacles) {
@@ -152,7 +154,7 @@ for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || proces
     if (w.state === 'cleared') cleared++;
     for (const [k, n] of Object.entries(w.hitLog)) causes[k] = (causes[k] || 0) + n;
     time += t;
-    if (process.env.VERBOSE) console.log(`  niveau ${lv + 1} partie ${seed}: ${w.state} en ${t.toFixed(0)} s, score ${w.score}` + (w.boss ? `, boss ${w.boss.kind === 'skel' && w.boss.armored ? 'avec armure' : 'phase finale'} ${Math.round(w.boss.hp)}/${w.boss.maxHp} après ${Math.round(w.boss.t)} s` : ''));
+    if (process.env.VERBOSE) console.log(`  niveau ${lv + 1} partie ${seed}: ${w.state} en ${t.toFixed(0)} s, score ${w.score}` + (w.boss ? `, boss ${w.boss.kind === 'skel' && w.boss.armored ? 'avec armure' : w.boss.kind === 'scorp' ? 'forme ' + (w.boss.formIdx + 1) + '/3' : 'phase finale'} ${Math.round(w.boss.hp)}/${w.boss.maxHp} après ${Math.round(w.boss.t)} s` : ''));
   }
   console.log(`niveau ${lv + 1} (${mode}) : terminé ${cleared}/${runs} fois, durée moyenne ${Math.round(time / runs)} s`);
   if (process.env.CAUSES) console.log('   coups reçus :', Object.entries(causes).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', '));

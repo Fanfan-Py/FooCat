@@ -311,6 +311,11 @@ Points d'attention :
       on passe pendant qu'elles sont éteintes), mini-scorpions volants, phénix-poussins, golems de lave.
       Robot sur 16 parties : niveau 13 gagné 9 fois en normal et 14 fois en facile ; niveau 14 gagné 8 fois en
       normal mais seulement 4 fois en facile (à surveiller pendant tes essais).
-- [ ] Niveau 15 : le Scorpion volant de feu.
+- [x] Niveau 15 : le Scorpion volant de feu (fait le 28 octobre).
+      3 formes (armure de fer, carapace de feu, squelette), point faible : la tête. Jet de feu annoncé par de
+      la fumée, boules de feu (1, 2 puis 3 selon la forme), il se retourne : une ligne rouge annonce sa charge,
+      il passe derrière le chat et lui lance des boules de feu dans le dos, puis revient. Escorte : éclaireurs,
+      chauves-souris de braise, puis mini-scorpions squelettes. Nouveau succès « Trois fois vaincu » ;
+      « Chasseur de boss » demande maintenant les 3 boss. Robot : gagné 2 fois sur 10 en normal, 3 sur 8 en facile.
 - [ ] Niveau 16 : la BD et les 3 boss à la suite.
 - [ ] Musiques de Vulcano et du Scorpion.
