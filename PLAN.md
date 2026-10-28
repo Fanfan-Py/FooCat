@@ -138,3 +138,72 @@ Corrections après le premier essai :
 - [x] Réglage de la difficulté avec le robot de test : l'Araignée de Fer était plus dure que le boss final
       (adoucie), les niveaux 6 et 7 trop faciles (un peu plus d'ennemis et d'obstacles).
 - [ ] Essais sur téléphone (par toi).
+
+---
+
+# Suite : couleurs du chat et vraie difficulté (plan du 28 octobre 2026)
+
+## Étape 11 : maquette des couleurs du chat licorne
+
+Nouveaux **succès plus durs**, qui débloquent chacun une **couleur du chat** (en plus des soucoupes).
+On peut changer la fourrure, l'intérieur des oreilles et les joues, la crinière, la corne et les yeux.
+
+Proposition (à valider sur la maquette) :
+
+| Couleur du chat | Succès pour la gagner |
+|---|---|
+| Roux (crinière rouge et jaune) | **SANS FAUTE** : finir un niveau sans être touché une seule fois |
+| Noir (crinière violette, corne argent) | **NUIT NOIRE** : finir le jeu en mode difficile |
+| Doré (corne et crinière blanches) | **COLLECTIONNEUR** : 3 étoiles sur les 10 niveaux |
+| Galaxie (fourrure bleu nuit étoilée) | **MARATHON** : atteindre la zone 15 en mode infini |
+| Fantôme (fourrure transparente) | **FIDÈLE** : réussir 7 défis du jour |
+| Squelette (os blancs, yeux verts) | **CHASSEUR DE BOSS** : vaincre les deux boss sans perdre de vie |
+
+- [ ] Maquette sur la page des maquettes : les 6 chats en grand, avec leur succès.
+- [ ] Maquette de l'écran « Apparence » (remplace « Soucoupes ») : on choisit la soucoupe ET le chat.
+- [ ] Maquette de l'écran des succès sur 2 pages (on passera de 14 à 20 succès).
+
+## Étape 12 : trois modes de difficulté
+
+- [ ] Le jeu actuel devient le mode **FACILE**, sans rien changer.
+      Ce qui est enregistré en « normal » (Continuer, scores, étoiles) passe en « facile » : rien n'est perdu.
+- [ ] Nouveau mode **NORMAL**, plus dur, et vrai mode **DIFFICILE**.
+- [ ] Choix sur la ligne MODE de l'accueil : FACILE, NORMAL, DIFFICILE, INFINI, DÉFI DU JOUR.
+- [ ] Le mode infini et le défi du jour se basent sur le nouveau mode NORMAL.
+
+Ce qui change d'un mode à l'autre (valeurs de départ, à ajuster avec le robot) :
+
+| | Facile (actuel) | Normal | Difficile |
+|---|---|---|---|
+| Vies | 3 | 3 | 2 |
+| Monstres : résistance | normale | x 1,5 | x 2 |
+| Nombre de monstres | normal | + 25 % | + 50 % |
+| Obstacles | normal | + 30 % | + 60 % |
+| Vitesse des monstres et des tirs | normale | + 10 % | + 20 % |
+| Tirs ennemis | normaux | + 25 % | + 50 % |
+| Vie des boss | normale | x 1,3 | x 1,6 |
+| Bonus | normaux | normaux | - 20 % |
+
+Objectif mesuré avec le robot (qui joue moins bien qu'un humain) : en facile, comme aujourd'hui ;
+en normal, environ moitié moins de victoires ; en difficile, le robot ne gagne qu'une à deux parties sur dix.
+
+## Étape 13 : pas de planque en haut ou en bas de l'écran
+
+Premier test (28 octobre) : deux robots tricheurs restent collés en haut ou en bas et tirent sans
+esquiver. Ils perdent sur les 10 niveaux (4 à 16 coups reçus par minute). Mais ils n'esquivent pas,
+le test doit donc être plus malin :
+
+- [ ] Ajouter au test automatique deux robots « planqués » qui esquivent, mais seulement dans une bande
+      en haut (ou en bas) de l'écran. Règle : sur chaque niveau et dans chaque mode, ils doivent faire
+      **nettement moins bien** que le robot normal.
+- [ ] Là où une planque marche encore, ajouter du danger dans les bords :
+  - des vagues de monstres qui passent tout en haut et tout en bas, ou qui visent la hauteur du chat ;
+  - dans les niveaux sans sol ni plafond (1, 2, 6, 7), des obstacles qui touchent aussi les bords ;
+  - si le chat reste plus de 5 secondes collé à un bord, la vague suivante arrive par ce bord.
+- [ ] Vérifier en mode facile, normal et difficile, puis captures d'écran des endroits modifiés.
+
+## Ordre proposé
+
+1. Étape 11 (maquette) : je la fais en premier pour que tu puisses la regarder pendant la suite.
+2. Étapes 12 et 13 ensemble, car elles se règlent avec le même robot.
+3. Après ta validation de la maquette : les couleurs du chat dans le jeu (nouvelle étape 14).
