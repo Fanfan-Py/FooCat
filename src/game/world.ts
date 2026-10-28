@@ -290,6 +290,11 @@ export class World implements BossHost, SkelHost {
     const add = (cy: number) => { const d = defs[Math.floor(this.rnd() * defs.length)]; this.place(d, cy - d.pix.h / 2, C.BELT.speed, true, this.rnd() * 6); };
     for (let cy = top - 13; cy + 13 > C.HUD_H - 6; cy -= 25) add(cy);
     for (let cy = bot + 13; cy - 13 < C.H + 6; cy += 25) add(cy);
+    // des mouches dans le passage : elles avancent avec la ceinture, il faut les abattre pour passer
+    if (i > 0 && this.rnd() < C.BELT.flies) {
+      const kind: EnemyKind = this.rnd() < 0.25 ? 'flyGold' : 'fly';
+      this.enemies.push(newEnemy(kind, C.W + 16, gapC - 7, { speed: C.BELT.speed + 6, amp: 9, phase: this.rnd() * 6 }));
+    }
   }
 
   // vérifie qu'il reste un passage d'au moins 46 pixels de haut près de cet endroit
@@ -504,7 +509,7 @@ export class World implements BossHost, SkelHost {
         return;
       }
       case 'hanger':
-        return void this.enemies.push(newEnemy('hanger', C.W + 8, 0, { phase: R() * 6, baseY: top + 20 + R() * 30, amp: 18 + R() * 14 }));
+        return void this.enemies.push(newEnemy('hanger', C.W + 8, 0, { phase: R() * 6, baseY: top + 26 + R() * 46, amp: 20 + R() * 22 })); // descend du plafond, parfois très bas
       default:
         return this.spawnFormation(kind, gold);
     }

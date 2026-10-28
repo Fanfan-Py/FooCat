@@ -127,11 +127,11 @@ export const LEVELS: Level[] = [
   {
     num: 3, name: 'PLANÈTE PÂTISSERIE', points: 30000, decor: 'planet', ground: 150, ceiling: null, scroll: 40,
     phases: [
-      { from: 0, obstacle: 4.0, obstacles: { lollipop: 2, cotton: 2 }, wave: 2.6, waves: { ants: 1, solo: 1, line: 1 }, gold: 0.1 },
-      { from: 0.15, obstacle: 3.4, obstacles: { lollipop: 2, cotton: 2, web: 1 }, wave: 2.2, waves: { ants: 2, hanger: 1, v: 1, line: 1, wasps: 1 }, gold: 0.2 },
-      { from: 0.45, banner: 'LA FORÊT DE TOILES !', obstacle: 2.8, obstacles: { web: 3, lollipop: 1 }, wave: 2.8, waves: { hanger: 2, solo: 1 }, gold: 0 },
-      { from: 0.62, obstacle: 3.0, obstacles: { lollipop: 2, cotton: 2, web: 1 }, wave: 1.9, waves: { ants: 2, hanger: 1, wasps: 1, swarm: 1, spider: 1 }, gold: 0.3 },
-      { from: 0.88, banner: 'DERNIER EFFORT !', obstacle: 3.4, obstacles: { lollipop: 1, cotton: 1 }, wave: 1.4, waves: { ants: 2, wasps: 2, swarm: 1 }, gold: 0.35 },
+      { from: 0, obstacle: 3.8, obstacles: { lollipop: 2, cotton: 2, web: 1 }, wave: 2.6, waves: { ants: 1, solo: 1, line: 1, hanger: 1 }, gold: 0.1 },
+      { from: 0.15, obstacle: 3.2, obstacles: { lollipop: 2, cotton: 2, web: 2 }, wave: 2.2, waves: { ants: 2, hanger: 2, v: 1, line: 1, wasps: 1 }, gold: 0.2 },
+      { from: 0.45, banner: 'LA FORÊT DE TOILES !', obstacle: 2.4, obstacles: { web: 4, lollipop: 1 }, wave: 2.4, waves: { hanger: 3, solo: 1 }, gold: 0 },
+      { from: 0.62, obstacle: 3.0, obstacles: { lollipop: 2, cotton: 2, web: 2 }, wave: 1.9, waves: { ants: 2, hanger: 2, wasps: 1, swarm: 1, spider: 1 }, gold: 0.3 },
+      { from: 0.88, banner: 'DERNIER EFFORT !', obstacle: 3.2, obstacles: { lollipop: 1, cotton: 1, web: 1 }, wave: 1.4, waves: { ants: 2, wasps: 2, swarm: 1, hanger: 1 }, gold: 0.35 },
     ],
   },
   {
@@ -218,7 +218,7 @@ export const BOSS = { hp: 420, points: 10000, contact: 2, laser: 2 };
 export const SKEL = { hp: 200, points: 15000, contact: 2 };
 
 // La ceinture de donuts : des colonnes de planètes avec un passage qui ondule
-export const BELT = { columns: 10, every: 1.5, gap: 64, speed: 36 };
+export const BELT = { columns: 10, every: 1.5, gap: 64, speed: 36, flies: 0.7 }; // flies : chance d'une mouche dans le passage, à chaque colonne
 
 export const BONUS_EVERY = 11; // secondes entre deux bonus qui arrivent tout seuls
 // Probabilité de chaque bonus

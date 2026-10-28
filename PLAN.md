@@ -231,6 +231,10 @@ le test doit donc être plus malin :
       dans le sens de sa course (aujourd'hui la traînée reste à l'horizontale).
 - [ ] Vérifier en mode facile, normal et difficile, puis captures d'écran des endroits modifiés.
 
+## Retouches du 28 octobre
+- [x] Niveau 1, ceinture de donuts : des mouches arrivent aussi dans le passage du chat (7 colonnes sur 10 environ).
+- [x] Niveau 3 : plus de toiles d'araignée et plus d'araignées suspendues, qui descendent plus bas.
+
 ## Ordre proposé
 
 1. Étape 11 (maquette) : je la fais en premier pour que tu puisses la regarder pendant la suite.
