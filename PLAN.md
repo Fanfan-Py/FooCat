@@ -305,7 +305,12 @@ Points d'attention :
 - [x] Niveaux 11 et 12, et la BD « Nouvel appel à l'aide » (faits le 28 octobre).
       Nouveaux ennemis : sorbet volant, éclaireur, chauve-souris de braise, dragonnet ; rochers de feu.
       Robot en mode normal : niveau 11 gagné 4 fois sur 12, niveau 12 3 fois sur 12.
-- [ ] Niveaux 13 et 14.
+- [x] Niveaux 13 et 14 (faits le 28 octobre).
+      13 : arbres en feu, lianes (qui s'allongent, rétrécissent ou tombent), salamandres, serpents de magma,
+      lucioles de feu, boules de feu du volcan. 14 : coulées de lave (1,3 s, annoncées par des gouttes ;
+      on passe pendant qu'elles sont éteintes), mini-scorpions volants, phénix-poussins, golems de lave.
+      Robot sur 16 parties : niveau 13 gagné 9 fois en normal et 14 fois en facile ; niveau 14 gagné 8 fois en
+      normal mais seulement 4 fois en facile (à surveiller pendant tes essais).
 - [ ] Niveau 15 : le Scorpion volant de feu.
 - [ ] Niveau 16 : la BD et les 3 boss à la suite.
 - [ ] Musiques de Vulcano et du Scorpion.

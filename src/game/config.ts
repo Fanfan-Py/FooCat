@@ -72,14 +72,20 @@ export const ENEMIES = {
   scout: { points: 200, hp: 2, drop: 0.12 }, // éclaireur du Scorpion : vole en formation puis plonge vers le chat
   emberBat: { points: 150, hp: 2, drop: 0.1 }, // chauve-souris de braise : en nuée ; vaincue, elle lâche 3 étincelles
   dragonet: { points: 400, hp: 6, drop: 0.3 }, // dragonnet : s'arrête, prévient, puis souffle un jet de feu
+  firefly: { points: 100, hp: 1, drop: 0.07 }, // luciole de feu (remplace les mouches dans le monde Vulcano)
+  salamander: { points: 300, hp: 4, drop: 0.2 }, // salamandre : marche au sol, saute, crache des gouttes de feu
+  magmaSnake: { points: 350, hp: 3, drop: 0.15 }, // serpent de magma : jaillit du sol (des bulles préviennent) et retombe en arc
+  miniScorp: { points: 200, hp: 2, drop: 0.1 }, // mini-scorpion volant : se place n'importe où, vise, puis fonce
+  phoenix: { points: 400, hp: 3, drop: 0.25 }, // phénix-poussin : renaît de ses cendres, sauf si on tire sur les cendres
+  golem: { points: 600, hp: 14, drop: 0.4 }, // golem de lave : lent et très solide
 };
 export type EnemyKind = keyof typeof ENEMIES;
 export const POINTS = { planet: 300, bonus: 50, wave: 500, belt: 1000, perSecond: 10 };
 
 // Vagues d'ennemis possibles
-export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling' | 'scorpion' | 'droneSquad' | 'batShrimp' | 'guitar' | 'comets' | 'crab' | 'jellyBlue' | 'jellyPink' | 'bubbles' | 'hanging' | 'sorbets' | 'scouts' | 'emberBats' | 'dragonet';
+export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling' | 'scorpion' | 'droneSquad' | 'batShrimp' | 'guitar' | 'comets' | 'crab' | 'jellyBlue' | 'jellyPink' | 'bubbles' | 'hanging' | 'sorbets' | 'scouts' | 'emberBats' | 'dragonet' | 'salamanders' | 'magma' | 'fireballs' | 'miniScorps' | 'phoenix' | 'golem';
 // Obstacles possibles
-export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable' | 'ice' | 'drop' | 'jet' | 'algae' | 'herse' | 'coral' | 'fireRock';
+export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable' | 'ice' | 'drop' | 'jet' | 'algae' | 'herse' | 'coral' | 'fireRock' | 'fireTree' | 'liana' | 'lavaFall';
 
 export interface Phase {
   from: number; // part des points du niveau (0 = début, 1 = fin)
@@ -96,12 +102,13 @@ export interface Phase {
 export interface Level {
   num: number; name: string;
   points: number; // points à gagner dans ce niveau pour passer au suivant
-  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne' | 'space3' | 'approach';
+  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne' | 'space3' | 'approach' | 'vulcano' | 'cave';
   ground: number | null; // hauteur du sol (null = pas de sol)
   ceiling: number | null; // hauteur du plafond (null = pas de plafond)
   outro?: string; // couleur du fondu de fin de niveau
   boss?: 'spider' | 'skel'; // le niveau se termine en battant ce boss
   water?: boolean; // sous l'eau : les groupes de mouches deviennent des bancs de poissons
+  fire?: boolean; // monde Vulcano : les groupes de mouches deviennent des lucioles de feu
   scroll: number; // vitesse de défilement des obstacles (px/s)
   next?: string; // texte de l'écran de fin
   phases: Phase[];
@@ -221,7 +228,6 @@ export const LEVELS: Level[] = [
   },
   {
     num: 12, name: 'APPROCHE DE VULCANO', points: 44000, decor: 'approach', ground: null, ceiling: null, scroll: 36, outro: 'o',
-    next: 'LA SUITE ARRIVE BIENTÔT : SUR LA PLANÈTE VULCANO !',
     phases: [
       { from: 0, obstacle: 3.6, obstacles: { fireRock: 2, planet: 1 }, wave: 1.95, waves: { emberBats: 2, scouts: 1, line: 1, sorbets: 1 }, gold: 0.2 },
       { from: 0.25, banner: 'CHAUVES-SOURIS DE BRAISE !', obstacle: 3.1, obstacles: { fireRock: 2 }, wave: 1.6, waves: { emberBats: 3, dragonet: 2, line: 1 }, gold: 0.2 },
@@ -229,7 +235,33 @@ export const LEVELS: Level[] = [
       { from: 0.75, banner: 'VULCANO EN VUE !', obstacle: 2.7, obstacles: { fireRock: 3 }, wave: 1.45, waves: { emberBats: 2, dragonet: 1, comets: 1, scouts: 1 }, gold: 0.3 },
     ],
   },
+  {
+    num: 13, name: 'SUR LA PLANÈTE VULCANO', points: 40000, decor: 'vulcano', ground: 150, ceiling: null, scroll: 40, fire: true,
+    phases: [
+      { from: 0, obstacle: 3.2, obstacles: { fireTree: 2, liana: 1 }, wave: 2.0, waves: { line: 1, salamanders: 1, emberBats: 1, solo: 1 }, gold: 0.2 },
+      { from: 0.2, banner: 'LES ARBRES EN FEU !', obstacle: 2.6, obstacles: { fireTree: 3, liana: 1 }, wave: 2.0, waves: { salamanders: 1, line: 1, fireballs: 1, emberBats: 1 }, gold: 0.25 },
+      { from: 0.45, banner: 'ATTENTION AUX LIANES !', obstacle: 2.2, obstacles: { liana: 3, fireTree: 1 }, wave: 2.2, waves: { magma: 2, emberBats: 1, swarm: 1 }, gold: 0.2 },
+      { from: 0.7, banner: 'LE VOLCAN SE RÉVEILLE !', obstacle: 2.8, obstacles: { fireTree: 2, liana: 2 }, wave: 1.6, waves: { fireballs: 2, magma: 2, salamanders: 1, dragonet: 1 }, gold: 0.3 },
+      { from: 0.9, banner: 'DERNIER EFFORT !', obstacle: 3.0, obstacles: { fireTree: 2, liana: 1 }, wave: 1.5, waves: { salamanders: 1, magma: 1, emberBats: 1, line: 1 }, gold: 0.35 },
+    ],
+  },
+  {
+    num: 14, name: "DANS L'ANTRE DU VOLCAN", points: 34000, decor: 'cave', ground: 154, ceiling: 26, scroll: 38, fire: true, outro: 'r',
+    next: 'LA SUITE ARRIVE BIENTÔT : LE SCORPION VOLANT DE FEU !',
+    phases: [
+      { from: 0, obstacle: 3.4, obstacles: { lavaFall: 2, fireRock: 1 }, wave: 2.2, waves: { miniScorps: 1, line: 1, fireballs: 1 }, gold: 0.2 },
+      { from: 0.2, banner: 'LES COULÉES DE LAVE !', obstacle: 2.8, obstacles: { lavaFall: 3 }, wave: 2.4, waves: { miniScorps: 1, phoenix: 1, line: 1 }, gold: 0.2 },
+      { from: 0.45, banner: 'LES MINI-SCORPIONS !', obstacle: 3.2, obstacles: { lavaFall: 2, fireRock: 1 }, wave: 1.8, waves: { miniScorps: 2, phoenix: 1, fireballs: 1, line: 1 }, gold: 0.25 },
+      { from: 0.7, banner: 'LES GOLEMS DE LAVE !', obstacle: 3.0, obstacles: { lavaFall: 2 }, wave: 2.0, waves: { golem: 1, miniScorps: 2, phoenix: 1, magma: 1 }, gold: 0.3 },
+      { from: 0.9, banner: 'DERNIER EFFORT !', obstacle: 2.8, obstacles: { lavaFall: 2, fireRock: 1 }, wave: 1.6, waves: { miniScorps: 2, fireballs: 1, golem: 1, phoenix: 1 }, gold: 0.35 },
+    ],
+  },
 ];
+
+// Coulées de lave (niveau 14) : éteinte (off s), gouttes d'avertissement (warn s), coulée (on s), fin (end s), en boucle
+export const LAVA = { off: 2.4, warn: 1.0, on: 1.3, end: 0.35, width: 7 };
+// Serpent de magma : bulles d'avertissement (warn s), puis saut en arc (leap s)
+export const MAGMA = { warn: 0.9, leap: 1.4 };
 
 // Dragonnet : fumée d'avertissement (warn s), jet de feu (fire s) long de « length » pixels, toutes les « every » s
 export const DRAGONET = { warn: 0.7, fire: 1.1, every: 2.2, length: 86 };

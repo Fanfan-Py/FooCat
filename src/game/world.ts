@@ -4,7 +4,7 @@ import * as C from './config';
 import {
   Box, Shape, Enemy, Shot, EShot, Obstacle, Bonus, Particle, Popup, Message, ObstacleDef,
   WeaponKind, BonusKind, EnemyKind, newEnemy, overlap, hitObstacle, shapeCenter, vrange, enemyBox, enemyCenter,
-  planetDefs, fireRockDefs, dragonetJet, beltDefs, lollipopDef, cottonDef, webDef, fenceDef, pillarDef, cableDef, cablePoint, elecOn, pickWeighted,
+  planetDefs, fireRockDefs, dragonetJet, fireTreeDef, lavaBox, beltDefs, lollipopDef, cottonDef, webDef, fenceDef, pillarDef, cableDef, cablePoint, elecOn, pickWeighted,
   iceDef, dropDef, jetRockDef, jetState, jetCircles, boxEllipse, algaePix, herseDef,
 } from './things';
 import { Boss, BossHost } from './boss';
@@ -301,7 +301,7 @@ export class World implements BossHost, SkelHost {
   private passageOk(d: ObstacleDef, y: number) {
     const probe: Obstacle = { kind: d.kind, pix: d.pix, x: C.W + 4, y, shapes: d.shapes, speed: 0, dead: false, belt: false };
     const ranges = [vrange(probe)];
-    for (const o of this.obstacles) if (o.x + o.pix.w > C.W - 90) ranges.push(vrange(o));
+    for (const o of this.obstacles) if (o.x + o.pix.w > C.W - 90 && o.shapes.length) ranges.push(vrange(o));
     ranges.sort((a, b) => a[0] - b[0]);
     let free = this.top;
     for (const [a, b] of ranges) { if (a - free >= 46) return true; free = Math.max(free, b); }
@@ -317,6 +317,27 @@ export class World implements BossHost, SkelHost {
         const y = C.HUD_H - d.pix.h * 0.3 + this.rnd() * (this.floor - C.HUD_H - d.pix.h * 0.4);
         if (this.passageOk(d, y)) { this.place(d, y, speed); return; }
       }
+      return;
+    }
+    if (kind === 'fireTree') { // arbre en feu, planté au sol, de taille variable
+      if (!G) return;
+      const h = Math.round(40 + this.rnd() * 44), treeSeed = 1 + Math.floor(this.rnd() * 6), d = fireTreeDef(h, treeSeed);
+      if (this.obstacles.some(o => o.x > C.W - 36) || !this.passageOk(d, G - h + 2)) return;
+      this.place(d, G - h + 2, speed);
+      this.obstacles[this.obstacles.length - 1].tree = { h, seed: treeSeed };
+      return;
+    }
+    if (kind === 'liana') { // liane qui pend du ciel : elle s'allonge et rétrécit, ou elle se détache et tombe
+      const max = 46 + this.rnd() * 50, drop = this.rnd() < 0.35, seed = Math.floor(this.rnd() * 9);
+      const d = { kind: 'liana' as const, pix: FC.liana(max, 0, seed), shapes: [{ t: 'r' as const, x: 3, y: 0, w: 8, h: max + 3 }] };
+      if (this.obstacles.some(o => o.x > C.W - 30) || !this.passageOk(d, this.top)) return;
+      this.place(d, this.top, speed);
+      this.obstacles[this.obstacles.length - 1].liana = { len: drop ? max : max * 0.6, min: max * 0.45, max, ph: this.rnd() * 6, seed, drop, at: 90 + this.rnd() * 150, vy: 0 };
+      return;
+    }
+    if (kind === 'lavaFall') { // coulée de lave verticale, du plafond au sol (on la traverse quand elle est éteinte)
+      if (this.obstacles.some(o => o.lava && o.x > C.W - 90)) return;
+      this.obstacles.push({ kind: 'lavaFall', pix: new FC.Pix(9, 1), x: C.W + 4, y: this.top, shapes: [], speed, dead: false, belt: false, lava: { offset: this.rnd() * 6 } });
       return;
     }
     if (this.phase.slalom) return this.spawnSlalom(speed);
@@ -451,6 +472,36 @@ export class World implements BossHost, SkelHost {
           phase: R() * 6, speed: 60, amp: 5, holdX: 170 + R() * 100, holdT: 6 + R() * 2, shootT: 0.8,
         }));
       }
+      case 'salamanders': {
+        if (!G) return this.spawnFormation('solo', gold);
+        const n = 1 + Math.floor(R() * (1.5 + this.progress));
+        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('salamander', C.W + 6 + i * 40, G - 13, { phase: R() * 6, shootT: 1 + R() * 1.2, holdT: 0.5 + R() }));
+        return;
+      }
+      case 'magma': { // un serpent de magma jaillira du sol (des bulles préviennent)
+        if (!G) return this.spawnFormation('solo', gold);
+        const x = 190 + R() * 120;
+        return void this.enemies.push(newEnemy('magmaSnake', x, C.H + 10, { holdX: x, baseY: G, vx: C.MAGMA.warn, amp: 70 + R() * 30, speed: 60 + R() * 45 }));
+      }
+      case 'fireballs': { // le volcan crache des boules de feu qui retombent
+        const n = 1 + Math.floor(R() * 2);
+        for (let i = 0; i < n; i++) this.eshots.push({ kind: 'fireball', x: 100 + R() * 220, y: top - 14 - i * 12, vx: -(20 + R() * 40) * sp, vy: 15, g: 80 * sp, dead: false });
+        this.sfx.play('bomb');
+        return;
+      }
+      case 'miniScorps': { // mini-scorpions volants : ils se placent n'importe où sur l'écran
+        const n = 1 + Math.floor(R() * (0.6 + this.progress));
+        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('miniScorp', C.W + 6 + i * 20, top + 10 + R() * (playBottom - top - 20), {
+          phase: R() * 6, holdX: 130 + R() * 170, amp: top + 10 + R() * (playBottom - top - 20), holdT: 1.2 + R() * 0.5 + i * 0.7,
+        }));
+        return;
+      }
+      case 'phoenix':
+        return void this.enemies.push(newEnemy('phoenix', C.W + 6, top + 20 + R() * (playBottom - top - 50), { phase: R() * 6, speed: (52 + R() * 12) * sp, amp: 16 + R() * 10 }));
+      case 'golem': {
+        if (!G || this.enemies.some(e => e.kind === 'golem')) return this.spawnFormation('solo', gold);
+        return void this.enemies.push(newEnemy('golem', C.W + 6, G - 34, { phase: R() * 6, speed: this.level.scroll + 6 }));
+      }
       case 'comets': { // météorites : du haut en descendant, du bas en remontant, ou à l'horizontale à toutes les hauteurs
         const n = 1 + Math.floor(R() * 2);
         for (let i = 0; i < n; i++) {
@@ -577,7 +628,7 @@ export class World implements BossHost, SkelHost {
     const id = ++this.groupSeq;
     if (pts.length > 1) this.groups.set(id, { left: pts.length, ok: true });
     pts.forEach(([dx, dy], i) => {
-      const kind: EnemyKind = this.level.water ? 'fish' : R() < gold ? 'flyGold' : 'fly';
+      const kind: EnemyKind = this.level.water ? 'fish' : this.level.fire ? 'firefly' : R() < gold ? 'flyGold' : 'fly';
       this.enemies.push(newEnemy(kind, C.W + 6 + dx, baseY + dy, { phase: i * wave + (f === 'swarm' ? R() * 6 : 0), speed, amp, group: id }));
     });
   }
@@ -594,7 +645,7 @@ export class World implements BossHost, SkelHost {
       if (!e.tough) { e.tough = true; e.hp = Math.max(1, Math.round(e.hp * (m.hp ?? 1))); } // plus résistants selon le mode
       e.flash = Math.max(0, e.flash - dt);
       switch (e.kind) {
-        case 'fly': case 'flyGold': case 'fish':
+        case 'fly': case 'flyGold': case 'fish': case 'firefly':
           e.x -= e.speed * dt * (cleared ? 2 : 1);
           e.y = e.baseY + Math.sin(this.t * 2.6 + e.phase) * e.amp;
           break;
@@ -736,6 +787,51 @@ export class World implements BossHost, SkelHost {
         case 'comet':
           e.x += e.vx * dt; e.y += e.vy * dt;
           break;
+        case 'salamander': { // marche au sol, saute, crache des gouttes de feu en cloche
+          e.x -= (this.level.scroll + 14) * dt;
+          e.holdT -= dt;
+          if (e.vy !== 0 || e.y < e.baseY) { e.vy += 330 * dt; e.y += e.vy * dt; if (e.y >= e.baseY) { e.y = e.baseY; e.vy = 0; } }
+          else if (e.holdT <= 0) { const near = e.x > h.x + 30 && e.x - h.x < 120 && h.y + 30 > this.floor - 75; e.vy = near ? -170 : -90; e.holdT = 1 + this.rnd() * 1.2; }
+          e.shootT -= dt;
+          if (e.shootT <= 0 && e.stage < 2 && this.canAim(e) && e.x < C.W - 20) { e.shootT = 3.0 / m.enemyFire; e.stage++; this.lobSugar(e.x + 3, e.y + 4, 'drop'); } // 2 crachats au plus
+          break;
+        }
+        case 'magmaSnake': { // bulles (stage 0), puis saut en arc (stage 1)
+          e.holdX -= this.level.scroll * dt;
+          if (e.stage === 0) { e.vx -= dt; e.x = e.holdX; e.y = C.H + 10; if (e.vx <= 0) { e.stage = 1; e.vy = 0; this.sfx.play('splash'); } }
+          else {
+            e.vy += dt / C.MAGMA.leap;
+            if (e.vy >= 1) { this.removeEnemy(e, false); continue; }
+            e.x = e.holdX - e.vy * e.amp - 7; e.y = e.baseY - Math.sin(e.vy * Math.PI) * e.speed - 6;
+          }
+          break;
+        }
+        case 'miniScorp': { // va se placer (stage 0), s'arrête et vise (stage 1), puis fonce (stage 2)
+          if (e.stage === 0) {
+            const dx = e.holdX - e.x, dy = e.amp - e.y, d = Math.hypot(dx, dy);
+            if (d < 3 || cleared) e.stage = 1;
+            else { const v = Math.min(d / dt, 120 * m.speed); e.x += dx / d * v * dt; e.y += dy / d * v * dt; }
+          } else if (e.stage === 1) {
+            e.holdT -= dt; e.y += Math.sin(this.t * 24) * 0.3;
+            if (e.holdT <= 0) {
+              const tx = h.x + 20, ty = h.y + 16, d = Math.hypot(tx - e.x, ty - e.y) || 1, v = 100 * m.speed;
+              e.vx = (tx - e.x) / d * v; e.vy = (ty - e.y) / d * v; e.stage = 2; this.sfx.play('dive');
+            }
+          } else { e.x += e.vx * dt; e.y += e.vy * dt; }
+          break;
+        }
+        case 'phoenix':
+          if (e.stage === 1) { // des cendres : il renaît si on ne tire pas dessus
+            e.x -= this.level.scroll * 0.5 * dt; e.holdT -= dt;
+            if (e.holdT <= 0) {
+              e.stage = 2; e.hp = Math.max(1, Math.round(C.ENEMIES.phoenix.hp * (m.hp ?? 1)));
+              this.burst(e.x + 8, e.y + 12, 14, [FC.P.y, FC.P.o, FC.P.r], 60); this.sfx.play('respawn');
+            }
+          } else { e.x -= e.speed * dt; e.y = e.baseY + Math.sin(this.t * 2.4 + e.phase) * e.amp; }
+          break;
+        case 'golem':
+          e.x -= e.speed * dt;
+          break;
         case 'sorbet': // s'arrête, flotte et lance des boules de sorbet qui ralentissent
           if (e.x > e.holdX && e.holdT > 0) e.x -= e.speed * dt;
           else {
@@ -810,7 +906,7 @@ export class World implements BossHost, SkelHost {
       }
       if (e.x < -32 || e.x > C.W + 220 || e.y < -40 || e.y > C.H + 40) { this.removeEnemy(e, false); continue; }
       // contact avec le chat
-      if (!e.dead && this.heroAlive() && h.inv <= 0 && overlap(hb, enemyBox(e))) {
+      if (!e.dead && this.heroAlive() && h.inv <= 0 && !(e.kind === 'phoenix' && e.stage === 1) && !(e.kind === 'magmaSnake' && e.stage === 0) && overlap(hb, enemyBox(e))) {
         if (e.kind === 'sleepBubble') { // la bulle éclate et le chat s'endort, sans perdre de cœur
           this.killEnemy(e, false, false); h.sleep = C.SLEEP_TIME; this.hitLog['bulle soporifique'] = (this.hitLog['bulle soporifique'] || 0) + 1;
           this.sfx.play('yawn'); continue;
@@ -851,9 +947,10 @@ export class World implements BossHost, SkelHost {
   }
 
   // un morceau de sucre lancé en cloche vers le chat
-  private lobSugar(sx: number, sy: number) {
-    const h = this.hero, g = 110, T = 1.5, tx = h.x + 20 + (this.rnd() - 0.5) * 36, ty = h.y + 16 + (this.rnd() - 0.5) * 24;
-    this.eshots.push({ kind: 'sugar', x: sx, y: sy, vx: (tx - sx) / T, vy: (ty - sy - 0.5 * g * T * T) / T, g, dead: false });
+  private lobSugar(sx: number, sy: number, kind: 'sugar' | 'drop' = 'sugar') {
+    const fire = kind === 'drop', h = this.hero, g = 110, T = fire ? 1.8 : 1.5; // les gouttes de feu sont plus lentes et moins précises
+    const tx = h.x + 20 + (this.rnd() - 0.5) * (fire ? 60 : 36), ty = h.y + 16 + (this.rnd() - 0.5) * (fire ? 40 : 24);
+    this.eshots.push({ kind, x: sx, y: sy, vx: (tx - sx) / T, vy: (ty - sy - 0.5 * g * T * T) / T, g, dead: false });
     this.sfx.play('throw');
   }
 
@@ -869,7 +966,8 @@ export class World implements BossHost, SkelHost {
       const b = s.kind === 'web' ? { x: s.x + 2, y: s.y + 2, w: 7, h: 7 } : s.kind === 'bullet' ? { x: s.x, y: s.y, w: 3, h: 3 }
         : s.kind === 'note' ? { x: s.x + 2, y: s.y + 2, w: 8, h: 10 } : s.kind === 'juice' ? { x: s.x + 1, y: s.y, w: 7, h: 5 }
           : s.kind === 'maraca' ? { x: s.x + 1, y: s.y + 1, w: 6, h: 9 } : s.kind === 'bone' ? { x: s.x + 2, y: s.y + 1, w: 7, h: 5 }
-            : s.kind === 'sorbet' ? { x: s.x + 1, y: s.y + 1, w: 6, h: 6 } : s.kind === 'ember' ? { x: s.x, y: s.y, w: 4, h: 4 } : { x: s.x, y: s.y, w: 5, h: 5 };
+            : s.kind === 'sorbet' ? { x: s.x + 1, y: s.y + 1, w: 6, h: 6 } : s.kind === 'ember' ? { x: s.x, y: s.y, w: 4, h: 4 }
+              : s.kind === 'drop' ? { x: s.x + 1, y: s.y + 1, w: 4, h: 5 } : s.kind === 'fireball' ? { x: s.x + 3, y: s.y + 3, w: 10, h: 10 } : { x: s.x, y: s.y, w: 5, h: 5 };
       if (!s.dead && this.heroAlive() && h.inv <= 0 && overlap(hb, b)) {
         s.dead = true;
         if (s.kind === 'web' || s.kind === 'sorbet') h.slow = C.WEB_SLOW.time; // la toile et le sorbet ralentissent
@@ -903,7 +1001,7 @@ export class World implements BossHost, SkelHost {
         if (s.dead) break;
       }
       for (const e of this.eshots) { // un tir détruit les morceaux de sucre
-        if (e.dead || (e.kind !== 'sugar' && e.kind !== 'maraca') || !overlap(sb, { x: e.x - 1, y: e.y - 1, w: 7, h: 7 })) continue;
+        if (e.dead || (e.kind !== 'sugar' && e.kind !== 'maraca' && e.kind !== 'drop') || !overlap(sb, { x: e.x - 1, y: e.y - 1, w: 7, h: 7 })) continue;
         e.dead = true; this.score += 10; this.burst(e.x + 2, e.y + 2, 6, [FC.P.W, FC.P.v], 40);
         if (s.kind === 'verm' || s.kind === 'drag' || s.kind === 'shard') s.dead = true;
         if (s.kind === 'pinata') { s.dead = true; this.pinataBurst(s, null, born); }
@@ -970,6 +1068,14 @@ export class World implements BossHost, SkelHost {
         o.shapes = [{ t: 'r', x: 3, y: g.top ? 0 : 3, w: 10, h: o.pix.h - 3 }]; // toute la largeur de l'algue
       }
       if (o.herse) o.y = this.top - 64 + 40 + Math.sin((this.t + o.herse.offset) * 1.0) * 30; // la herse monte et descend
+      if (o.tree) o.pix = FC.fireTree(o.tree.h, o.tree.seed, Math.floor(this.t * 6) % 4); // les flammes dansent
+      if (o.liana) {
+        const L = o.liana;
+        if (L.drop) { if (o.x < L.at || L.vy > 0) { L.vy += 160 * dt; o.y += L.vy * dt; if (o.y > C.H) o.dead = true; } } // elle se détache et tombe
+        else L.len = L.min + (L.max - L.min) * (0.5 + 0.5 * Math.sin(this.t * 0.9 + L.ph)); // elle s'allonge et rétrécit
+        o.pix = FC.liana(L.len, Math.floor(this.t * 4), L.seed);
+        o.shapes = [{ t: 'r', x: 3, y: 0, w: 8, h: L.len + 3 }];
+      }
       if (o.dead || !this.heroAlive() || h.ghost > 0) continue;
       if (o.jet && h.inv <= 0 && jetState(o, this.t) === 'on' && jetCircles(o).some(([cx, cy, r]) => boxEllipse(hb, cx, cy, r, r))) {
         this.flash = 0.2; this.flashColor = [255, 120, 200, 255];
@@ -979,6 +1085,11 @@ export class World implements BossHost, SkelHost {
       if (o.elec && h.inv <= 0 && elecOn(o, this.t) && overlap(hb, { x: o.x + o.elec.x, y: o.y + o.elec.y, w: o.elec.w, h: o.elec.h })) {
         this.flash = 0.2; this.flashColor = [255, 230, 80, 255];
         this.hurt(C.DAMAGE.web, 'électricité');
+        continue;
+      }
+      if (o.lava) { // la coulée brûle seulement quand elle coule
+        const lb = lavaBox(o, this.t, this.top, this.floor);
+        if (lb && h.inv <= 0 && overlap(hb, lb)) { this.flash = 0.2; this.flashColor = [255, 140, 40, 255]; this.hurt(C.DAMAGE.obstacle, 'coulée de lave'); }
         continue;
       }
       if (!hitObstacle(o, hb)) continue;
@@ -998,7 +1109,7 @@ export class World implements BossHost, SkelHost {
         this.hurt(C.DAMAGE.web, 'toile géante');
       } else if (h.inv <= 0) {
         h.x = Math.max(0, h.x - 10);
-        this.hurt(o.kind === 'fence' || o.kind === 'herse' || o.kind === 'algae' || o.kind === 'coral' ? C.DAMAGE.web : C.DAMAGE.obstacle, 'obstacle ' + o.kind);
+        this.hurt(o.kind === 'fence' || o.kind === 'herse' || o.kind === 'algae' || o.kind === 'coral' || o.kind === 'liana' ? C.DAMAGE.web : C.DAMAGE.obstacle, 'obstacle ' + o.kind);
       }
     }
     this.obstacles = this.obstacles.filter(o => !o.dead);
@@ -1067,6 +1178,11 @@ export class World implements BossHost, SkelHost {
 
   private killEnemy(e: Enemy, scored: boolean, sound = true, by?: Shot) {
     if (e.dead) return;
+    if (e.kind === 'phoenix' && e.stage === 0 && scored) { // il tombe en cendres... et renaîtra si on ne tire pas dessus
+      e.stage = 1; e.hp = 2; e.holdT = 2.6;
+      this.burst(e.x + 8, e.y + 10, 12, [FC.P.o, FC.P.r, [90, 80, 96, 255]], 50); this.sfx.play('kill');
+      return;
+    }
     if (scored) {
       this.stats.kills++;
       this.events.push({ type: 'kill', kind: e.kind, by: by?.kind });

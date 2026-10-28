@@ -2,9 +2,9 @@
 // pour vérifier que rien ne plante et mesurer la durée et la difficulté.
 import { FC } from '../src/art';
 import { World, Controls } from '../src/game/world';
-import { vrange, jetCircles, jetState } from '../src/game/things';
+import { vrange, jetCircles, jetState, lavaState } from '../src/game/things';
 import { App, AppInput } from '../src/game/app';
-import { W, H, LEVELS, Mode } from '../src/game/config';
+import { W, H, LEVELS, Mode, LAVA } from '../src/game/config';
 import { endlessZone, dailySetup } from '../src/game/modes';
 import { savePng } from './png';
 
@@ -37,7 +37,7 @@ function robot(w: World, t: number, look = 95): Controls {
   }
   for (const e of w.enemies) if (e.kind === 'dragonet' && e.stage >= 2 && e.x > h.x - 10) blocked.push([e.y - 6, e.y + 28]); // jet de feu
   for (const e of w.enemies) {
-    if ((e.kind === 'wasp' && e.stage === 2) || (e.kind === 'scout' && e.stage === 1)) {
+    if ((e.kind === 'wasp' && e.stage === 2) || (e.kind === 'scout' && e.stage === 1) || (e.kind === 'miniScorp' && e.stage === 2)) {
       for (let k = 0; k < 16; k++) { const x = e.x + e.vx * k * 0.05, y = e.y + e.vy * k * 0.05; if (x > h.x - 10 && x < h.x + 44) blocked.push([y - 10, y + 26]); }
     } else if (e.x > h.x && e.x - h.x < 70) blocked.push([e.y - 10, e.y + 26]);
   }
@@ -61,7 +61,22 @@ function robot(w: World, t: number, look = 95): Controls {
   const frame = Math.round(t * 60);
   const jaw = !!(b && b.alive && !b.entering) && frame % 120 === 0;
   const fight = !!(b && b.alive && !b.entering);
-  const wantX = fight ? (b!.kind === 'skel' ? 40 : h.weapon === 'rain' ? 120 : 90) : 40; // pendant l'araignée, il s'approche ; il garde ses distances avec le poisson
+  let wantX = fight ? (b!.kind === 'skel' ? 40 : h.weapon === 'rain' ? 120 : 90) : 40; // pendant l'araignée, il s'approche ; il garde ses distances avec le poisson
+  // coulées de lave : reculer si elle va brûler devant, la traverser si elle reste éteinte assez longtemps
+  let retreat = 1e9;
+  for (const o of w.obstacles) {
+    if (!o.lava || o.x + 12 < h.x - 22 || o.x > h.x + 150) continue;
+    if (o.x + 4 < h.x + 8) { wantX = Math.max(wantX, o.x + 6); continue; } // déjà passée : on reste à sa droite
+    const [st, k] = lavaState(o, w.t);
+    // temps avant qu'elle brûle (les gouttes d'avertissement ne brûlent pas encore)
+    const safe = st === 'off' ? (1 - k) * LAVA.off + LAVA.warn : st === 'warn' ? (1 - k) * LAVA.warn : 0;
+    const burn = st === 'on' ? (1 - k) * LAVA.on + LAVA.end : st === 'end' ? (1 - k) * LAVA.end : LAVA.on + LAVA.end;
+    const cross = Math.max(0, o.x + 11 - (h.x + 8)) / (115 + o.speed);
+    if (safe > cross + 0.15) { wantX = Math.max(wantX, o.x + 14); continue; } // on passe pendant qu'elle est éteinte
+    const reach = o.x + 4 - o.speed * (safe + burn); // jusqu'où elle descendra en brûlant
+    if (reach < h.x + 36) retreat = Math.min(retreat, reach - 38); // sinon on recule juste assez
+  }
+  wantX = Math.min(wantX, retreat);
   return {
     dx: Math.max(-1, Math.min(1, (wantX - h.x) / 20)), dy, fire: true, special: jaw || frame % 400 === 0,
     swap: !fight && frame % 600 === 300, select: fight ? (h.ammo.verm > 0 ? 0 : -1) : -1,
@@ -126,7 +141,14 @@ for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || proces
   for (let seed = 1; seed <= runs; seed++) {
     const w = new World(sfx, { level: lv, seed: seed * 977 + lv, mode });
     let t = 0;
-    while (t < 900 && w.state !== 'over' && !(w.state === 'cleared' && w.stateT > 3)) { w.update(STEP, robot(w, t)); t += STEP; }
+    let lavaHits = 0;
+    while (t < 900 && w.state !== 'over' && !(w.state === 'cleared' && w.stateT > 3)) {
+      w.update(STEP, robot(w, t)); t += STEP;
+      if (process.env.DEBUGLAVA && (w.hitLog['coulée de lave'] || 0) > lavaHits) { // pour comprendre les brûlures
+        lavaHits = w.hitLog['coulée de lave'];
+        console.log(`  brûlure à ${t.toFixed(1)} s : chat x=${w.hero.x.toFixed(0)} y=${w.hero.y.toFixed(0)} ; coulées ${w.obstacles.filter(o => o.lava).map(o => o.x.toFixed(0) + ':' + lavaState(o, w.t)[0]).join(' ')}`);
+      }
+    }
     if (w.state === 'cleared') cleared++;
     for (const [k, n] of Object.entries(w.hitLog)) causes[k] = (causes[k] || 0) + n;
     time += t;

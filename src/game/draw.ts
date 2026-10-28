@@ -2,7 +2,7 @@
 import { FC, Pix, Color } from '../art';
 import * as C from './config';
 import { World, WEAPON_ORDER, rainStage } from './world';
-import { enemySprite, elecOn, elecSoon, cablePoint, jetState, jetOrigin, jetCircles, enemyCenter, spriteOffset } from './things';
+import { enemySprite, elecOn, elecSoon, cablePoint, jetState, jetOrigin, jetCircles, enemyCenter, spriteOffset, lavaState } from './things';
 import { heroSprite } from './rewards';
 
 // apparence de la soucoupe choisie par le joueur
@@ -198,6 +198,54 @@ function decorApproach(scr: Pix, w: World) {
   const pl = FC.vulcanoPlanet(16 + Math.round(Math.min(k, 1.6) * 10) * 4); // Vulcano grossit à mesure qu'on approche
   scr.blit(pl, C.W - pl.w * 0.55 + 10 - Math.round(k * 10), 90 - pl.h / 2);
 }
+// ---------- niveau 13 : sur la planète Vulcano ----------
+const LV = { y: FC.col('ffd23f'), o: FC.col('ff9a3c'), r: FC.col('ff4d2e'), d: FC.col('b3201a') };
+function decorVulcano(scr: Pix, w: World) {
+  const d = FC.mk('decorVulcano', () => ({ bg: FC.bg('n13', C.W, C.H, [[0, '2a0810'], [0.55, '8a2418'], [1, 'ff8a3c']]), volcano: FC.volcanoBg().scale(2) }));
+  const t = w.t;
+  scr.d.set(d.bg.d);
+  const vx = C.W - 230 - Math.round(w.progress * 60);
+  scr.blit(d.volcano, vx, 150 - d.volcano.h + 4);
+  // le volcan fume (les vraies boules de feu, dangereuses, sont des tirs ennemis)
+  for (let s2 = 0; s2 < 4; s2++) { const sp = (t * 0.3 + s2 / 4) % 1; scr.ell(vx + 150 + Math.sin(sp * 5 + s2) * 10, 22 - sp * 30, 4 + sp * 10, 3 + sp * 6, FC.alpha(FC.col('5a4048'), 140 * (1 - sp))); }
+}
+function vulcanoGround(scr: Pix, w: World) { // sol de roche sombre avec des mares de lave
+  const G = w.level.ground!, off = Math.floor(w.t * w.level.scroll), t = w.t;
+  for (let x = 0; x < C.W; x++) {
+    const u = x + off, pool = (u % 150) > 96 && (u % 150) < 136;
+    const h = G + Math.round(Math.sin(u * 0.07) * 1.5);
+    if (pool) {
+      const ly = h + 3 + Math.round(Math.sin(u * 0.3 + t * 3) * 1);
+      scr.rect(x, h, 1, ly - h, FC.col('3e2c30')); scr.put(x, ly, LV.y); scr.rect(x, ly + 1, 1, C.H - ly, (u + Math.floor(t * 8)) % 7 === 0 ? LV.o : LV.r);
+    } else {
+      scr.rect(x, h, 1, C.H - h, FC.col('3e2c30')); scr.put(x, h, FC.col('6b4a48'));
+      if ((u * 13) % 23 === 0) scr.put(x, h + 6, FC.col('261a20'));
+      if ((u * 7) % 31 === 0) scr.put(x, h + 3 + (u % 9), LV.o);
+    }
+  }
+}
+// ---------- niveau 14 : dans l'antre du volcan ----------
+function decorCave(scr: Pix, w: World) {
+  const d = FC.mk('decorCave', () => ({ bg: FC.bg('n14', C.W, C.H, [[0, '1a0608'], [0.6, '3a0e10'], [1, '5a1810']]) }));
+  scr.d.set(d.bg.d);
+  const off = Math.floor(w.t * 10);
+  for (let k = -1; k < 5; k++) { // piliers de roche au loin, fissures qui brillent
+    const x = 40 + k * 90 - (off % 90);
+    scr.rect(x, 0, 18, C.H, FC.col('2a0c10')); scr.rect(x, 0, 3, C.H, FC.col('3e1418'));
+    for (let y = 40; y < 150; y += 37) scr.line(x + 6, y, x + 11, y + 10, FC.alpha(LV.o, 120));
+  }
+}
+function caveFront(scr: Pix, w: World) {
+  const top = w.top, G = w.level.ground!, off = Math.floor(w.t * w.level.scroll), t = w.t, rock = FC.col('261a20'), edge = FC.col('3e2c30');
+  scr.rect(0, C.HUD_H, C.W, top - C.HUD_H, rock); scr.rect(0, top - 1, C.W, 1, edge);
+  for (let x = -20; x < C.W + 20; x += 1) { // stalactites
+    const u = x + off, k = ((u % 23) + 23) % 23, len = (u * 7) % 3 === 0 ? 10 : 6;
+    if (k < 8) scr.rect(x, top, 1, Math.max(0, Math.round(len * (1 - Math.abs(k - 4) / 4))), rock);
+  }
+  scr.rect(0, G, C.W, C.H - G, rock); scr.rect(0, G, C.W, 1, edge);
+  for (let x = 0; x < C.W; x++) { const ly = C.H - 6 + Math.round(Math.sin((x + off) * 0.2 + t * 2)); scr.rect(x, ly, 1, C.H - ly, (x + off) % 9 === 0 ? LV.y : LV.r); } // rivière de lave
+}
+
 // ---------- niveau 7 : vers la planète aquatique ----------
 function decorOcean(scr: Pix, w: World) {
   const d = FC.mk('decorOcean', () => ({ bg: FC.bg('n7', C.W, C.H, [[0, '06142e'], [0.6, '0d3360'], [1, '1a5a8a']]), stars: FC.stars(71, C.W, C.H, 120), ocean: FC.oceanPlanet(92) }));
@@ -299,7 +347,7 @@ function decorThrone(scr: Pix, w: World) {
   floatBits(scr, t, 40);
 }
 
-const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone, space3: decorSpace3, approach: decorApproach };
+const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone, space3: decorSpace3, approach: decorApproach, vulcano: decorVulcano, cave: decorCave };
 
 // ---------- le niveau ----------
 export function drawWorld(scr: Pix, w: World) {
@@ -317,6 +365,7 @@ export function drawWorld(scr: Pix, w: World) {
       const c = FC.alpha(P.M, 220);
       scr.line(o.x + 2, top, o.x + 2, o.y + 1, c); scr.line(o.x + o.pix.w - 3, top, o.x + o.pix.w - 3, o.y + 1, c);
     }
+    if (o.lava) { const [st, k] = lavaState(o, t); if (st !== 'off') FC.lavaFall(scr, o.x + 4, w.top, w.floor, st, k, t); continue; }
     scr.blit(o.pix, o.x, o.y);
     if (o.elec) drawElec(scr, o, t);
     if (o.kind === 'cable') { // étincelles qui courent le long du câble
@@ -332,12 +381,21 @@ export function drawWorld(scr: Pix, w: World) {
   if (w.level.decor === 'fortress') fortressBands(scr, w);
   if (w.level.decor === 'sea') seaFront(scr, w);
   if (w.level.decor === 'castle' || w.level.decor === 'throne') castleFront(scr, w);
+  if (w.level.decor === 'vulcano') vulcanoGround(scr, w);
+  if (w.level.decor === 'cave') caveFront(scr, w);
 
   for (const b of w.bonuses) scr.blit(FC.spr(BONUS_SPRITE[b.kind]), b.x, b.y);
   const jets = w.obstacles.some((o) => o.jet);
   for (const e of w.enemies) {
     if (e.kind === 'hanger') scr.line(e.x + 11, top, e.x + 11, e.y + 4, FC.alpha(P.W, 190));
     const hidden = jets && inJet(w, ...enemyCenter(e));
+    if (e.kind === 'magmaSnake') { // une mare de lave qui bouillonne, puis le serpent qui jaillit en arc
+      const G = e.baseY;
+      scr.ell(e.holdX, G + 2, 10, 3, LV.r); scr.ell(e.holdX, G + 1, 7, 1.5, LV.y);
+      if (e.stage === 0) { for (let b = 0; b < 4; b++) { const bp = (t * 2 + b / 4) % 1; scr.ell(e.holdX - 6 + b * 4, G - bp * 8, 1 + bp, 1 + bp, FC.alpha(LV.o, 220 * (1 - bp))); } }
+      else FC.magmaSnake(scr, e.holdX, G + 2, e.vy, t, e.amp, e.speed);
+      continue;
+    }
     const [ox, oy] = spriteOffset(e);
     scr.blit(enemySprite(e, t), e.x + ox, e.y + oy, false, hidden ? 0.3 : e.flash > 0 ? 0.4 : 1);
   }
@@ -350,6 +408,8 @@ export function drawWorld(scr: Pix, w: World) {
     else if (s.kind === 'maraca') scr.blit(FC.spr('maraca', Math.floor(t * 12)), s.x, s.y);
     else if (s.kind === 'bone') scr.blit(FC.spr('bone', Math.floor(t * 8) % 2), s.x, s.y);
     else if (s.kind === 'sorbet') scr.blit(FC.spr('sorbetBall', Math.floor(t * 6) % 2), s.x, s.y);
+    else if (s.kind === 'drop') scr.blit(FC.spr('fireDrop', Math.floor(t * 8) % 2), s.x, s.y);
+    else if (s.kind === 'fireball') scr.blit(FC.spr('fireball', Math.floor(t * 8)), s.x, s.y);
     else if (s.kind === 'ember') { scr.rect(s.x - 1, s.y - 1, 6, 6, FC.alpha(P.o, 90)); scr.rect(s.x, s.y, 4, 4, P.o); scr.rect(s.x + 1, s.y + 1, 2, 2, P.y); }
     else if (s.kind === 'bullet') { scr.rect(s.x - 1, s.y - 1, 5, 5, FC.alpha(P.R, 90)); scr.rect(s.x, s.y, 3, 3, P.R); scr.put(s.x + 1, s.y + 1, P.q); }
     else scr.blit(FC.spr('sugar'), s.x, s.y);

@@ -22,14 +22,17 @@ export interface Shot {
   src?: number; // numéro du tir (les éclats de Piñata gardent celui de leur Piñata)
   touched?: boolean; // ce tir a déjà touché (pour la précision)
 }
-export interface EShot { kind: 'web' | 'sugar' | 'bullet' | 'note' | 'juice' | 'maraca' | 'bone' | 'sorbet' | 'ember'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean; age?: number; bounces?: number }
+export interface EShot { kind: 'web' | 'sugar' | 'bullet' | 'note' | 'juice' | 'maraca' | 'bone' | 'sorbet' | 'ember' | 'drop' | 'fireball'; x: number; y: number; vx: number; vy: number; g: number; dead: boolean; age?: number; bounces?: number }
 // elec : zone électrique (clôture) qui s'allume (on secondes) et s'éteint (off secondes)
 export interface Elec { x: number; y: number; w: number; h: number; offset: number; on: number; off: number }
 // jet de paillettes : part du rocher en biais (vers le haut ou vers le bas), s'allume et s'éteint
 export interface Jet { offset: number; down: boolean }
 // algue qui pousse (h : taille actuelle) ; herse qui monte et descend
 export interface Grow { h: number; max: number; kind: number; top: boolean }
-export interface Obstacle { kind: C.ObstacleKind; pix: Pix; x: number; y: number; shapes: Shape[]; speed: number; dead: boolean; belt: boolean; elec?: Elec; top?: boolean; jet?: Jet; grow?: Grow; herse?: { offset: number } }
+export interface Obstacle { kind: C.ObstacleKind; pix: Pix; x: number; y: number; shapes: Shape[]; speed: number; dead: boolean; belt: boolean; elec?: Elec; top?: boolean; jet?: Jet; grow?: Grow; herse?: { offset: number };
+  tree?: { h: number; seed: number }; liana?: Liana; lava?: { offset: number } }
+// liane : longueur qui varie entre min et max (ou fixe), qui peut se détacher et tomber
+export interface Liana { len: number; min: number; max: number; ph: number; seed: number; drop: boolean; at: number; vy: number }
 export interface Bonus { kind: BonusKind; x: number; y: number; baseY: number; speed: number; t: number; dead: boolean }
 export interface Particle { x: number; y: number; vx: number; vy: number; life: number; max: number; color: Color; g: number }
 export interface Popup { text: string; x: number; y: number; t: number }
@@ -78,10 +81,13 @@ const BOXES: Record<EnemyKind, Box> = {
   batShrimp: { x: 2, y: 11, w: 24, h: 12 }, guitarFish: { x: 2, y: 3, w: 26, h: 12 }, comet: { x: 29, y: 1, w: 10, h: 10 },
   crab: { x: 2, y: 7, w: 22, h: 11 }, jellyBlue: { x: 2, y: 2, w: 16, h: 14 }, jellyPink: { x: 2, y: 2, w: 16, h: 14 },
   sleepBubble: { x: 2, y: 2, w: 14, h: 14 }, hangShrimp: { x: 2, y: 5, w: 24, h: 12 }, fish: { x: 1, y: 2, w: 14, h: 7 }, miniSkel: { x: 1, y: 1, w: 16, h: 9 },
+  firefly: { x: 1, y: 1, w: 9, h: 8 }, salamander: { x: 1, y: 3, w: 26, h: 9 }, magmaSnake: { x: 1, y: 1, w: 12, h: 10 },
+  miniScorp: { x: 1, y: 6, w: 20, h: 10 }, phoenix: { x: 2, y: 5, w: 16, h: 12 }, golem: { x: 3, y: 3, w: 26, h: 30 },
   sorbet: { x: 5, y: 3, w: 15, h: 17 }, scout: { x: 2, y: 6, w: 22, h: 9 }, emberBat: { x: 6, y: 4, w: 12, h: 10 }, dragonet: { x: 2, y: 6, w: 24, h: 12 },
 };
 export function enemyBox(e: Enemy): Box {
   if (e.kind === 'mint') return { x: e.x + 1, y: e.y + 1, w: e.size * 2 + 1, h: e.size * 2 + 1 };
+  if (e.kind === 'phoenix' && e.stage === 1) return { x: e.x, y: e.y + 10, w: 16, h: 6 }; // les cendres
   if (e.kind === 'hangShrimp' && e.stage > 0) { const b = BOXES.batShrimp; return { x: e.x + b.x, y: e.y + b.y, w: b.w, h: b.h }; }
   const b = BOXES[e.kind];
   return { x: e.x + b.x, y: e.y + b.y, w: b.w, h: b.h };
@@ -103,6 +109,12 @@ export function enemySprite(e: Enemy, t: number): Pix {
     case 'fish': return FC.spr('smallFish', Math.floor(t * 6 + e.phase) % 2);
     case 'miniSkel': return FC.spr('miniSkel', Math.floor(t * 8 + e.phase) % 2);
     case 'sorbet': return FC.spr('sorbet', Math.floor(t * 4 + e.phase) % 2);
+    case 'firefly': return FC.spr('firefly', Math.floor(t * 6 + e.phase) % 2);
+    case 'salamander': return FC.spr('salamander', Math.floor(t * 8 + e.phase) % 2);
+    case 'magmaSnake': return FC.spr('magmaHead', Math.floor(t * 6));
+    case 'miniScorp': return FC.spr('miniScorp', Math.floor(t * 12 + e.phase) % 2);
+    case 'phoenix': return e.stage === 1 ? FC.spr('ashes', Math.floor(t * 4)) : FC.spr('phoenix', Math.floor(t * 8 + e.phase) % 2);
+    case 'golem': return FC.spr('golem', Math.floor(t * 4 + e.phase) % 2);
     case 'scout': return FC.spr('scout', Math.floor(t * 10 + e.phase) % 2);
     case 'emberBat': return FC.spr('emberBat', Math.floor(t * 8 + e.phase) % 2);
     case 'dragonet': return FC.spr('dragonet', Math.floor(t * 6 + e.phase) % 2);
@@ -142,6 +154,28 @@ export function planetDefs(): ObstacleDef[] {
     for (const r of [9, 12]) add(FC.ringPlanet(r, bases[r % 6], 'P', 'W'), r * 0.9, r * 0.9);
     return out;
   });
+}
+
+// arbre en feu (niveau 13) : tronc et couronne de flammes
+export function fireTreeDef(h: number, seed: number): ObstacleDef {
+  const pix = FC.fireTree(h, seed, 0), w = pix.w, tw = Math.max(3, Math.round(h / 10));
+  return { kind: 'fireTree', pix, shapes: [{ t: 'r', x: w / 2 - tw / 2 - 1, y: h * 0.45, w: tw + 2, h: h * 0.55 }, { t: 'e', cx: w / 2, cy: h * 0.42, rx: w * 0.36, ry: h * 0.26 }] };
+}
+// coulée de lave : état à l'instant t ('off', 'warn', 'on', 'end') et avancement dans cet état (0 à 1)
+export function lavaState(o: Obstacle, t: number): ['off' | 'warn' | 'on' | 'end', number] {
+  const L = C.LAVA, period = L.off + L.warn + L.on + L.end;
+  let u = ((t + (o.lava?.offset ?? 0)) % period + period) % period;
+  if (u < L.off) return ['off', u / L.off]; u -= L.off;
+  if (u < L.warn) return ['warn', u / L.warn]; u -= L.warn;
+  if (u < L.on) return ['on', u / L.on]; u -= L.on;
+  return ['end', u / L.end];
+}
+// la zone brûlante de la coulée (entre le plafond et le sol), ou null si elle ne brûle pas
+export function lavaBox(o: Obstacle, t: number, top: number, floor: number): Box | null {
+  const [st, k] = lavaState(o, t), x = o.x + 4 - C.LAVA.width / 2;
+  if (st === 'on') return { x, y: top, w: C.LAVA.width, h: (floor - top) * Math.min(1, k * 4) };
+  if (st === 'end') { const y0 = top + (floor - top) * k; return { x, y: y0, w: C.LAVA.width, h: floor - y0 }; }
+  return null;
 }
 
 // rochers de feu flottants (niveau 12)
