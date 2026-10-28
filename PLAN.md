@@ -290,7 +290,8 @@ Points d'attention :
 | Golem de lave | 14 | lent et très solide ; seules ses fissures brillantes sont fragiles |
 
 ## Étapes
-- [ ] Maquettes : niveaux 11 à 16, personnages de Vulcano, le Scorpion sous ses 3 formes, les 2 BD.
+- [x] Maquettes : niveaux 11 à 16, personnages de Vulcano, le Scorpion sous ses 3 formes, les 2 BD.
+- [ ] Validation des maquettes de Vulcano par toi.
 - [ ] Niveaux 11 et 12, et la BD « Nouvel appel à l'aide ».
 - [ ] Niveaux 13 et 14.
 - [ ] Niveau 15 : le Scorpion volant de feu.
