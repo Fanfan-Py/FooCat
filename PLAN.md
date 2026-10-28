@@ -297,7 +297,8 @@ Points d'attention :
 
 ## Étapes
 - [x] Maquettes : niveaux 11 à 16, personnages de Vulcano, le Scorpion sous ses 3 formes, les 2 BD.
-- [ ] Validation des maquettes de Vulcano par toi.
+- [x] Validation des maquettes de Vulcano (28 octobre) : éclaireur redessiné, coulées de lave plus fines.
+      La case de fête de la fin du niveau 5 est aussi sur la planche « Histoire illustrée ».
 - [ ] Niveaux 11 et 12, et la BD « Nouvel appel à l'aide ».
 - [ ] Niveaux 13 et 14.
 - [ ] Niveau 15 : le Scorpion volant de feu.
