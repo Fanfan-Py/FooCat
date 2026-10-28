@@ -171,6 +171,36 @@
     p.ell(34, 6, 4.6, 4.6, function (x, y, dx, dy) { return dx < -0.2 && dy < -0.2 ? P.W : col('bff3ff'); });
     return p;
   };
+  // météorite : rocher qui brûle, traînée de feu dans le sens de sa course
+  // a : angle de la course (0 = vers la gauche, positif = en descendant), f : image, r : rayon du rocher
+  // le rocher est au point (28 + cos·16 vers la course) d'une image de 56 x 56 : voir FC.meteorCenter
+  FC.meteorCenter = function (a) { return [28 - Math.cos(a) * 16, 28 + Math.sin(a) * 16]; };
+  FC.meteor = function (a, f, r) {
+    r = r || 5; a = Math.round(a * 8) / 8;
+    return FC.mk('meteor' + a + '_' + (f % 4) + '_' + r, function () {
+      var S2 = 56, p = new Pix(S2, S2), dx = -Math.cos(a), dy = Math.sin(a), c0 = FC.meteorCenter(a), cx = c0[0], cy = c0[1], R = FC.rng(3 + f % 4);
+      var fire = [col('fff3b0'), col('ffd23f'), col('ff9a3c'), col('ff4d5e'), col('a77bff')];
+      for (var k = 30; k >= 0; k--) {
+        var q = k / 30, tx = cx - dx * k * 1.2 + (R() - 0.5) * 2 * q, ty = cy - dy * k * 1.2 + (R() - 0.5) * 2 * q;
+        var rad = (r + 1.5) * (1 - q * 0.8), c = fire[Math.min(4, Math.floor(q * 5))];
+        p.ell(tx, ty, rad, rad, alpha(c, Math.round(230 * (1 - q * 0.75))));
+      }
+      for (var s = 0; s < 6; s++) {
+        var d = 6 + R() * 22, side = (R() - 0.5) * 10;
+        p.put(cx - dx * d - dy * side, cy - dy * d + dx * side, alpha(s % 2 ? P.y : P.W, 200));
+      }
+      var rock = new Pix(S2, S2);
+      rock.ell(cx, cy, r, r, function (x, y, ex, ey) {
+        var lit = ex * dx + ey * dy; // l'avant est éclairé par le frottement
+        if (((x * 5 + y * 3 + f) % 9) === 0) return col('3a2420');
+        return lit > 0.35 ? col('ffb066') : lit > -0.2 ? col('8a5a44') : col('5a3a2e');
+      });
+      rock.ell(cx - dx * 1.5 + dy * 1.5, cy - dy * 1.5 - dx * 1.5, 1.4, 1.4, col('3a2420'));
+      rock.outline(P.K);
+      p.blit(rock, 0, 0);
+      return p;
+    });
+  };
   FC.iceBlock = function (r) {
     return FC.mk('ice' + r, function () {
       var p = new Pix(r * 2 + 3, r * 2 + 3), c = r + 1;

@@ -14,6 +14,7 @@ export interface Enemy {
   kind: EnemyKind; x: number; y: number; baseY: number; phase: number; speed: number; amp: number;
   hp: number; holdX: number; holdT: number; shootT: number; flash: number; dead: boolean; group: number;
   vx: number; vy: number; stage: number; size: number;
+  tough?: boolean; // résistance déjà ajustée au mode de difficulté
 }
 export interface Shot {
   kind: WeaponKind | 'jaw' | 'shard'; x: number; y: number; vx: number; vy: number; dmg: number;
@@ -84,6 +85,13 @@ export function enemyBox(e: Enemy): Box {
   const b = BOXES[e.kind];
   return { x: e.x + b.x, y: e.y + b.y, w: b.w, h: b.h };
 }
+// météorite : angle de sa course, et décalage du dessin pour que le rocher soit sur sa zone de collision
+export function cometAngle(e: Enemy) { return Math.atan2(e.vy, -e.vx); }
+export function spriteOffset(e: Enemy): [number, number] {
+  if (e.kind !== 'comet') return [0, 0];
+  const b = BOXES.comet, [cx, cy] = FC.meteorCenter(Math.round(cometAngle(e) * 8) / 8);
+  return [Math.round(b.x + b.w / 2 - cx), Math.round(b.y + b.h / 2 - cy)];
+}
 export function enemyCenter(e: Enemy): [number, number] { const b = enemyBox(e); return [b.x + b.w / 2, b.y + b.h / 2]; }
 
 export function enemySprite(e: Enemy, t: number): Pix {
@@ -101,7 +109,7 @@ export function enemySprite(e: Enemy, t: number): Pix {
     case 'scorpion': return FC.spr('scorpion', Math.floor(t * 6 + e.phase) % 2);
     case 'batShrimp': return FC.spr('batShrimp', Math.floor(t * 8 + e.phase) % 2);
     case 'guitarFish': return FC.spr('guitarFish', Math.floor(t * 6 + e.phase) % 2);
-    case 'comet': return FC.spr('comet', Math.floor(t * 10));
+    case 'comet': return FC.meteor(cometAngle(e), Math.floor(t * 10 + e.phase));
     case 'crab': return FC.spr('crab', Math.floor(t * 6 + e.phase) % 2);
     case 'jellyBlue': case 'jellyPink': return FC.spr(e.kind, Math.floor(t * 4 + e.phase) % 4);
     case 'sleepBubble': return FC.spr('sleepBubble', Math.floor(t * 2 + e.phase) % 2);

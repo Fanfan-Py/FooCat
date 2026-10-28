@@ -2,7 +2,7 @@
 import { FC, Pix, Color } from '../art';
 import * as C from './config';
 import { World, WEAPON_ORDER, rainStage } from './world';
-import { enemySprite, elecOn, elecSoon, cablePoint, jetState, jetOrigin, jetCircles, enemyCenter } from './things';
+import { enemySprite, elecOn, elecSoon, cablePoint, jetState, jetOrigin, jetCircles, enemyCenter, spriteOffset } from './things';
 import { heroSprite } from './rewards';
 
 // apparence de la soucoupe choisie par le joueur
@@ -175,10 +175,6 @@ function decorSpace2(scr: Pix, w: World) {
   scr.d.set(d.bg.d);
   FC.drawStars(scr, d.stars, t, [3, 9, 20]);
   scr.blit(d.ocean, C.W - 70 - Math.round(w.progress * 30), 22);
-  for (let c = 0; c < 2; c++) { // comètes au loin (décor)
-    const ph = (t * 0.12 + c / 2) % 1;
-    scr.blit(FC.spr('comet', Math.floor(t * 8)), 360 - ph * 460, 30 + c * 60 + ph * 50, false, 0.35);
-  }
 }
 // ---------- niveau 7 : vers la planète aquatique ----------
 function decorOcean(scr: Pix, w: World) {
@@ -320,7 +316,8 @@ export function drawWorld(scr: Pix, w: World) {
   for (const e of w.enemies) {
     if (e.kind === 'hanger') scr.line(e.x + 11, top, e.x + 11, e.y + 4, FC.alpha(P.W, 190));
     const hidden = jets && inJet(w, ...enemyCenter(e));
-    scr.blit(enemySprite(e, t), e.x, e.y, false, hidden ? 0.3 : e.flash > 0 ? 0.4 : 1);
+    const [ox, oy] = spriteOffset(e);
+    scr.blit(enemySprite(e, t), e.x + ox, e.y + oy, false, hidden ? 0.3 : e.flash > 0 ? 0.4 : 1);
   }
   for (const o of w.obstacles) if (o.jet) drawJet(scr, o, t); // les paillettes passent par-dessus les monstres
   for (const s of w.eshots) {

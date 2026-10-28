@@ -15,6 +15,8 @@ const mode = (process.env.MODE || 'normal') as Mode;
 const runs = Number(process.env.RUNS || 8);
 
 // Robot : cherche la hauteur libre la plus proche devant lui, tire tout le temps
+// band : robot « planqué », qui n'esquive que dans une bande de 40 pixels en haut ou en bas de l'écran
+let band: 'haut' | 'bas' | null = null;
 function robot(w: World, t: number, look = 95): Controls {
   const h = w.hero, cy = h.y + 17;
   const blocked: [number, number][] = [];
@@ -45,7 +47,9 @@ function robot(w: World, t: number, look = 95): Controls {
     if (b.kind === 'spider' && b.laser !== 'idle') blocked.push([b.laserY - 16, b.laserY + 16]);
     if (b.kind === 'skel' && b.charging) blocked.push([b.y + 14, b.y + 74]); // s'écarte de la charge
   }
-  for (let y = 26; y <= w.floor - 14; y += 2) {
+  const lo = band === 'bas' ? w.floor - 54 : 26, hi = band === 'haut' ? w.top + 40 : w.floor - 14;
+  if (band) target = (lo + hi) / 2;
+  for (let y = lo; y <= hi; y += 2) {
     if (blocked.some(([a, b]) => y > a && y < b)) continue;
     const cost = Math.abs(y - cy) + Math.abs(y - target) * 0.2;
     if (cost < best) { best = cost; target = y; }
@@ -90,7 +94,33 @@ if (process.env.DAILY) {
   }
 }
 
-for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || process.env.DAILY ? 0 : Number(process.env.TO || LEVELS.length)); lv++) {
+// test anti-planque (CAMP=1) : le robot normal contre deux robots planqués en haut et en bas
+if (process.env.CAMP) {
+  const from = Number(process.env.FROM || 0), to = Number(process.env.TO || LEVELS.length);
+  for (let lv = from; lv < to; lv++) {
+    const res: string[] = [];
+    let ref = 0;
+    for (const b of [null, 'haut', 'bas'] as const) {
+      band = b;
+      let ok = 0, hits = 0, time = 0;
+      for (let seed = 1; seed <= runs; seed++) {
+        const w = new World(sfx, { level: lv, seed: seed * 977 + lv, mode });
+        let t = 0;
+        while (t < 900 && w.state !== 'over' && !(w.state === 'cleared' && w.stateT > 3)) { w.update(STEP, robot(w, t)); t += STEP; }
+        if (w.state === 'cleared') ok++;
+        hits += w.hits; time += t;
+      }
+      const rate = hits / (time / 60);
+      if (!b) ref = rate;
+      const flag = b && (rate < ref * 1.3 || ok > 0) ? ' ⚠' : '';
+      res.push(`${b ?? 'normal'} ${ok}/${runs} · ${rate.toFixed(1)} coups/min${flag}`);
+    }
+    band = null;
+    console.log(`niveau ${lv + 1} (${mode}) : ${res.join('   ')}`);
+  }
+}
+
+for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || process.env.DAILY || process.env.CAMP ? 0 : Number(process.env.TO || LEVELS.length)); lv++) {
   let cleared = 0, time = 0; const causes: Record<string, number> = {};
   for (let seed = 1; seed <= runs; seed++) {
     const w = new World(sfx, { level: lv, seed: seed * 977 + lv, mode });

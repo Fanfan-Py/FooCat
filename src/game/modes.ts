@@ -5,7 +5,7 @@
 import * as C from './config';
 
 export type GameMode = C.Mode | 'infini' | 'defi';
-export interface ModeCfg { lives: number; energy: number; spawn: number; speed: number; enemyFire: number; bonus?: number }
+export interface ModeCfg { lives: number; energy: number; spawn: number; speed: number; enemyFire: number; obstacle?: number; hp?: number; bossHp?: number; bonus?: number }
 
 // les niveaux sans boss, dans l'ordre du jeu
 export const ZONE_LEVELS = C.LEVELS.map((l, i) => (l.boss ? -1 : i)).filter((i) => i >= 0);
@@ -17,7 +17,7 @@ export interface Setup { levelIndex: number; level: C.Level; mode: ModeCfg; labe
 
 // difficulté renforcée : plus d'ennemis, plus rapides, qui tirent plus souvent
 export function boosted(base: ModeCfg, boost: number): ModeCfg {
-  return { ...base, spawn: base.spawn * boost, speed: base.speed * (1 + (boost - 1) * 0.5), enemyFire: base.enemyFire * boost };
+  return { ...base, spawn: base.spawn * boost, obstacle: (base.obstacle ?? 1) * (1 + (boost - 1) * 0.5), speed: base.speed * (1 + (boost - 1) * 0.5), enemyFire: base.enemyFire * boost };
 }
 
 export function endlessZone(zone: number): Setup { // zone : 1, 2, 3...

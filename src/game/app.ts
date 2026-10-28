@@ -29,8 +29,25 @@ function center(scr: Pix, s: string, y: number, c: number[], o: any = {}, cx = C
 }
 function right(scr: Pix, s: string, x: number, y: number, c: number[], o: any = {}) { FC.text(scr, s, x - FC.textWidth(s), y, c, o); }
 
-const MODES: GameMode[] = ['normal', 'difficile', 'infini', 'defi'];
-const MODE_NAMES: Record<GameMode, string> = { normal: 'NORMAL', difficile: 'DIFFICILE', infini: 'INFINI', defi: 'DÉFI DU JOUR' };
+const MODES: GameMode[] = ['facile', 'normal', 'difficile', 'infini', 'defi'];
+const MODE_NAMES: Record<GameMode, string> = { facile: 'FACILE', normal: 'NORMAL', difficile: 'DIFFICILE', infini: 'INFINI', defi: 'DÉFI DU JOUR' };
+
+// Le 28 octobre 2026, l'ancien mode « normal » est devenu « facile » et l'ancien « difficile » est devenu « normal » :
+// on déplace une seule fois la partie en cours, les scores, les meilleurs scores et les étoiles.
+function migrateModes() {
+  try {
+    const ls = localStorage;
+    if (ls.getItem('foocat.modes.v2')) return;
+    const move = (from: string, to: string) => { const v = ls.getItem(from); if (v !== null) { ls.setItem(to, v); ls.removeItem(from); } };
+    move('foocat.save.normal', 'foocat.save.facile'); move('foocat.save.difficile', 'foocat.save.normal');
+    move('foocat.scores.normal', 'foocat.scores.facile'); move('foocat.scores.difficile', 'foocat.scores.normal');
+    move('foocat.best', 'foocat.best.facile'); move('foocat.best.difficile', 'foocat.best.normal');
+    const stars = JSON.parse(ls.getItem('foocat.stars') || '{}'), out: Record<string, number> = {};
+    for (const [k, n] of Object.entries(stars)) out[k.replace(/^normal-/, 'facile-').replace(/^difficile-/, 'normal-')] = n as number;
+    ls.setItem('foocat.stars', JSON.stringify(out));
+    ls.setItem('foocat.modes.v2', '1');
+  } catch { /* stockage indisponible */ }
+}
 // le défi du jour a un tableau des scores par jour
 function scoreKey(m: GameMode) { return m === 'defi' ? 'defi.' + today() : m; }
 const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle'];
@@ -131,6 +148,7 @@ export class App {
   private story = { idx: 0, carry: undefined as Carry | undefined, scenes: [] as any[], pix: null as Pix | null };
 
   constructor(private sfx: Sfx) {
+    migrateModes();
     if (!SKINS.some((s) => s.id === this.skin) || !this.skinOpen(this.skin)) this.skin = 'classic';
     setHeroSkin(this.skin);
     this.applySettings();
@@ -149,7 +167,7 @@ export class App {
   private writeSave(v: { level: number; carry: Carry } | null) {
     try { if (v) localStorage.setItem(this.saveKey, JSON.stringify(v)); else localStorage.removeItem(this.saveKey); } catch { /* stockage indisponible */ }
   }
-  get bestKey() { return this.mode === 'normal' ? 'foocat.best' : 'foocat.best.' + scoreKey(this.mode); }
+  get bestKey() { return 'foocat.best.' + scoreKey(this.mode); }
   get best() { const top = loadScores(scoreKey(this.mode))[0]; return Math.max(load(this.bestKey), top ? top.score : 0); }
 
   private go(s: State, menu: string[] | null = null, y0 = 0) {
@@ -170,7 +188,7 @@ export class App {
   }
   // mode infini et défi du jour
   get special() { return this.mode === 'infini' || this.mode === 'defi'; }
-  get baseMode(): C.Mode { return this.mode === 'difficile' ? 'difficile' : 'normal'; }
+  get baseMode(): C.Mode { return this.mode === 'facile' || this.mode === 'difficile' ? this.mode : 'normal'; }
   private startEndless(zone: number, carry?: Carry) {
     const setup = endlessZone(zone);
     this.zone = zone; this.devRun = false; this.levelStart = null;
@@ -678,7 +696,7 @@ export class App {
     center(scr, 'TU AS TERMINÉ LES ' + C.LEVELS.length + ' NIVEAUX EN MODE ' + MODE_NAMES[this.mode], 72, P.W, { outline: P.K });
     center(scr, w.level.next ?? '', 84, P.q, { outline: P.K });
     center(scr, 'SCORE ' + w.score, 104, P.y, { sc: 2, outline: P.K });
-    center(scr, this.mode === 'normal' ? 'ESSAIE LE MODE DIFFICILE !' : 'CHAMPION DE LA GALAXIE !', 136, P.v, { outline: P.K });
+    center(scr, this.mode === 'facile' ? 'ESSAIE LE MODE NORMAL !' : this.mode === 'normal' ? 'ESSAIE LE MODE DIFFICILE !' : 'CHAMPION DE LA GALAXIE !', 136, P.v, { outline: P.K });
     if (this.stateT > 1 && this.t % 1.2 < 0.8) center(scr, (this.touch ? 'TOUCHE' : 'ENTRÉE') + " POUR REVENIR À L'ACCUEIL", 152, P.W, { outline: P.K });
   }
 
@@ -686,7 +704,7 @@ export class App {
     this.drawTitleBackground(scr);
     const t = this.t, a = Math.floor(t * 3) % 2, list = loadScores(scoreKey(this.scoresMode));
     center(scr, 'MEILLEURS SCORES', 8, P.y, { sc: 2, outline: P.P });
-    center(scr, 'MODE ' + MODE_NAMES[this.scoresMode], 30, this.scoresMode === 'normal' ? P.b : P.P, { outline: P.K });
+    center(scr, 'MODE ' + MODE_NAMES[this.scoresMode], 30, this.scoresMode === 'facile' ? P.g : this.scoresMode === 'normal' ? P.b : P.P, { outline: P.K });
     FC.text(scr, '<', 100 - a, 30, P.y, { outline: P.K }); FC.text(scr, '>', 216 + a, 30, P.y, { outline: P.K });
     if (!list.length) center(scr, 'PAS ENCORE DE SCORE : À TOI DE JOUER !', 90, P.W, { outline: P.K });
     const medal = [P.y, P.m, P.o];

@@ -170,11 +170,28 @@ Proposition (à valider sur la maquette) :
 
 ## Étape 12 : trois modes de difficulté
 
-- [ ] Le jeu actuel devient le mode **FACILE**, sans rien changer.
+- [x] Le jeu actuel devient le mode **FACILE**, sans rien changer.
       Ce qui est enregistré en « normal » (Continuer, scores, étoiles) passe en « facile » : rien n'est perdu.
-- [ ] Nouveau mode **NORMAL**, plus dur, et vrai mode **DIFFICILE**.
-- [ ] Choix sur la ligne MODE de l'accueil : FACILE, NORMAL, DIFFICILE, INFINI, DÉFI DU JOUR.
-- [ ] Le mode infini et le défi du jour se basent sur le nouveau mode NORMAL.
+- [x] Nouveau mode **NORMAL**, plus dur, et vrai mode **DIFFICILE**.
+- [x] Choix sur la ligne MODE de l'accueil : FACILE, NORMAL, DIFFICILE, INFINI, DÉFI DU JOUR.
+- [x] Le mode infini et le défi du jour se basent sur le nouveau mode NORMAL.
+
+Valeurs retenues après les essais du robot (28 octobre) :
+
+| | Facile | Normal | Difficile |
+|---|---|---|---|
+| Vies | 3 | 3 | 2 |
+| Monstres : résistance | normale | x 1,3 | x 1,45 |
+| Nombre de monstres | normal | + 15 % | + 25 % |
+| Obstacles | normal | + 20 % | + 30 % |
+| Vitesse des monstres et des tirs | normale | + 5 % | + 10 % |
+| Tirs ennemis | normaux | + 15 % | + 25 % |
+| Vie des boss | normale | x 1,2 | x 1,3 |
+| Bonus | normaux | normaux | - 10 % |
+
+Parties gagnées par le robot (qui joue moins bien qu'un humain) : environ 2 sur 3 en facile,
+1 sur 3 en normal, 1 sur 13 en difficile. Les premières valeurs du tableau du dessus étaient
+bien trop dures (le robot perdait tout en difficile en une à deux minutes).
 
 Ce qui change d'un mode à l'autre (valeurs de départ, à ajuster avec le robot) :
 
@@ -198,17 +215,19 @@ Premier test (28 octobre) : deux robots tricheurs restent collés en haut ou en 
 esquiver. Ils perdent sur les 10 niveaux (4 à 16 coups reçus par minute). Mais ils n'esquivent pas,
 le test doit donc être plus malin :
 
-- [ ] Ajouter au test automatique deux robots « planqués » qui esquivent, mais seulement dans une bande
+- [x] Ajouter au test automatique deux robots « planqués » qui esquivent, mais seulement dans une bande
       en haut (ou en bas) de l'écran. Règle : sur chaque niveau et dans chaque mode, ils doivent faire
       **nettement moins bien** que le robot normal.
 - [ ] Là où une planque marche encore, ajouter du danger dans les bords :
   - des vagues de monstres qui passent tout en haut et tout en bas, ou qui visent la hauteur du chat ;
   - dans les niveaux sans sol ni plafond (1, 2, 6, 7), des obstacles qui touchent aussi les bords ;
-  - si le chat reste plus de 5 secondes collé à un bord, la vague suivante arrive par ce bord.
-- [ ] **Pluie de comètes** (niveau 6) : aujourd'hui elles partent toutes du haut à droite et descendent
+  - si le chat reste plus de 5 secondes collé à un bord, la vague suivante arrive par ce bord. **Fait.**
+- [x] Résultat (mode normal) : sur les 10 niveaux, un robot planqué reçoit 1,5 à 4 fois plus de coups que le
+      robot normal. Il a quand même gagné une partie sur 3 au niveau 1 (en bas) et au niveau 3 (en haut).
+- [x] **Pluie de comètes** (niveau 6) : aujourd'hui elles partent toutes du haut à droite et descendent
       vers la gauche, donc le coin en haut à gauche est toujours à l'abri. Elles arriveront aussi
       d'en bas (en remontant) et à des hauteurs variées, pour couvrir tout l'écran.
-- [ ] **Nouvelle apparence des comètes** : un vrai rocher qui brûle, avec une traînée de feu
+- [x] **Nouvelle apparence des comètes** : un vrai rocher qui brûle, avec une traînée de feu
       dans le sens de sa course (aujourd'hui la traînée reste à l'horizontale).
 - [ ] Vérifier en mode facile, normal et difficile, puis captures d'écran des endroits modifiés.
 

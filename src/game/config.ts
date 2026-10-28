@@ -6,10 +6,14 @@ export const HUD_H = 14; // bandeau du haut (score, vies...)
 
 // Le choix du niveau à l'accueil n'existe qu'en mode développeur (voir app.ts).
 
-// Modes de jeu. « difficile » est prêt mais pas encore proposé à l'écran titre.
+// Modes de difficulté (choisis sur la ligne MODE de l'accueil).
+// spawn : ennemis plus nombreux ; obstacle : obstacles plus nombreux ; speed : vitesse des ennemis et de leurs tirs ;
+// enemyFire : tirs plus fréquents ; hp : résistance des ennemis ; bossHp : vie des boss ; bonus : fréquence des bonus.
+// « facile » est le jeu tel qu'il était jusqu'au 28 octobre 2026.
 export const MODES = {
-  normal: { lives: 3, energy: 4, spawn: 1, speed: 1, enemyFire: 1 },
-  difficile: { lives: 2, energy: 4, spawn: 1.25, speed: 1.1, enemyFire: 1.2 },
+  facile: { lives: 3, energy: 4, spawn: 1, obstacle: 1, speed: 1, enemyFire: 1, hp: 1, bossHp: 1, bonus: 1 },
+  normal: { lives: 3, energy: 4, spawn: 1.15, obstacle: 1.2, speed: 1.05, enemyFire: 1.15, hp: 1.3, bossHp: 1.2, bonus: 1 },
+  difficile: { lives: 2, energy: 4, spawn: 1.25, obstacle: 1.3, speed: 1.1, enemyFire: 1.25, hp: 1.45, bossHp: 1.3, bonus: 0.9 },
 };
 export type Mode = keyof typeof MODES;
 

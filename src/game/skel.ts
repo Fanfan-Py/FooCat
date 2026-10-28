@@ -24,8 +24,8 @@ export class SkelBoss {
   x = C.W + 10;
   y = 40;
   t = 0;
-  hp = C.SKEL.hp;
-  readonly maxHp = C.SKEL.hp;
+  hp: number;
+  readonly maxHp: number;
   armored = true;
   entering = true;
   dying = 0; // > 0 pendant l'explosion finale
@@ -42,7 +42,7 @@ export class SkelBoss {
 
   static readonly HOME_X = C.W - 136;
 
-  constructor(private top: number, private bottom: number) { }
+  constructor(private top: number, private bottom: number, hpMul = 1) { this.hp = this.maxHp = Math.round(C.SKEL.hp * hpMul); }
 
   get stage() { return this.armored ? 1 : 2; }
   get alive() { return !this.dead && this.dying <= 0; }

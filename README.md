@@ -3,8 +3,10 @@
 Jeu de tir à défilement horizontal : un chat licorne dans une soucoupe donut.
 Marche dans le navigateur sur PC, Mac, iPhone et Android.
 
-Quatre modes, au choix sur la ligne « MODE » de l'accueil :
-- **Normal** et **Difficile** : les 10 niveaux, avec deux boss.
+Cinq modes, au choix sur la ligne « MODE » de l'accueil :
+- **Facile**, **Normal** (le mode de départ) et **Difficile** : les 10 niveaux, avec deux boss.
+  Plus le mode est dur, plus les ennemis sont nombreux, rapides et résistants, et les obstacles nombreux
+  (réglages dans `MODES`, dans `src/game/config.ts`).
 - **Infini** : des zones sans fin (les niveaux sans boss, en boucle), de plus en plus dures.
 - **Défi du jour** : le même niveau, le même hasard et la même règle spéciale pour tout le monde
   pendant une journée (réglages dans `src/game/modes.ts`), avec un tableau des scores du jour.
@@ -70,7 +72,9 @@ nouveau décor ou un nouvel ennemi demande en plus un peu de dessin et de code.
 
 `npm test` fait jouer un robot sur chaque niveau et indique ce qui le touche le plus
 (`CAUSES=1 npm test`), pour régler la difficulté. `ENDLESS=1 npm test` mesure jusqu'où il va
-en mode infini, `DAILY=1 npm test` essaie les défis des 7 prochains jours.
+en mode infini, `DAILY=1 npm test` essaie les défis des 7 prochains jours. `MODE=facile|normal|difficile`
+choisit le mode. `CAMP=1 npm test` compare le robot normal à deux robots « planqués » tout en haut ou
+tout en bas de l'écran : ils doivent recevoir nettement plus de coups.
 
 ## Commandes
 

@@ -86,6 +86,8 @@ export class World implements BossHost, SkelHost {
   private groups = new Map<number, { left: number; ok: boolean }>();
   private groupSeq = 0;
   private dist = 0;
+  // anti-planque : temps passé collé au bord du haut ou du bas
+  private edge = { side: 0, t: 0 };
   private rnd: () => number;
 
   constructor(private sfx: Sfx, o: WorldOptions = {}) {
@@ -124,6 +126,8 @@ export class World implements BossHost, SkelHost {
     const h = this.hero;
 
     if (this.state === 'play' && this.heroAlive()) {
+      const cy = h.y + 17, side = cy < this.top + 40 ? -1 : cy > this.floor - 40 ? 1 : 0;
+      if (side && side === this.edge.side) this.edge.t += dt; else this.edge = { side, t: 0 };
       this.dist += dt * C.POINTS.perSecond;
       while (this.dist >= 10) { this.dist -= 10; this.score += 10; }
     }
@@ -225,7 +229,7 @@ export class World implements BossHost, SkelHost {
       this.phaseIdx++;
       const cur = ph[this.phaseIdx];
       if (cur.banner) this.say(cur.banner);
-      if (cur.event === 'boss' && !this.boss) { this.boss = this.level.boss === 'skel' ? new SkelBoss(this.top, this.floor) : new Boss(); this.sfx.play('alarm'); this.sfx.music?.(this.level.boss === 'skel' ? 'skelboss' : 'boss'); }
+      if (cur.event === 'boss' && !this.boss) { this.boss = this.level.boss === 'skel' ? new SkelBoss(this.top, this.floor, this.mode.bossHp ?? 1) : new Boss(this.mode.bossHp ?? 1); this.sfx.play('alarm'); this.sfx.music?.(this.level.boss === 'skel' ? 'skelboss' : 'boss'); }
       if (cur.event === 'belt' && !this.belt.done) {
         Object.assign(this.belt, { active: true, col: 0, timer: 2.2, hitsAtStart: this.hits });
         this.sfx.play('alarm');
@@ -242,12 +246,14 @@ export class World implements BossHost, SkelHost {
       if (T.obstacle <= 0) {
         const k = pickWeighted(ph.obstacles, this.rnd);
         if (k) this.spawnObstacle(k);
-        T.obstacle = ph.obstacle / m.spawn * (0.75 + this.rnd() * 0.5);
+        T.obstacle = ph.obstacle / (m.obstacle ?? m.spawn) * (0.75 + this.rnd() * 0.5);
       }
     }
     if (T.wave <= 0) {
       const wk = this.belt.active ? 'solo' : pickWeighted(ph.waves, this.rnd);
       if (wk) this.spawnWave(wk, ph.gold);
+      // le chat reste collé à un bord depuis plus de 5 s : une rangée d'ennemis arrive à sa hauteur
+      if (this.edge.t > 5 && !this.belt.active) { this.spawnFormation('line', ph.gold, this.edge.side); this.edge.t = 0; }
       T.wave = (this.belt.active ? 5 : ph.wave) / m.spawn * (0.8 + this.rnd() * 0.4) * lerp(1.1, 0.9, p);
     }
     if (T.bonus <= 0) { // pendant le combat contre le boss, des munitions arrivent plus souvent
@@ -415,9 +421,15 @@ export class World implements BossHost, SkelHost {
           phase: R() * 6, speed: 55, amp: 10, holdX: 190 + R() * 90, holdT: 5 + R() * 2, shootT: 1.2,
         }));
       }
-      case 'comets': { // comètes qui tombent en diagonale
+      case 'comets': { // météorites : du haut en descendant, du bas en remontant, ou à l'horizontale à toutes les hauteurs
         const n = 1 + Math.floor(R() * 2);
-        for (let i = 0; i < n; i++) this.enemies.push(newEnemy('comet', C.W + 10 + R() * 120, top - 6 + R() * 50, { vx: -(150 + R() * 50) * sp, vy: (55 + R() * 40) * sp, phase: R() * 6 }));
+        for (let i = 0; i < n; i++) {
+          const k = R(), vx = -(150 + R() * 50) * sp;
+          const [y, vy] = k < 0.4 ? [top - 6 + R() * 50, (55 + R() * 40) * sp]
+            : k < 0.7 ? [this.floor - 14 - R() * 40, -(55 + R() * 40) * sp]
+              : [top + R() * (playBottom - top), (R() - 0.5) * 30 * sp];
+          this.enemies.push(newEnemy('comet', C.W + 10 + R() * 120, y, { vx, vy, phase: R() * 6 }));
+        }
         return;
       }
       case 'crab': {
@@ -520,7 +532,7 @@ export class World implements BossHost, SkelHost {
     } else this.placeAlgae(this.slalomTop, max, speed, false);
   }
 
-  private spawnFormation(f: C.WaveKind, gold: number) {
+  private spawnFormation(f: C.WaveKind, gold: number, side = 0) { // side : -1 tout en haut, 1 tout en bas
     const R = this.rnd, p = this.progress;
     let pts: number[][], amp = 10 + R() * 10, wave = 0.55;
     if (f === 'line') { const n = 4 + Math.floor(R() * 3); pts = []; for (let i = 0; i < n; i++) pts.push([i * 18, 0]); amp = 14; }
@@ -530,7 +542,7 @@ export class World implements BossHost, SkelHost {
     else pts = [[0, 0]];
     const ys = pts.map(q => q[1]), minY = Math.min(...ys), maxY = Math.max(...ys);
     const lo = this.top + 4 - minY + amp, hi = this.floor - 16 - maxY - amp;
-    const baseY = lo + R() * Math.max(0, hi - lo);
+    const baseY = side < 0 ? lo : side > 0 ? Math.max(lo, hi) : lo + R() * Math.max(0, hi - lo);
     const speed = (46 + R() * 14 + p * 20) * this.mode.speed;
     const id = ++this.groupSeq;
     if (pts.length > 1) this.groups.set(id, { left: pts.length, ok: true });
@@ -549,6 +561,7 @@ export class World implements BossHost, SkelHost {
   private updateEnemies(dt: number) {
     const h = this.hero, hb = this.heroBox(), p = this.progress, m = this.mode, cleared = this.state === 'cleared';
     for (const e of this.enemies) {
+      if (!e.tough) { e.tough = true; e.hp = Math.max(1, Math.round(e.hp * (m.hp ?? 1))); } // plus résistants selon le mode
       e.flash = Math.max(0, e.flash - dt);
       switch (e.kind) {
         case 'fly': case 'flyGold': case 'fish':

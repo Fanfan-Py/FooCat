@@ -19,8 +19,9 @@ export class Boss {
   x = C.W + 10;
   y = 40;
   t = 0;
-  hp = C.BOSS.hp;
-  readonly maxHp = C.BOSS.hp;
+  hp: number;
+  readonly maxHp: number;
+  constructor(hpMul = 1) { this.hp = this.maxHp = Math.round(C.BOSS.hp * hpMul); }
   entering = true;
   dying = 0; // > 0 pendant l'explosion finale
   dead = false;
