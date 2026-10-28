@@ -143,6 +143,9 @@ Corrections après le premier essai :
 
 # Suite : couleurs du chat et vraie difficulté (plan du 28 octobre 2026)
 
+Décisions (28 octobre) : les 6 couleurs et leurs succès sont **validés** ; un nouveau joueur commence
+en mode **NORMAL** ; les scores de l'ancien mode difficile passent dans le nouveau mode NORMAL.
+
 ## Étape 11 : maquette des couleurs du chat licorne
 
 Nouveaux **succès plus durs**, qui débloquent chacun une **couleur du chat** (en plus des soucoupes).
@@ -159,9 +162,11 @@ Proposition (à valider sur la maquette) :
 | Fantôme (fourrure transparente) | **FIDÈLE** : réussir 7 défis du jour |
 | Squelette (os blancs, yeux verts) | **CHASSEUR DE BOSS** : vaincre les deux boss sans perdre de vie |
 
-- [ ] Maquette sur la page des maquettes : les 6 chats en grand, avec leur succès.
-- [ ] Maquette de l'écran « Apparence » (remplace « Soucoupes ») : on choisit la soucoupe ET le chat.
-- [ ] Maquette de l'écran des succès sur 2 pages (on passera de 14 à 20 succès).
+- [x] Maquette sur la page des maquettes : les 6 chats en grand, avec leur succès.
+- [x] Maquette de l'écran « Apparence » (remplace « Soucoupes ») : on choisit la soucoupe ET le chat.
+- [x] Maquette de l'écran des succès sur 2 pages (on passera de 14 à 20 succès).
+- [x] Maquette de la nouvelle pluie de météorites (niveau 6).
+- [ ] Validation de la maquette par toi.
 
 ## Étape 12 : trois modes de difficulté
 
@@ -200,10 +205,17 @@ le test doit donc être plus malin :
   - des vagues de monstres qui passent tout en haut et tout en bas, ou qui visent la hauteur du chat ;
   - dans les niveaux sans sol ni plafond (1, 2, 6, 7), des obstacles qui touchent aussi les bords ;
   - si le chat reste plus de 5 secondes collé à un bord, la vague suivante arrive par ce bord.
+- [ ] **Pluie de comètes** (niveau 6) : aujourd'hui elles partent toutes du haut à droite et descendent
+      vers la gauche, donc le coin en haut à gauche est toujours à l'abri. Elles arriveront aussi
+      d'en bas (en remontant) et à des hauteurs variées, pour couvrir tout l'écran.
+- [ ] **Nouvelle apparence des comètes** : un vrai rocher qui brûle, avec une traînée de feu
+      dans le sens de sa course (aujourd'hui la traînée reste à l'horizontale).
 - [ ] Vérifier en mode facile, normal et difficile, puis captures d'écran des endroits modifiés.
 
 ## Ordre proposé
 
 1. Étape 11 (maquette) : je la fais en premier pour que tu puisses la regarder pendant la suite.
+   La nouvelle apparence des comètes sera aussi sur la maquette.
 2. Étapes 12 et 13 ensemble, car elles se règlent avec le même robot.
 3. Après ta validation de la maquette : les couleurs du chat dans le jeu (nouvelle étape 14).
+4. Nouveaux niveaux : idées à venir de ta part.
