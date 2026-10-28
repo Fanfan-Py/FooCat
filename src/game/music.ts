@@ -46,6 +46,46 @@ const THEMES: Record<string, Theme> = {
     bass: ['C3 . G2 . C3 . G2 . C3 . G2 . C3 . E3 .', 'F2 . C3 . F2 . C3 . F2 . C3 . F2 . A2 .', 'G2 . D3 . G2 . D3 . G2 . D3 . G2 . B2 .', 'C3 . G2 . E2 . G2 . C3 . . . . . . .'],
     drums: 'k . h . s . h . k . h k s . h .',
   },
+  // cap sur Vulcano (niveaux 11 et 12) : tendu et rapide, en mi mineur
+  approach: {
+    bpm: 128,
+    lead: ['E5 . G5 . B5 . E6 - D6 . B5 . G5 . A5 .', 'C6 . B5 . G5 . E5 - G5 . A5 . B5 - - .', 'D6 . C6 . A5 . F#5 - A5 . D6 . F#6 - E6 .', 'D#6 - - - B5 - - - F#5 - A5 - B5 - - -'],
+    lead2: ['E4 - - - - - - - G4 - - - - - - -', 'C4 - - - - - - - E4 - - - - - - -', 'D4 - - - - - - - F#4 - - - - - - -', 'B3 - - - - - - - D#4 - - - - - - -'],
+    bass: ['E2 E2 . E3 E2 . E2 E3 E2 E2 . E3 E2 . B1 D2', 'C2 C2 . C3 C2 . C2 C3 C2 C2 . C3 C2 . G1 B1', 'D2 D2 . D3 D2 . D2 D3 D2 D2 . D3 D2 . A1 C#2', 'B1 B1 . B2 B1 . B1 B2 B1 B1 . B2 B1 . F#1 A1'],
+    drums: 'k . h k s . h . k k h . s . h h',
+  },
+  // sur la planète Vulcano (niveau 13) : tambours et gamme orientale chaude
+  vulcano: {
+    bpm: 118,
+    lead: ['A4 - Bb4 - C#5 - - - E5 - D5 - C#5 - Bb4 -', 'A4 - - - . . E5 - F5 - E5 - D5 - C#5 -', 'D5 - E5 - F5 - - - G5 - F5 - E5 - D5 -', 'C#5 - Bb4 - A4 - - - . . . . E4 - - -'],
+    lead2: ['A3 - - - - - - - E4 - - - - - - -', 'A3 - - - - - - - E4 - - - - - - -', 'D4 - - - - - - - F4 - - - - - - -', 'C#4 - - - - - - - E4 - - - - - - -'],
+    bass: ['A1 . A1 A2 . A1 . A2 A1 . A1 A2 . Bb1 . A1', 'A1 . A1 A2 . A1 . A2 A1 . A1 A2 . Bb1 . A1', 'D2 . D2 D3 . D2 . D3 D2 . D2 D3 . E2 . D2', 'A1 . A1 A2 . Bb1 . A2 C#2 . A1 . E2 . A1 .'],
+    drums: 'k . k s . k h . k . k s . k h h',
+  },
+  // l'antre du volcan (niveaux 14 et 15) : sombre, des arpèges comme des gouttes
+  cave: {
+    bpm: 100,
+    lead: ['D5 - - - F5 - - - E5 - - - C#5 - - -', 'D5 - - - A4 - - - Bb4 - - - A4 - - -', 'F5 - - - E5 - - - D5 - - - C5 - - -', 'Bb4 - - - A4 - - - C#5 - - - . . . .'],
+    lead2: ['A3 . D4 . F4 . D4 . A3 . D4 . F4 . D4 .', 'G3 . Bb3 . D4 . Bb3 . G3 . Bb3 . D4 . Bb3 .', 'F3 . A3 . D4 . A3 . F3 . A3 . C4 . A3 .', 'A3 . C#4 . E4 . C#4 . A3 . C#4 . E4 . G4 .'],
+    bass: ['D2 - - - - - - - D2 - - - C2 - - -', 'Bb1 - - - - - - - G1 - - - A1 - - -', 'D2 - - - - - - - F1 - - - - - - -', 'A1 - - - - - - - A1 - - - C#2 - - -'],
+    drums: 'k . . . h . . . s . . . h . . h',
+  },
+  // le Scorpion volant de feu : très rapide et menaçant
+  scorpboss: {
+    bpm: 172,
+    lead: ['D5 . Eb5 . F#5 . D5 . A5 . G5 . F#5 . Eb5 .', 'D5 . A4 . Bb4 . A4 . D5 . Eb5 . F#5 - - -', 'G5 . F#5 . Eb5 . D5 . C5 . Bb4 . A4 . Bb4 .', 'A4 . D5 . F#5 . A5 . D6 - - - C6 - Bb5 -'],
+    lead2: ['D4 - - - - - - - Eb4 - - - - - - -', 'D4 - - - - - - - F#4 - - - - - - -', 'G4 - - - - - - - D4 - - - - - - -', 'A4 - - - - - - - F#4 - - - - - - -'],
+    bass: ['D2 D2 D3 D2 Eb2 Eb2 Eb3 Eb2 D2 D2 D3 D2 C2 C2 C3 C2', 'D2 D2 D3 D2 Eb2 Eb2 Eb3 Eb2 F#2 F#2 F#3 F#2 Eb2 Eb2 Eb3 Eb2', 'G1 G1 G2 G1 F#1 F#1 F#2 F#1 Eb2 Eb2 Eb3 Eb2 D2 D2 D3 D2', 'A1 A1 A2 A1 A1 A1 A2 A1 D2 D2 D3 D2 A1 A1 A2 A1'],
+    drums: 'k h s h k k s h k h s k k h s s',
+  },
+  // le vaisseau des boss (niveau 16) : marche mécanique, en do mineur
+  ship: {
+    bpm: 132,
+    lead: ['C5 . C5 . Eb5 . G5 . F5 . Eb5 . D5 . Eb5 .', 'C5 . C5 . Eb5 . G5 . Ab5 - G5 - F5 - - -', 'Ab5 . G5 . F5 . Eb5 . D5 . Eb5 . F5 . G5 .', 'G5 - - - B4 - - - D5 - F5 - G5 - - -'],
+    lead2: ['C4 . G4 . C4 . G4 . C4 . G4 . C4 . G4 .', 'Ab3 . Eb4 . Ab3 . Eb4 . F3 . C4 . F3 . C4 .', 'F3 . C4 . F3 . C4 . G3 . D4 . G3 . D4 .', 'G3 . B3 . D4 . B3 . G3 . B3 . D4 . F4 .'],
+    bass: ['C2 . C2 . C3 . C2 . C2 . C2 . G1 . Bb1 .', 'Ab1 . Ab1 . Ab2 . Ab1 . F1 . F1 . F2 . F1 .', 'F1 . F1 . F2 . F1 . G1 . G1 . G2 . G1 .', 'G1 . G1 . G2 . G1 . G1 . B1 . D2 . G2 .'],
+    drums: 'k . h . s . h . k . k . s . h s',
+  },
   // océan (niveaux 7 et 8) : calme, en ré majeur, avec des arpèges qui font des bulles
   ocean: {
     bpm: 100,

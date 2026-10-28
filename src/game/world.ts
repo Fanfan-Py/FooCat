@@ -1305,7 +1305,7 @@ export class World implements BossHost, SkelHost, ScorpHost {
   private spawnBoss(kind: 'spider' | 'skel' | 'scorp') {
     const hpMul = (this.mode.bossHp ?? 1) * (this.level.boss === 'rush' ? C.RUSH.hp : 1);
     this.boss = kind === 'skel' ? new SkelBoss(this.top, this.floor, hpMul) : kind === 'scorp' ? new ScorpBoss(this.top, this.floor, hpMul) : new Boss(hpMul);
-    this.sfx.play('alarm'); this.sfx.music?.(kind === 'spider' ? 'boss' : 'skelboss');
+    this.sfx.play('alarm'); this.sfx.music?.(kind === 'spider' ? 'boss' : kind === 'skel' ? 'skelboss' : 'scorpboss');
     if (this.level.boss === 'rush') this.say('BOSS ' + (this.rushIdx + 1) + '/3 : ' + RUSH_NAMES[this.rushIdx] + ' !');
   }
   // niveau 16 : une pause avec des bonus, puis le boss suivant

@@ -323,4 +323,5 @@ Points d'attention :
       on reprend au boss en cours.
 - [x] BD de fin (demandée le 28 octobre) : le vaisseau explose en mille bonbons, la grande fête avec une
       pluie de bonbons et tous les amis, puis « FIN » sous un arc-en-ciel.
-- [ ] Musiques de Vulcano et du Scorpion.
+- [x] Musiques de Vulcano et du Scorpion (28 octobre) : « cap sur Vulcano » (niveaux 11-12), « Vulcano » (13),
+      « la grotte » (14 et salle du trône du 15), « le Scorpion » (son combat), « le vaisseau » (16).

@@ -51,7 +51,7 @@ function migrateModes() {
 }
 // le défi du jour a un tableau des scores par jour
 function scoreKey(m: GameMode) { return m === 'defi' ? 'defi.' + today() : m; }
-const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle', 'space', 'iron', 'planet', 'iron', 'castle', 'iron'];
+const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle', 'approach', 'approach', 'vulcano', 'cave', 'cave', 'ship'];
 
 // histoires en BD, montrées avant certains niveaux (numéro du niveau en partant de 0)
 type Panel = { scene: string; text: string };
