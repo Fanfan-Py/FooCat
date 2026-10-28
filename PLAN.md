@@ -166,7 +166,7 @@ Proposition (à valider sur la maquette) :
 - [x] Maquette de l'écran « Apparence » (remplace « Soucoupes ») : on choisit la soucoupe ET le chat.
 - [x] Maquette de l'écran des succès sur 2 pages (on passera de 14 à 20 succès).
 - [x] Maquette de la nouvelle pluie de météorites (niveau 6).
-- [ ] Validation de la maquette par toi.
+- [x] Validation de la maquette par toi (28 octobre ; couleurs du petit chat renforcées).
 
 ## Étape 12 : trois modes de difficulté
 
@@ -219,3 +219,61 @@ le test doit donc être plus malin :
 2. Étapes 12 et 13 ensemble, car elles se règlent avec le même robot.
 3. Après ta validation de la maquette : les couleurs du chat dans le jeu (nouvelle étape 14).
 4. Nouveaux niveaux : idées à venir de ta part.
+
+---
+
+# Le monde Vulcano : niveaux 11 à 16 (idées du 28 octobre 2026)
+
+Avis : très bonne suite. Après l'eau, le feu change complètement les couleurs. Et plusieurs idées
+occupent tout l'écran (lianes qui tombent du haut, coulées de lave verticales qui obligent à bouger
+de gauche à droite, mini-scorpions partout) : parfait contre les planques en haut ou en bas.
+Points d'attention :
+- Le niveau 11 est le 3e niveau dans l'espace : il lui faut sa propre identité
+  (la nouvelle pluie de météorites et de nouveaux ennemis).
+- Le chat ne tire que vers l'avant : quand le scorpion se retourne et passe derrière lui,
+  ce sera un moment pour esquiver, court et annoncé, puis il revient devant.
+- Niveau 16 (les 3 boss à la suite) : en cas de game over, on reprend au boss en cours,
+  pas au premier. Une petite pause avec des bonus entre deux boss.
+- C'est un gros morceau (6 niveaux, un boss à 3 formes, 2 histoires en BD) : maquettes d'abord.
+- La difficulté continue de monter jusqu'au niveau 16, dans tous les modes.
+
+## Histoires en BD
+- Avant le niveau 11 : « Nouvel appel à l'aide » (la fête sur la planète aquatique, un petit
+  phénix arrive avec un message, le Scorpion volant de feu sur le volcan, départ pour Vulcano).
+- Avant le niveau 16 : les 3 boss s'allient et construisent un vaisseau ; le chat s'y glisse.
+
+## Les niveaux
+- **11. Retour dans l'espace** : pluie de météorites (nouvelle version), sorbets volants,
+  éclaireurs du Scorpion.
+- **12. Approche de Vulcano** : le ciel passe du bleu au jaune, orange et rouge à mesure qu'on
+  approche ; chauves-souris de braise, dragonnets, rochers de feu flottants.
+- **13. Sur la planète Vulcano** : arbres en feu de plusieurs tailles ; lianes qui pendent du ciel,
+  s'allongent, rétrécissent ou se détachent ; salamandres ; serpents de magma ; lucioles de feu.
+- **14. Dans l'antre du volcan** : coulées de lave verticales de quelques secondes (annoncées) ;
+  boules de feu ; mini-scorpions volants partout ; phénix-poussins ; golems de lave.
+- **15. La salle du trône du volcan** : le **Scorpion volant de feu**, plus petit et rapide,
+  vole et se retourne, crache du feu et des boules de feu. À vaincre 3 fois :
+  armure de fer, puis carapace de feu, puis scorpion squelette, chaque fois avec une escorte.
+- **16. Le vaisseau des boss** : les 3 boss l'un après l'autre dans une grande salle.
+
+## Ennemis proposés (à valider sur les maquettes)
+| Ennemi | Niveaux | Ce qu'il fait |
+|---|---|---|
+| Sorbet volant | 11 | soucoupe en cornet de glace, lance des boules de sorbet qui ralentissent |
+| Éclaireur du Scorpion | 11, 12 | petit drone rouge en formation, plonge vers le chat |
+| Chauve-souris de braise | 12, 13 | en nuée ; vaincue, elle éclate en 3 étincelles qui tombent |
+| Dragonnet | 12, 14 | s'arrête, puis souffle un jet de feu horizontal (annoncé) |
+| Salamandre | 13 | marche au sol, saute, crache des gouttes de feu en cloche |
+| Serpent de magma | 13, 14 | jaillit de la lave en bas de l'écran et retombe en arc |
+| Luciole de feu | 13 à 15 | remplace les mouches dans le monde Vulcano |
+| Mini-scorpion volant | 14, 15 | partout sur l'écran : s'arrête, vise, puis fonce |
+| Phénix-poussin | 14 | renaît de ses cendres une fois, sauf si on tire sur les cendres |
+| Golem de lave | 14 | lent et très solide ; seules ses fissures brillantes sont fragiles |
+
+## Étapes
+- [ ] Maquettes : niveaux 11 à 16, personnages de Vulcano, le Scorpion sous ses 3 formes, les 2 BD.
+- [ ] Niveaux 11 et 12, et la BD « Nouvel appel à l'aide ».
+- [ ] Niveaux 13 et 14.
+- [ ] Niveau 15 : le Scorpion volant de feu.
+- [ ] Niveau 16 : la BD et les 3 boss à la suite.
+- [ ] Musiques de Vulcano et du Scorpion.
