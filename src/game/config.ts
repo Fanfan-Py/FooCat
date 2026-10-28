@@ -68,14 +68,18 @@ export const ENEMIES = {
   hangShrimp: { points: 250, hp: 2, drop: 0.15 }, // crevette accrochée au plafond : se laisse tomber
   fish: { points: 100, hp: 1, drop: 0.07 }, // petit poisson (en bancs, sous l'eau)
   miniSkel: { points: 120, hp: 2, drop: 0.06 }, // mini-poisson squelette (escorte du boss du niveau 10)
+  sorbet: { points: 250, hp: 4, drop: 0.2 }, // sorbet volant : s'arrête et lance des boules de sorbet qui ralentissent
+  scout: { points: 200, hp: 2, drop: 0.12 }, // éclaireur du Scorpion : vole en formation puis plonge vers le chat
+  emberBat: { points: 150, hp: 2, drop: 0.1 }, // chauve-souris de braise : en nuée ; vaincue, elle lâche 3 étincelles
+  dragonet: { points: 400, hp: 6, drop: 0.3 }, // dragonnet : s'arrête, prévient, puis souffle un jet de feu
 };
 export type EnemyKind = keyof typeof ENEMIES;
 export const POINTS = { planet: 300, bonus: 50, wave: 500, belt: 1000, perSecond: 10 };
 
 // Vagues d'ennemis possibles
-export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling' | 'scorpion' | 'droneSquad' | 'batShrimp' | 'guitar' | 'comets' | 'crab' | 'jellyBlue' | 'jellyPink' | 'bubbles' | 'hanging';
+export type WaveKind = 'solo' | 'line' | 'v' | 'column' | 'swarm' | 'spider' | 'wasps' | 'mints' | 'ants' | 'hanger' | 'drone' | 'turret' | 'spiderling' | 'scorpion' | 'droneSquad' | 'batShrimp' | 'guitar' | 'comets' | 'crab' | 'jellyBlue' | 'jellyPink' | 'bubbles' | 'hanging' | 'sorbets' | 'scouts' | 'emberBats' | 'dragonet';
 // Obstacles possibles
-export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable' | 'ice' | 'drop' | 'jet' | 'algae' | 'herse' | 'coral';
+export type ObstacleKind = 'planet' | 'lollipop' | 'cotton' | 'web' | 'fence' | 'pillar' | 'cable' | 'ice' | 'drop' | 'jet' | 'algae' | 'herse' | 'coral' | 'fireRock';
 
 export interface Phase {
   from: number; // part des points du niveau (0 = début, 1 = fin)
@@ -92,7 +96,7 @@ export interface Phase {
 export interface Level {
   num: number; name: string;
   points: number; // points à gagner dans ce niveau pour passer au suivant
-  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne';
+  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne' | 'space3' | 'approach';
   ground: number | null; // hauteur du sol (null = pas de sol)
   ceiling: number | null; // hauteur du plafond (null = pas de plafond)
   outro?: string; // couleur du fondu de fin de niveau
@@ -204,7 +208,31 @@ export const LEVELS: Level[] = [
       { from: 1, event: 'boss', banner: 'LE POISSON SQUELETTE DE LA MORT !', obstacle: 99, obstacles: {}, wave: 99, waves: {}, gold: 0 },
     ],
   },
+  // ---------- le monde Vulcano ----------
+  {
+    num: 11, name: "RETOUR DANS L'ESPACE", points: 33000, decor: 'space3', ground: null, ceiling: null, scroll: 34,
+    phases: [
+      { from: 0, obstacle: 4.33, obstacles: { planet: 2 }, wave: 1.97, waves: { line: 1, comets: 1, sorbets: 1, scouts: 1 }, gold: 0.2 },
+      { from: 0.2, banner: 'PLUIE DE MÉTÉORITES !', obstacle: 6, obstacles: { planet: 1 }, wave: 1.07, waves: { comets: 3, scouts: 1 }, gold: 0 },
+      { from: 0.4, banner: 'LES SORBETS VOLANTS !', obstacle: 4.13, obstacles: { planet: 2 }, wave: 1.64, waves: { sorbets: 2, line: 1, scouts: 1, v: 1 }, gold: 0.25 },
+      { from: 0.65, obstacle: 3.94, obstacles: { planet: 2 }, wave: 1.48, waves: { comets: 2, sorbets: 1, scouts: 2, swarm: 1 }, gold: 0.3 },
+      { from: 0.88, banner: 'DERNIER EFFORT !', obstacle: 4.33, obstacles: { planet: 1 }, wave: 1.23, waves: { scouts: 2, comets: 2, sorbets: 1 }, gold: 0.35 },
+    ],
+  },
+  {
+    num: 12, name: 'APPROCHE DE VULCANO', points: 44000, decor: 'approach', ground: null, ceiling: null, scroll: 36, outro: 'o',
+    next: 'LA SUITE ARRIVE BIENTÔT : SUR LA PLANÈTE VULCANO !',
+    phases: [
+      { from: 0, obstacle: 3.6, obstacles: { fireRock: 2, planet: 1 }, wave: 1.95, waves: { emberBats: 2, scouts: 1, line: 1, sorbets: 1 }, gold: 0.2 },
+      { from: 0.25, banner: 'CHAUVES-SOURIS DE BRAISE !', obstacle: 3.1, obstacles: { fireRock: 2 }, wave: 1.6, waves: { emberBats: 3, dragonet: 2, line: 1 }, gold: 0.2 },
+      { from: 0.5, banner: 'ATTENTION AUX DRAGONNETS !', obstacle: 3.2, obstacles: { fireRock: 2 }, wave: 1.8, waves: { dragonet: 2, emberBats: 1, scouts: 1, sorbets: 1 }, gold: 0.25 },
+      { from: 0.75, banner: 'VULCANO EN VUE !', obstacle: 2.7, obstacles: { fireRock: 3 }, wave: 1.45, waves: { emberBats: 2, dragonet: 1, comets: 1, scouts: 1 }, gold: 0.3 },
+    ],
+  },
 ];
+
+// Dragonnet : fumée d'avertissement (warn s), jet de feu (fire s) long de « length » pixels, toutes les « every » s
+export const DRAGONET = { warn: 0.7, fire: 1.1, every: 2.2, length: 86 };
 
 // Algues : elles poussent pendant qu'on avance (pixels par seconde), jusqu'à leur taille maximale
 export const ALGAE = { grow: 22, min: 40, max: 84 };

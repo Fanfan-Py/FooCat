@@ -35,8 +35,9 @@ function robot(w: World, t: number, look = 95): Controls {
       if (x > h.x - 4 && x < h.x + 40) blocked.push([y - 12, y + 22]);
     }
   }
+  for (const e of w.enemies) if (e.kind === 'dragonet' && e.stage >= 2 && e.x > h.x - 10) blocked.push([e.y - 6, e.y + 28]); // jet de feu
   for (const e of w.enemies) {
-    if (e.kind === 'wasp' && e.stage === 2) {
+    if ((e.kind === 'wasp' && e.stage === 2) || (e.kind === 'scout' && e.stage === 1)) {
       for (let k = 0; k < 16; k++) { const x = e.x + e.vx * k * 0.05, y = e.y + e.vy * k * 0.05; if (x > h.x - 10 && x < h.x + 44) blocked.push([y - 10, y + 26]); }
     } else if (e.x > h.x && e.x - h.x < 70) blocked.push([e.y - 10, e.y + 26]);
   }

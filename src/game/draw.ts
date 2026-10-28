@@ -176,6 +176,28 @@ function decorSpace2(scr: Pix, w: World) {
   FC.drawStars(scr, d.stars, t, [3, 9, 20]);
   scr.blit(d.ocean, C.W - 70 - Math.round(w.progress * 30), 22);
 }
+// ---------- niveau 11 : retour dans l'espace, Vulcano au loin ----------
+function decorSpace3(scr: Pix, w: World) {
+  const d = FC.mk('decorSpace3', () => ({ bg: FC.bg('n11', C.W, C.H, [[0, '0a0618'], [0.6, '1a0e2e'], [1, '2e1020']]), stars: FC.stars(111, C.W, C.H, 150) }));
+  scr.d.set(d.bg.d);
+  FC.drawStars(scr, d.stars, w.t, [3, 9, 20]);
+  scr.blit(FC.vulcanoPlanet(16), C.W - 54 - Math.round(w.progress * 30), 24, false, 0.7);
+}
+// ---------- niveau 12 : approche de Vulcano, le ciel passe du bleu nuit au rouge orangé ----------
+const SKY12 = { s: ['0b0a26', '1d1450', '3a1d6e'], v: ['5a1408', 'c4401a', 'ffb040'] };
+function decorApproach(scr: Pix, w: World) {
+  const d = FC.mk('decorApproach', () => ({ stars: FC.stars(121, C.W, C.H, 120), s: SKY12.s.map((c) => FC.col(c)), v: SKY12.v.map((c) => FC.col(c)) }));
+  let u = Math.min(1, w.progress * 1.1); if (w.state === 'cleared') u = 1;
+  const top = FC.mix(d.s[0], d.v[0], u), mid = FC.mix(d.s[1], d.v[1], u), bot = FC.mix(d.s[2], d.v[2], u);
+  for (let y = 0; y < C.H; y += 2) {
+    const q = y / (C.H - 1), c = q < 0.6 ? FC.mix(top, mid, q / 0.6) : FC.mix(mid, bot, (q - 0.6) / 0.4);
+    scr.rect(0, y, C.W, 2, c);
+  }
+  if (u < 0.85) FC.drawStars(scr, d.stars, w.t, [3, 9, 20]);
+  let k = u; if (w.state === 'cleared') k = 1 + w.stateT * 0.3;
+  const pl = FC.vulcanoPlanet(16 + Math.round(Math.min(k, 1.6) * 10) * 4); // Vulcano grossit à mesure qu'on approche
+  scr.blit(pl, C.W - pl.w * 0.55 + 10 - Math.round(k * 10), 90 - pl.h / 2);
+}
 // ---------- niveau 7 : vers la planète aquatique ----------
 function decorOcean(scr: Pix, w: World) {
   const d = FC.mk('decorOcean', () => ({ bg: FC.bg('n7', C.W, C.H, [[0, '06142e'], [0.6, '0d3360'], [1, '1a5a8a']]), stars: FC.stars(71, C.W, C.H, 120), ocean: FC.oceanPlanet(92) }));
@@ -277,7 +299,7 @@ function decorThrone(scr: Pix, w: World) {
   floatBits(scr, t, 40);
 }
 
-const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone };
+const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone, space3: decorSpace3, approach: decorApproach };
 
 // ---------- le niveau ----------
 export function drawWorld(scr: Pix, w: World) {
@@ -320,12 +342,15 @@ export function drawWorld(scr: Pix, w: World) {
     scr.blit(enemySprite(e, t), e.x + ox, e.y + oy, false, hidden ? 0.3 : e.flash > 0 ? 0.4 : 1);
   }
   for (const o of w.obstacles) if (o.jet) drawJet(scr, o, t); // les paillettes passent par-dessus les monstres
+  for (const e of w.enemies) if (e.kind === 'dragonet' && e.stage >= 2) FC.fireJet(scr, e.x + 1, e.y + 11, e.stage === 3 ? C.DRAGONET.length : 0, t, e.stage === 2);
   for (const s of w.eshots) {
     if (s.kind === 'web') scr.blit(FC.spr('web', Math.floor(t * 8) % 4), s.x, s.y);
     else if (s.kind === 'note') scr.blit(FC.spr('note', Math.floor(t * 8) % 3), s.x, s.y);
     else if (s.kind === 'juice') scr.blit(FC.spr('juice', Math.floor(t * 8)), s.x, s.y);
     else if (s.kind === 'maraca') scr.blit(FC.spr('maraca', Math.floor(t * 12)), s.x, s.y);
     else if (s.kind === 'bone') scr.blit(FC.spr('bone', Math.floor(t * 8) % 2), s.x, s.y);
+    else if (s.kind === 'sorbet') scr.blit(FC.spr('sorbetBall', Math.floor(t * 6) % 2), s.x, s.y);
+    else if (s.kind === 'ember') { scr.rect(s.x - 1, s.y - 1, 6, 6, FC.alpha(P.o, 90)); scr.rect(s.x, s.y, 4, 4, P.o); scr.rect(s.x + 1, s.y + 1, 2, 2, P.y); }
     else if (s.kind === 'bullet') { scr.rect(s.x - 1, s.y - 1, 5, 5, FC.alpha(P.R, 90)); scr.rect(s.x, s.y, 3, 3, P.R); scr.put(s.x + 1, s.y + 1, P.q); }
     else scr.blit(FC.spr('sugar'), s.x, s.y);
   }

@@ -51,17 +51,24 @@ function migrateModes() {
 }
 // le défi du jour a un tableau des scores par jour
 function scoreKey(m: GameMode) { return m === 'defi' ? 'defi.' + today() : m; }
-const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle'];
+const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle', 'space', 'iron'];
 
-// histoire illustrée entre le niveau 5 et le niveau 6
-const STORY = [
+// histoires en BD, montrées avant certains niveaux (numéro du niveau en partant de 0)
+type Panel = { scene: string; text: string };
+const STORY_AQUA: Panel[] = [
   { scene: 'story1', text: "L'ARAIGNÉE DE FER EST VAINCUE ! LE CHAT LICORNE S'ÉCHAPPE DE LA FORTERESSE." },
   { scene: 'storyParty', text: "VICTOIRE ! SUR LA PLANÈTE PÂTISSERIE, C'EST LA FÊTE : UN FEU D'ARTIFICE DE BONBONS POUR LE CHAT LICORNE !" },
   { scene: 'story2', text: "DANS L'ESPACE FLOTTE UNE BOUTEILLE... À L'INTÉRIEUR, UN MESSAGE : AU SECOURS !" },
   { scene: 'story3', text: 'UNE PLANÈTE AQUATIQUE EST MENACÉE PAR LE TERRIBLE POISSON SQUELETTE DE LA MORT.' },
   { scene: 'story4', text: "LE CHAT LICORNE N'HÉSITE PAS : CAP SUR L'OCÉAN DES ÉTOILES ! PLOUF !" },
 ];
-const STORY_BEFORE = 5; // l'histoire se montre avant le niveau 6 (numéro 5 en partant de 0)
+const STORY_VULCANO: Panel[] = [
+  { scene: 'story5', text: 'LA PLANÈTE AQUATIQUE EST SAUVÉE ! MÉDUSES ET POISSONS FONT LA FÊTE AVEC LE CHAT LICORNE.' },
+  { scene: 'story6', text: "UN PETIT PHÉNIX ARRIVE À BOUT DE SOUFFLE, UNE LETTRE DANS LE BEC : AU SECOURS !" },
+  { scene: 'story7', text: 'SUR LA PLANÈTE VULCANO, LE SCORPION VOLANT DE FEU FAIT TREMBLER LE VOLCAN.' },
+  { scene: 'story8', text: "LE CHAT LICORNE N'HÉSITE PAS UNE SECONDE : CAP SUR VULCANO !" },
+];
+const STORIES: Record<number, Panel[]> = { 5: STORY_AQUA, 10: STORY_VULCANO }; // avant le niveau 6 et avant le niveau 11
 // coupe un texte en lignes qui tiennent dans la largeur donnée
 function wrap(text: string, width: number): string[] {
   const lines: string[] = []; let cur = '';
@@ -150,7 +157,7 @@ export class App {
   private bilan: { stars: number; kills: number; acc: number; bonuses: number; hits: number; time: number } | null = null;
   private titleStars = FC.stars(3, C.W, C.H, 120);
   private bigHero: Record<string, Pix> = {};
-  private story = { idx: 0, carry: undefined as Carry | undefined, scenes: [] as any[], pix: null as Pix | null };
+  private story = { idx: 0, level: 5, panels: [] as Panel[], carry: undefined as Carry | undefined, scenes: [] as any[], pix: null as Pix | null };
 
   constructor(private sfx: Sfx) {
     migrateModes();
@@ -259,7 +266,7 @@ export class App {
         if (i === 1) this.go('title');
         else if (i === 0) {
           if (this.state === 'over') this.restart();
-          else if (w.levelIndex + 1 === STORY_BEFORE) this.openStory(w.carry());
+          else if (STORIES[w.levelIndex + 1] && w.levelIndex + 1 < C.LEVELS.length) this.openStory(w.levelIndex + 1, w.carry());
           else if (w.levelIndex + 1 < C.LEVELS.length) this.startLevel(w.levelIndex + 1, w.carry());
           else { if (!this.devRun) { this.writeSave(null); if (this.mode === 'difficile') this.unlock('nuitnoire'); } this.afterGame('end', true); }
         }
@@ -280,9 +287,9 @@ export class App {
       case 'succes': this.updateSucces(c); break;
       case 'skins': this.updateSkins(c); break;
       case 'story':
-        if (c.pause) { this.startLevel(STORY_BEFORE, this.story.carry); break; } // Échap : passer l'histoire
+        if (c.pause) { this.startLevel(this.story.level, this.story.carry); break; } // Échap : passer l'histoire
         if (this.stateT > 0.6 && (c.confirm || c.tapX >= 0)) {
-          if (++this.story.idx >= STORY.length) this.startLevel(STORY_BEFORE, this.story.carry);
+          if (++this.story.idx >= this.story.panels.length) this.startLevel(this.story.level, this.story.carry);
           else { this.stateT = 0; this.sfx.play('swap'); }
         }
         break;
@@ -440,7 +447,7 @@ export class App {
     else if (a === 'continue' && sv) { this.devRun = false; this.startLevel(sv.level, sv.carry); }
     else if (this.mode === 'infini') this.startEndless(1);
     else if (this.mode === 'defi') this.startDaily();
-    else if (this.dev && this.choice === STORY_BEFORE) { this.devRun = true; this.openStory(); }
+    else if (this.dev && STORIES[this.choice]) { this.devRun = true; this.openStory(this.choice); }
     else { this.devRun = this.dev && this.choice > 0; this.startLevel(this.dev ? this.choice : 0); }
   }
 
@@ -450,9 +457,9 @@ export class App {
   }
 
   // ---------- histoire illustrée ----------
-  private openStory(carry?: Carry) {
-    this.story.idx = 0; this.story.carry = carry;
-    if (!this.story.scenes.length) this.story.scenes = STORY.map((p) => FC.scenes[p.scene]());
+  private openStory(level: number, carry?: Carry) {
+    const panels = STORIES[level];
+    this.story = { ...this.story, idx: 0, carry, level, panels, scenes: panels.map((p) => FC.scenes[p.scene]()) };
     this.go('story'); this.sfx.music?.('title');
   }
   private drawStory(scr: Pix) {
@@ -461,11 +468,11 @@ export class App {
     sc.draw(panel, this.stateT + this.story.idx * 3);
     scr.rect(8, 2, 304, 172, P.W); // bord blanc de la case de BD
     scr.blit(panel.scale(2), 10, 4);
-    const lines = wrap(STORY[this.story.idx].text, 284);
+    const lines = wrap(this.story.panels[this.story.idx].text, 284);
     const by = 172 - lines.length * 8 - 6;
     scr.rect(14, by, 292, lines.length * 8 + 6, P.y); scr.rect(14, by, 292, 1, P.K); scr.rect(14, by + lines.length * 8 + 5, 292, 1, P.K);
     lines.forEach((l, i) => center(scr, l, by + 4 + i * 8, P.K));
-    FC.text(scr, (this.story.idx + 1) + '/' + STORY.length, 16, 8, P.W, { outline: P.K });
+    FC.text(scr, (this.story.idx + 1) + '/' + this.story.panels.length, 16, 8, P.W, { outline: P.K });
     if (this.stateT > 0.6 && this.t % 1.2 < 0.8) FC.text(scr, this.touch ? 'TOUCHE >' : 'ENTRÉE >', 266, 8, P.W, { outline: P.K });
   }
 
