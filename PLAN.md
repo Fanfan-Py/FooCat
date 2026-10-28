@@ -234,6 +234,8 @@ le test doit donc être plus malin :
 ## Retouches du 28 octobre
 - [x] Niveau 1, ceinture de donuts : des mouches arrivent aussi dans le passage du chat (7 colonnes sur 10 environ).
 - [x] Niveau 3 : plus de toiles d'araignée et plus d'araignées suspendues, qui descendent plus bas.
+- [x] Fin du niveau 5 : une case de BD pour fêter la victoire (feu d'artifice de bonbons sur la
+      planète Pâtisserie), la 2e des 5 cases de l'histoire entre les niveaux 5 et 6.
 
 ## Ordre proposé
 

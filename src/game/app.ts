@@ -55,6 +55,7 @@ const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', '
 // histoire illustrée entre le niveau 5 et le niveau 6
 const STORY = [
   { scene: 'story1', text: "L'ARAIGNÉE DE FER EST VAINCUE ! LE CHAT LICORNE S'ÉCHAPPE DE LA FORTERESSE." },
+  { scene: 'storyParty', text: "VICTOIRE ! SUR LA PLANÈTE PÂTISSERIE, C'EST LA FÊTE : UN FEU D'ARTIFICE DE BONBONS POUR LE CHAT LICORNE !" },
   { scene: 'story2', text: "DANS L'ESPACE FLOTTE UNE BOUTEILLE... À L'INTÉRIEUR, UN MESSAGE : AU SECOURS !" },
   { scene: 'story3', text: 'UNE PLANÈTE AQUATIQUE EST MENACÉE PAR LE TERRIBLE POISSON SQUELETTE DE LA MORT.' },
   { scene: 'story4', text: "LE CHAT LICORNE N'HÉSITE PAS : CAP SUR L'OCÉAN DES ÉTOILES ! PLOUF !" },
