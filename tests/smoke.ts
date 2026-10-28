@@ -141,7 +141,7 @@ if (process.env.CAMP) {
 for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || process.env.DAILY || process.env.CAMP ? 0 : Number(process.env.TO || LEVELS.length)); lv++) {
   let cleared = 0, time = 0; const causes: Record<string, number> = {};
   for (let seed = 1; seed <= runs; seed++) {
-    const w = new World(sfx, { level: lv, seed: seed * 977 + lv, mode });
+    const w = new World(sfx, { level: lv, seed: seed * 977 + lv, mode, rushFrom: Number(process.env.RUSHFROM || 0) });
     let t = 0;
     let lavaHits = 0;
     while (t < 900 && w.state !== 'over' && !(w.state === 'cleared' && w.stateT > 3)) {
@@ -154,7 +154,7 @@ for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || proces
     if (w.state === 'cleared') cleared++;
     for (const [k, n] of Object.entries(w.hitLog)) causes[k] = (causes[k] || 0) + n;
     time += t;
-    if (process.env.VERBOSE) console.log(`  niveau ${lv + 1} partie ${seed}: ${w.state} en ${t.toFixed(0)} s, score ${w.score}` + (w.boss ? `, boss ${w.boss.kind === 'skel' && w.boss.armored ? 'avec armure' : w.boss.kind === 'scorp' ? 'forme ' + (w.boss.formIdx + 1) + '/3' : 'phase finale'} ${Math.round(w.boss.hp)}/${w.boss.maxHp} après ${Math.round(w.boss.t)} s` : ''));
+    if (process.env.VERBOSE) console.log(`  niveau ${lv + 1} partie ${seed}: ${w.state} en ${t.toFixed(0)} s, score ${w.score}` + (w.boss ? `, ${w.level.boss === 'rush' ? 'boss ' + (w.rushIdx + 1) + '/3 ' : ''}boss ${w.boss.kind === 'skel' && w.boss.armored ? 'avec armure' : w.boss.kind === 'scorp' ? 'forme ' + (w.boss.formIdx + 1) + '/3' : 'phase finale'} ${Math.round(w.boss.hp)}/${w.boss.maxHp} après ${Math.round(w.boss.t)} s` : ''));
   }
   console.log(`niveau ${lv + 1} (${mode}) : terminé ${cleared}/${runs} fois, durée moyenne ${Math.round(time / runs)} s`);
   if (process.env.CAUSES) console.log('   coups reçus :', Object.entries(causes).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', '));

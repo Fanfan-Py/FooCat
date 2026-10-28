@@ -317,5 +317,10 @@ Points d'attention :
       il passe derrière le chat et lui lance des boules de feu dans le dos, puis revient. Escorte : éclaireurs,
       chauves-souris de braise, puis mini-scorpions squelettes. Nouveau succès « Trois fois vaincu » ;
       « Chasseur de boss » demande maintenant les 3 boss. Robot : gagné 2 fois sur 10 en normal, 3 sur 8 en facile.
-- [ ] Niveau 16 : la BD et les 3 boss à la suite.
+- [x] Niveau 16 : la BD et les 3 boss à la suite (fait le 28 octobre).
+      BD « les boss s'allient » avant le niveau ; dans le vaisseau, l'Araignée de Fer, le poisson squelette puis
+      le Scorpion (vie réduite d'un quart), avec une pause et des bonus entre deux boss ; après un game over,
+      on reprend au boss en cours.
+- [x] BD de fin (demandée le 28 octobre) : le vaisseau explose en mille bonbons, la grande fête avec une
+      pluie de bonbons et tous les amis, puis « FIN » sous un arc-en-ciel.
 - [ ] Musiques de Vulcano et du Scorpion.

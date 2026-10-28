@@ -51,7 +51,7 @@ function migrateModes() {
 }
 // le défi du jour a un tableau des scores par jour
 function scoreKey(m: GameMode) { return m === 'defi' ? 'defi.' + today() : m; }
-const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle', 'space', 'iron', 'planet', 'iron', 'castle'];
+const THEMES = ['space', 'nebula', 'planet', 'iron', 'iron', 'space', 'ocean', 'ocean', 'castle', 'castle', 'space', 'iron', 'planet', 'iron', 'castle', 'iron'];
 
 // histoires en BD, montrées avant certains niveaux (numéro du niveau en partant de 0)
 type Panel = { scene: string; text: string };
@@ -68,7 +68,18 @@ const STORY_VULCANO: Panel[] = [
   { scene: 'story7', text: 'SUR LA PLANÈTE VULCANO, LE SCORPION VOLANT DE FEU FAIT TREMBLER LE VOLCAN.' },
   { scene: 'story8', text: "LE CHAT LICORNE N'HÉSITE PAS UNE SECONDE : CAP SUR VULCANO !" },
 ];
-const STORIES: Record<number, Panel[]> = { 5: STORY_AQUA, 10: STORY_VULCANO }; // avant le niveau 6 et avant le niveau 11
+const STORY_SHIP: Panel[] = [
+  { scene: 'story9', text: "L'ARAIGNÉE DE FER, LE POISSON SQUELETTE ET LE SCORPION VOLANT DE FEU S'ALLIENT !" },
+  { scene: 'story10', text: 'ENSEMBLE, ILS CONSTRUISENT UN ÉNORME VAISSEAU DE GUERRE.' },
+  { scene: 'story11', text: "LE CHAT LICORNE SE GLISSE À L'INTÉRIEUR... LE COMBAT FINAL COMMENCE !" },
+];
+// la fin du jeu, après les 3 boss du niveau 16
+const STORY_END: Panel[] = [
+  { scene: 'storyEnd1', text: 'LES TROIS BOSS SONT VAINCUS ! LE VAISSEAU EXPLOSE EN MILLE BONBONS.' },
+  { scene: 'storyEnd2', text: "C'EST LA FÊTE DANS TOUTE LA GALAXIE : UNE PLUIE DE BONBONS POUR LE CHAT LICORNE ET SES AMIS !" },
+  { scene: 'storyEnd3', text: "LE CHAT LICORNE A SAUVÉ LA GALAXIE. MERCI D'AVOIR JOUÉ !" },
+];
+const STORIES: Record<number, Panel[]> = { 5: STORY_AQUA, 10: STORY_VULCANO, 15: STORY_SHIP }; // avant les niveaux 6, 11 et 16
 // coupe un texte en lignes qui tiennent dans la largeur donnée
 function wrap(text: string, width: number): string[] {
   const lines: string[] = []; let cur = '';
@@ -157,7 +168,8 @@ export class App {
   private bilan: { stars: number; kills: number; acc: number; bonuses: number; hits: number; time: number } | null = null;
   private titleStars = FC.stars(3, C.W, C.H, 120);
   private bigHero: Record<string, Pix> = {};
-  private story = { idx: 0, level: 5, panels: [] as Panel[], carry: undefined as Carry | undefined, scenes: [] as any[], pix: null as Pix | null };
+  private story = { idx: 0, panels: [] as Panel[], scenes: [] as any[], pix: null as Pix | null, done: () => { } };
+  private rushFrom = 0; // niveau 16 : reprendre au boss en cours après un game over
 
   constructor(private sfx: Sfx) {
     migrateModes();
@@ -191,10 +203,11 @@ export class App {
     if (s === 'over') this.sfx.music?.(null);
     if (s === 'end') this.sfx.music?.('victory');
   }
-  private startLevel(i: number, carry?: Carry) {
+  private startLevel(i: number, carry?: Carry, rushFrom = 0) {
     // on repart toujours avec au moins les vies de départ du mode
     if (carry) carry = { ...carry, lives: Math.max(carry.lives, C.MODES[this.baseMode].lives) };
-    this.world = new World(this.sfx, { level: i, carry, mode: this.baseMode });
+    this.rushFrom = rushFrom;
+    this.world = new World(this.sfx, { level: i, carry, mode: this.baseMode, rushFrom });
     this.levelStart = this.world.carry();
     if (!this.devRun) this.writeSave(i > 0 ? { level: i, carry: this.levelStart } : null);
     this.go('play'); this.sfx.play('start');
@@ -222,7 +235,7 @@ export class App {
   private restart() {
     if (this.mode === 'infini') this.startEndless(1);
     else if (this.mode === 'defi') this.startDaily();
-    else if (this.world) this.startLevel(this.world.levelIndex, this.levelStart ?? undefined);
+    else if (this.world) this.startLevel(this.world.levelIndex, this.levelStart ?? undefined, this.rushFrom);
   }
   private record() { if (this.world && this.world.score > this.best) save(this.bestKey, this.world.score); }
 
@@ -266,9 +279,9 @@ export class App {
         if (i === 1) this.go('title');
         else if (i === 0) {
           if (this.state === 'over') this.restart();
-          else if (STORIES[w.levelIndex + 1] && w.levelIndex + 1 < C.LEVELS.length) this.openStory(w.levelIndex + 1, w.carry());
+          else if (STORIES[w.levelIndex + 1] && w.levelIndex + 1 < C.LEVELS.length) this.openStoryBefore(w.levelIndex + 1, w.carry());
           else if (w.levelIndex + 1 < C.LEVELS.length) this.startLevel(w.levelIndex + 1, w.carry());
-          else { if (!this.devRun) { this.writeSave(null); if (this.mode === 'difficile') this.unlock('nuitnoire'); } this.afterGame('end', true); }
+          else { if (!this.devRun) { this.writeSave(null); if (this.mode === 'difficile') this.unlock('nuitnoire'); } this.openStory(STORY_END, () => this.afterGame('end', true)); }
         }
         break;
       }
@@ -287,9 +300,9 @@ export class App {
       case 'succes': this.updateSucces(c); break;
       case 'skins': this.updateSkins(c); break;
       case 'story':
-        if (c.pause) { this.startLevel(this.story.level, this.story.carry); break; } // Échap : passer l'histoire
+        if (c.pause) { this.story.done(); break; } // Échap : passer l'histoire
         if (this.stateT > 0.6 && (c.confirm || c.tapX >= 0)) {
-          if (++this.story.idx >= this.story.panels.length) this.startLevel(this.story.level, this.story.carry);
+          if (++this.story.idx >= this.story.panels.length) this.story.done();
           else { this.stateT = 0; this.sfx.play('swap'); }
         }
         break;
@@ -369,7 +382,8 @@ export class App {
   private finish(then: After) {
     if (then === 'over') {
       const w = this.world!;
-      const again = this.mode === 'infini' ? 'REJOUER' : this.mode === 'defi' ? 'REJOUER LE DÉFI' : 'REJOUER LE NIVEAU ' + w.level.num;
+      if (w.level.boss === 'rush' && w.boss) this.rushFrom = w.rushIdx; // on reprendra au boss en cours
+      const again = this.mode === 'infini' ? 'REJOUER' : this.mode === 'defi' ? 'REJOUER LE DÉFI' : this.rushFrom > 0 ? 'REJOUER : BOSS ' + (this.rushFrom + 1) + '/3' : 'REJOUER LE NIVEAU ' + w.level.num;
       this.go('over', [again, "RETOUR À L'ACCUEIL"], 124);
       this.stateT = 1; // le menu est tout de suite utilisable
     } else this.go(then);
@@ -447,7 +461,7 @@ export class App {
     else if (a === 'continue' && sv) { this.devRun = false; this.startLevel(sv.level, sv.carry); }
     else if (this.mode === 'infini') this.startEndless(1);
     else if (this.mode === 'defi') this.startDaily();
-    else if (this.dev && STORIES[this.choice]) { this.devRun = true; this.openStory(this.choice); }
+    else if (this.dev && STORIES[this.choice]) { this.devRun = true; this.openStoryBefore(this.choice); }
     else { this.devRun = this.dev && this.choice > 0; this.startLevel(this.dev ? this.choice : 0); }
   }
 
@@ -457,9 +471,9 @@ export class App {
   }
 
   // ---------- histoire illustrée ----------
-  private openStory(level: number, carry?: Carry) {
-    const panels = STORIES[level];
-    this.story = { ...this.story, idx: 0, carry, level, panels, scenes: panels.map((p) => FC.scenes[p.scene]()) };
+  private openStoryBefore(level: number, carry?: Carry) { this.openStory(STORIES[level], () => this.startLevel(level, carry)); }
+  private openStory(panels: Panel[], done: () => void) {
+    this.story = { ...this.story, idx: 0, panels, done, scenes: panels.map((p) => FC.scenes[p.scene]()) };
     this.go('story'); this.sfx.music?.('title');
   }
   private drawStory(scr: Pix) {

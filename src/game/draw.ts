@@ -271,6 +271,29 @@ function volcanoThroneFront(scr: Pix, w: World) { // plafond d'obsidienne, foss�
   }
 }
 
+// ---------- niveau 16 : le vaisseau des boss ----------
+function decorShip(scr: Pix, w: World) {
+  const d = FC.mk('decorShip', () => ({ bg: FC.bg('n16', C.W, C.H, [[0, '1e2638'], [1, '2a3248']]), stars: FC.stars(161, C.W, C.H, 80) }));
+  const t = w.t, off = Math.floor(t * 14);
+  scr.d.set(d.bg.d);
+  for (let k = -1; k < 6; k++) { // plaques de métal et hublots qui donnent sur l'espace
+    const x = k * 64 - (off % 64);
+    scr.rect(x, 14, 1, C.H, FC.col('141a2a'));
+    for (let y = 30; y < 150; y += 20) scr.put(x + 4, y, P.m);
+    const hx = x + 32, hy = 70;
+    scr.ell(hx, hy, 15, 15, P.n); scr.ell(hx, hy, 12, 12, FC.col('050a1f'));
+    for (let s2 = 0; s2 < 5; s2++) { const sx = hx - 10 + ((s2 * 7 + Math.floor(t * 30)) % 20), sy = hy - 8 + (s2 * 5) % 16; if ((sx - hx) ** 2 + (sy - hy) ** 2 < 120) scr.put(sx, sy, P.W); }
+    for (let r = 0; r < 8; r++) { const a = r / 8 * Math.PI * 2; scr.put(hx + Math.cos(a) * 15, hy + Math.sin(a) * 15, P.m); }
+  }
+  for (let v = 0; v < 6; v++) scr.put(20 + v * 56, 30, (Math.floor(t * 3) + v) % 2 ? P.R : FC.col('5a1020')); // voyants rouges
+}
+function shipFront(scr: Pix, w: World) { // tuyaux au plafond, sol à bandes de danger
+  const top = w.top, G = w.level.ground!, off = Math.floor(w.t * w.level.scroll);
+  scr.rect(0, C.HUD_H, C.W, top - C.HUD_H, P.n); scr.rect(0, top - 4, C.W, 1, P.M); scr.rect(0, top - 1, C.W, 1, P.K);
+  scr.rect(0, G, C.W, C.H - G, P.n); scr.rect(0, G, C.W, 1, P.m);
+  for (let x = -8; x < C.W; x += 8) scr.rect(x + (8 - off % 8), G + 2, 4, 3, P.Y);
+}
+
 // ---------- niveau 7 : vers la planète aquatique ----------
 function decorOcean(scr: Pix, w: World) {
   const d = FC.mk('decorOcean', () => ({ bg: FC.bg('n7', C.W, C.H, [[0, '06142e'], [0.6, '0d3360'], [1, '1a5a8a']]), stars: FC.stars(71, C.W, C.H, 120), ocean: FC.oceanPlanet(92) }));
@@ -372,7 +395,7 @@ function decorThrone(scr: Pix, w: World) {
   floatBits(scr, t, 40);
 }
 
-const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone, space3: decorSpace3, approach: decorApproach, vulcano: decorVulcano, cave: decorCave, volcanoThrone: decorVolcanoThrone };
+const DECOR = { space: decorSpace, nebula: decorNebula, planet: decorPlanet, iron: decorIron, fortress: decorFortress, space2: decorSpace2, ocean: decorOcean, sea: decorSea, castle: decorCastle, throne: decorThrone, space3: decorSpace3, approach: decorApproach, vulcano: decorVulcano, cave: decorCave, volcanoThrone: decorVolcanoThrone, ship: decorShip };
 
 // ---------- le niveau ----------
 export function drawWorld(scr: Pix, w: World) {
@@ -409,6 +432,7 @@ export function drawWorld(scr: Pix, w: World) {
   if (w.level.decor === 'vulcano') vulcanoGround(scr, w);
   if (w.level.decor === 'cave') caveFront(scr, w);
   if (w.level.decor === 'volcanoThrone') volcanoThroneFront(scr, w);
+  if (w.level.decor === 'ship') shipFront(scr, w);
 
   for (const b of w.bonuses) scr.blit(FC.spr(BONUS_SPRITE[b.kind]), b.x, b.y);
   const jets = w.obstacles.some((o) => o.jet);
@@ -608,7 +632,7 @@ function drawBossBar(scr: Pix, w: World) {
   const b = w.boss!;
   scr.rect(0, 165, C.W, 15, FC.alpha(P.K, 200));
   const armor = (b.kind === 'skel' && b.armored) || (b.kind === 'scorp' && b.form === 'iron');
-  const label = b.kind === 'scorp' ? b.name + ' ' + (b.formIdx + 1) + '/3' : b.name + (armor ? ' · ARMURE' : '');
+  const label = (w.level.boss === 'rush' ? (w.rushIdx + 1) + '/3 · ' : '') + (b.kind === 'scorp' ? b.name + ' ' + (b.formIdx + 1) + '/3' : b.name + (armor ? ' · ARMURE' : ''));
   const nx = FC.text(scr, label, 6, 170, P.W);
   const bw = C.W - nx - 16, fill = Math.round((bw - 2) * b.hp / b.maxHp);
   const col = b.kind === 'scorp' ? [P.M, LV.o, FC.col('3dff7a')][b.formIdx] : armor ? P.M : P.R;

@@ -103,11 +103,11 @@ export interface Phase {
 export interface Level {
   num: number; name: string;
   points: number; // points à gagner dans ce niveau pour passer au suivant
-  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne' | 'space3' | 'approach' | 'vulcano' | 'cave' | 'volcanoThrone';
+  decor: 'space' | 'nebula' | 'planet' | 'iron' | 'fortress' | 'space2' | 'ocean' | 'sea' | 'castle' | 'throne' | 'space3' | 'approach' | 'vulcano' | 'cave' | 'volcanoThrone' | 'ship';
   ground: number | null; // hauteur du sol (null = pas de sol)
   ceiling: number | null; // hauteur du plafond (null = pas de plafond)
   outro?: string; // couleur du fondu de fin de niveau
-  boss?: 'spider' | 'skel' | 'scorp'; // le niveau se termine en battant ce boss
+  boss?: 'spider' | 'skel' | 'scorp' | 'rush'; // le niveau se termine en battant ce boss (rush : les 3 boss à la suite)
   water?: boolean; // sous l'eau : les groupes de mouches deviennent des bancs de poissons
   fire?: boolean; // monde Vulcano : les groupes de mouches deviennent des lucioles de feu
   scroll: number; // vitesse de défilement des obstacles (px/s)
@@ -258,12 +258,20 @@ export const LEVELS: Level[] = [
   },
   {
     num: 15, name: 'LA SALLE DU TRÔNE DU VOLCAN', points: 12000, decor: 'volcanoThrone', ground: 158, ceiling: 24, scroll: 40, fire: true, boss: 'scorp',
-    next: 'LA SUITE ARRIVE BIENTÔT : LE VAISSEAU DES BOSS !',
     phases: [
       { from: 0, obstacle: 3.4, obstacles: { lavaFall: 1, fireRock: 1 }, wave: 2.2, waves: { miniScorps: 1, emberBats: 1, line: 1 }, gold: 0.2 },
       { from: 0.4, banner: 'LES GARDES DU SCORPION !', obstacle: 3.8, obstacles: { lavaFall: 1 }, wave: 1.8, waves: { scouts: 1, salamanders: 1, phoenix: 1, line: 1 }, gold: 0.25 },
       { from: 0.75, obstacle: 4.0, obstacles: { fireRock: 1 }, wave: 1.6, waves: { emberBats: 2, miniScorps: 1, fireballs: 1 }, gold: 0.3 },
       { from: 1, event: 'boss', banner: 'LE SCORPION VOLANT DE FEU !', obstacle: 99, obstacles: {}, wave: 99, waves: {}, gold: 0 },
+    ],
+  },
+  {
+    num: 16, name: 'LE VAISSEAU DES BOSS', points: 10000, decor: 'ship', ground: 160, ceiling: 24, scroll: 40, boss: 'rush',
+    next: 'LE CHAT LICORNE A SAUVÉ LA GALAXIE !',
+    phases: [
+      { from: 0, obstacle: 3.6, obstacles: { pillar: 2 }, wave: 2.0, waves: { drone: 1, scouts: 1, spiderling: 1, line: 1 }, gold: 0.2 },
+      { from: 0.5, banner: 'ALERTE ! INTRUS À BORD !', obstacle: 4.0, obstacles: { pillar: 1 }, wave: 1.6, waves: { droneSquad: 1, scouts: 1, emberBats: 1, line: 1 }, gold: 0.3 },
+      { from: 1, event: 'boss', obstacle: 99, obstacles: {}, wave: 99, waves: {}, gold: 0 },
     ],
   },
 ];
@@ -287,6 +295,8 @@ export const BOSS = { hp: 420, points: 10000, contact: 2, laser: 2 };
 // Le boss du niveau 10 : le poisson squelette (sa jauge se remplit une fois quand l'armure casse)
 export const SKEL = { hp: 200, points: 15000, contact: 2 };
 // Le boss du niveau 15 : le Scorpion volant de feu (3 formes ; hp pour chacune) ; breath : longueur du jet de feu
+// Niveau 16 : les 3 boss à la suite (vie un peu réduite), pause entre deux boss (secondes)
+export const RUSH = { order: ['spider', 'skel', 'scorp'] as const, hp: 0.75, pause: 4.5 };
 export const SCORP = { hp: 100, points: 20000, contact: 2, fire: 1, breath: 80 };
 
 // La ceinture de donuts : des colonnes de planètes avec un passage qui ondule

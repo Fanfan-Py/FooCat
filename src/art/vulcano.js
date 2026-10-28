@@ -481,7 +481,72 @@
         var ph = (t * 0.35) % 1, hx = 10 + ph * 100, sc = 1 - Math.max(0, ph - 0.7) * 2;
         if (ph < 0.85) FC.hero(scr, hx, 34, t, sc);
         if (t % 1.4 < 1) FC.text(scr, 'CHUT...', 10, 8, P.W, { outline: P.K });
-        FC.text(scr, 'LE COMBAT FINAL COMMENCE !', 8, 58, P.y, { outline: P.K });
+      }
+    };
+  };
+  // ---------- la fin : les 3 boss vaincus, la grande fête ----------
+  function warship(scr, x, y, t) { // le vaisseau des boss (comme dans la case « le vaisseau de guerre »)
+    scr.tri(x - 22, y + 10, x, y - 4, x, y + 24, P.M);
+    scr.rect(x, y - 4, 96, 28, P.M); scr.rect(x, y - 4, 96, 4, P.m); scr.rect(x, y + 20, 96, 4, P.n);
+    scr.rect(x + 26, y - 14, 40, 12, P.n);
+    for (var k = 0; k < 3; k++) { scr.ell(x + 18 + k * 26, y + 10, 6, 6, P.n); scr.ell(x + 18 + k * 26, y + 10, 4, 4, [P.R, GREEN, LV.o][k]); }
+  }
+  FC.scenes.storyEnd1 = function () { // le vaisseau explose en mille bonbons
+    var bg = FC.bg('stE1', 150, 84, [[0, '050a1f'], [1, '2a1030']]), L = FC.stars(131, 150, 84, 60);
+    var candies = []; for (var c = 0; c < 26; c++) candies.push([Math.random() * Math.PI * 2, 30 + Math.random() * 60, c]);
+    return {
+      w: 150, h: 84, draw: function (scr, t) {
+        scr.d.set(bg.d); FC.drawStars(scr, L, t, [2, 5, 10]);
+        var ph = (t * 0.4) % 1;
+        if (ph < 0.25) warship(scr, 52, 34, t);
+        else {
+          var q = (ph - 0.25) / 0.75;
+          scr.ell(100, 44, 12 + q * 44, 9 + q * 32, alpha(LV.o, Math.round(210 * (1 - q))));
+          scr.ell(100, 44, 8 + q * 30, 6 + q * 22, alpha(LV.y, Math.round(230 * (1 - q))));
+          scr.ell(100, 44, 4 + q * 14, 3 + q * 10, alpha(P.W, Math.round(240 * (1 - q))));
+          candies.forEach(function (cd) { var d = q * cd[1]; scr.blit(spr('candyBit', cd[2]), 100 + Math.cos(cd[0]) * d, 44 + Math.sin(cd[0]) * d * 0.7 + q * q * 20); });
+          if (q > 0.2) FC.text(scr, 'BOUM !', 86, 6, P.y, { sc: 2, outline: P.K });
+        }
+        FC.hero(scr, 8 + Math.sin(t * 2) * 3, 40, t);
+      }
+    };
+  };
+  FC.scenes.storyEnd2 = function () { // la grande fête, pluie de bonbons
+    var bg = FC.bg('stE2', 150, 84, [[0, '1d1450'], [0.6, 'a77bff'], [1, 'ffc9e2']]), L = FC.stars(141, 150, 84, 30);
+    var spots = [[22, 18], [70, 10], [128, 20], [46, 30], [104, 30]];
+    return {
+      w: 150, h: 84, draw: function (scr, t) {
+        scr.d.set(bg.d); FC.drawStars(scr, L, t, [0, 1, 2]);
+        for (var k = 0; k < spots.length; k++) { // feux d'artifice
+          var ph = (t * 0.55 + k / spots.length) % 1, cx = spots[k][0], cy = spots[k][1], r = 4 + ph * 14;
+          if (ph < 0.12) continue;
+          if (ph < 0.2) scr.ell(cx, cy, 4, 4, alpha(P.W, 200));
+          for (var a = 0; a < 12; a++) { var an = a / 12 * Math.PI * 2; scr.rect(cx + Math.cos(an) * r, cy + Math.sin(an) * r * 0.85 + ph * ph * 8, 2, 2, alpha(RB[(a + k) % 6], Math.round(255 * Math.min(1, (1 - ph) * 1.6)))); }
+        }
+        // la pluie de bonbons
+        for (var b = 0; b < 22; b++) {
+          var fy = ((t * (20 + b % 5 * 4) + b * 29) % 96) - 8, fx = (b * 37 + 5) % 148 + Math.sin(t * 2 + b) * 2;
+          if (b % 7 === 0) scr.blit(spr('bigCandy', Math.floor(t * 6 + b) % 4), fx - 6, fy);
+          else if (b % 3 === 0) scr.blit(spr('bigDrag', b), fx, fy); else scr.blit(spr('candyBit', b), fx, fy);
+        }
+        // les amis font la fête avec le chat
+        scr.blit(spr('jellyPink', Math.floor(t * 4) % 4), 6, 44 + Math.round(Math.sin(t * 4) * 3));
+        scr.blit(spr('smallFish', Math.floor(t * 6) % 2), 26, 64 + Math.round(Math.cos(t * 5) * 2));
+        scr.blit(spr('phoenix', Math.floor(t * 8)), 116, 40 + Math.round(Math.sin(t * 5 + 1) * 4));
+        scr.blit(spr('jellyBlue', Math.floor(t * 4 + 2) % 4), 128, 58 + Math.round(Math.cos(t * 4) * 3));
+        FC.hero(scr, 55, 30 - Math.abs(Math.sin(t * 4)) * 8, t);
+        if (t % 1.2 < 0.85) FC.text(scr, 'HOURRA !', 54, 3, P.y, { outline: P.K });
+      }
+    };
+  };
+  FC.scenes.storyEnd3 = function () { // fin
+    var bg = FC.bg('stE3', 150, 84, [[0, '0b0a26'], [1, '3a1d6e']]), L = FC.stars(151, 150, 84, 70);
+    return {
+      w: 150, h: 84, draw: function (scr, t) {
+        scr.d.set(bg.d); FC.drawStars(scr, L, t, [1, 3, 6]);
+        for (var i = 0; i < 6; i++) scr.ell(75, 70, 62 - i * 5, 44 - i * 5, RB[i], function (x, y, dx, dy) { return dy < 0 && dx * dx + dy * dy > 0.82; }); // arc-en-ciel
+        FC.hero(scr, 55, 36 + Math.round(Math.sin(t * 2) * 2), t);
+        FC.text(scr, 'FIN', 63, 10, P.y, { sc: 2, outline: P.K });
       }
     };
   };
