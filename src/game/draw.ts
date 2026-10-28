@@ -6,8 +6,8 @@ import { enemySprite, elecOn, elecSoon, cablePoint, jetState, jetOrigin, jetCirc
 import { heroSprite } from './rewards';
 
 // apparence de la soucoupe choisie par le joueur
-let heroSkin = 'classic';
-export function setHeroSkin(id: string) { heroSkin = id; }
+let heroSkin = 'classic', heroCat = 'classic';
+export function setHeroSkin(id: string, cat = heroCat) { heroSkin = id; heroCat = cat; }
 
 const P = FC.P;
 const BONUS_SPRITE: Record<string, string> = {
@@ -336,7 +336,7 @@ export function drawWorld(scr: Pix, w: World) {
   if (h.dead <= 0 && !(h.inv > 0 && Math.floor(t * 14) % 2)) {
     const by = Math.round(Math.sin(t * 2.4) * 1.5), op = h.ghost > 0 ? 0.45 : 1;
     FC.trail(scr, h.x + 4, h.y + 25 + by, t);
-    scr.blit(heroSprite(heroSkin, Math.floor(t * 5) % 4), h.x, h.y + by, false, op);
+    scr.blit(heroSprite(heroSkin, Math.floor(t * 5) % 4, heroCat), h.x, h.y + by, false, op);
     if (h.slow > 0) scr.blit(FC.spr('stuck'), h.x + 8, h.y + 6 + by);
     if (w.level.water) for (let k = 0; k < 4; k++) { // bulles du scaphandre
       const ph = (t * 0.7 + k / 4) % 1;
@@ -399,7 +399,7 @@ export function drawHud(scr: Pix, w: World) {
     scr.blit(FC.spr('heart'), 56 + i * 8, 3, false, full ? (blink ? 1 : 0.4) : 0.2);
   }
   // vies
-  scr.blit(FC.spr('lifeIcon'), 90, 2);
+  scr.blit(FC.lifeIconCat(heroCat), 90, 2);
   FC.text(scr, 'x' + Math.max(0, h.lives), 101, 4, P.W);
   // progression vers le niveau suivant
   const nx = FC.text(scr, w.label, 114, 4, P.q);

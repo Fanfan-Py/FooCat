@@ -9,6 +9,7 @@ import { GameMode, endlessZone, dailySetup, today } from './modes';
 import {
   Settings, loadSettings, saveSettings, Stats, loadStats, saveStats, ACHIEVEMENTS, loadUnlocked, saveUnlocked,
   loadStars, saveStars, SKINS, skinUnlockedBy, loadSkin, saveSkin, heroSprite,
+  CATS, catUnlockedBy, loadCat, saveCat, totalStars,
 } from './rewards';
 
 const P = FC.P;
@@ -142,6 +143,9 @@ export class App {
   private lastStatsSave = 0;
   private unlocked = loadUnlocked();
   private skin = loadSkin();
+  private cat = loadCat();
+  private appTab = 0; // écran Apparence : 0 soucoupe, 1 chat
+  private succPage = 0; // écran des succès : page 1 ou 2
   private toasts: { title: string; sub: string; t: number }[] = [];
   private bilan: { stars: number; kills: number; acc: number; bonuses: number; hits: number; time: number } | null = null;
   private titleStars = FC.stars(3, C.W, C.H, 120);
@@ -151,7 +155,9 @@ export class App {
   constructor(private sfx: Sfx) {
     migrateModes();
     if (!SKINS.some((s) => s.id === this.skin) || !this.skinOpen(this.skin)) this.skin = 'classic';
-    setHeroSkin(this.skin);
+    if (!CATS.some((c) => c.id === this.cat) || !this.catOpen(this.cat)) this.cat = 'classic';
+    setHeroSkin(this.skin, this.cat);
+    this.stats.stars = totalStars(loadStars()); // (pour les étoiles gagnées avant ce succès)
     this.applySettings();
     this.sfx.music?.('title');
     this.titleMenu();
@@ -193,6 +199,7 @@ export class App {
   private startEndless(zone: number, carry?: Carry) {
     const setup = endlessZone(zone);
     this.zone = zone; this.devRun = false; this.levelStart = null;
+    if (zone > this.stats.bestZone) { this.stats.bestZone = zone; this.statsDirty = true; this.checkGoals(); }
     this.world = new World(this.sfx, { setup, carry });
     this.go('play'); this.sfx.play(zone > 1 ? 'level' : 'start');
     this.sfx.music?.(THEMES[setup.levelIndex] ?? 'space');
@@ -227,7 +234,11 @@ export class App {
         if (w.state === 'over') { this.record(); this.sfx.music?.(null); this.afterGame('over'); }
         if (w.state === 'cleared' && w.stateT > 3) {
           if (this.mode === 'infini') { this.record(); this.startEndless(this.zone + 1, w.carry()); } // zone suivante, sans pause
-          else if (this.mode === 'defi') { this.record(); this.sfx.music?.(null); this.afterGame('end', true); }
+          else if (this.mode === 'defi') {
+            const day = Number(this.daily.date.replace(/-/g, ''));
+            if (this.stats.dailyLast !== day) { this.stats.dailyLast = day; this.stats.dailyWins++; this.statsDirty = true; this.checkGoals(); }
+            this.record(); this.sfx.music?.(null); this.afterGame('end', true);
+          }
           else this.levelDone(w);
         }
         break;
@@ -250,7 +261,7 @@ export class App {
           if (this.state === 'over') this.restart();
           else if (w.levelIndex + 1 === STORY_BEFORE) this.openStory(w.carry());
           else if (w.levelIndex + 1 < C.LEVELS.length) this.startLevel(w.levelIndex + 1, w.carry());
-          else { if (!this.devRun) this.writeSave(null); this.afterGame('end', true); }
+          else { if (!this.devRun) { this.writeSave(null); if (this.mode === 'difficile') this.unlock('nuitnoire'); } this.afterGame('end', true); }
         }
         break;
       }
@@ -290,23 +301,31 @@ export class App {
       else if (ev.type === 'break') this.stats.jawBreaks++;
       else if (ev.type === 'belt') this.unlock('belt');
       else if (ev.type === 'pinata5') this.unlock('pinata');
-      else if (ev.type === 'boss') { this.unlock(ev.kind === 'skel' ? 'skel' : 'boss'); if (this.mode === 'difficile') this.unlock('hard'); }
+      else if (ev.type === 'boss') {
+        this.unlock(ev.kind === 'skel' ? 'skel' : 'boss'); if (this.mode === 'difficile') this.unlock('hard');
+        if (w.stats.livesLost === 0) { // vaincu sans perdre de vie
+          if (ev.kind === 'skel') this.stats.cleanSkel = 1; else this.stats.cleanSpider = 1;
+          this.stats.cleanBosses = this.stats.cleanSpider + this.stats.cleanSkel;
+        }
+      }
     }
     w.events = [];
     this.statsDirty = true;
-    for (const a of ACHIEVEMENTS) if (a.goal && this.stats[a.goal.stat] >= a.goal.n) this.unlock(a.id);
+    this.checkGoals();
     if (w.score >= 100000) this.unlock('score100k');
   }
+  private checkGoals() { for (const a of ACHIEVEMENTS) if (a.goal && this.stats[a.goal.stat] >= a.goal.n) this.unlock(a.id); }
   private unlock(id: string) {
     if (this.unlocked.has(id)) return;
     const a = ACHIEVEMENTS.find((x) => x.id === id);
     if (!a) return;
     this.unlocked.add(id); saveUnlocked(this.unlocked);
-    const skin = a.skin && SKINS.find((s) => s.id === a.skin);
-    this.toasts.push({ title: 'SUCCÈS : ' + a.name, sub: skin ? 'NOUVELLE SOUCOUPE : ' + skin.name : a.desc, t: 0 });
+    const skin = a.skin && SKINS.find((s) => s.id === a.skin), cat = a.cat && CATS.find((c) => c.id === a.cat);
+    this.toasts.push({ title: 'SUCCÈS : ' + a.name, sub: skin ? 'NOUVELLE SOUCOUPE : ' + skin.name : cat ? 'NOUVEAU CHAT : ' + cat.name : a.desc, t: 0 });
     this.sfx.play('level');
   }
   private skinOpen(id: string) { const a = skinUnlockedBy(id); return !a || this.unlocked.has(a.id); }
+  private catOpen(id: string) { const a = catUnlockedBy(id); return !a || this.unlocked.has(a.id); }
 
   // ---------- fin de niveau : bilan et étoiles ----------
   private levelDone(w: World) {
@@ -315,9 +334,12 @@ export class App {
     this.bilan = { stars, kills: s.kills, acc: s.shots ? Math.round(s.hitShots / s.shots * 100) : 0, bonuses: s.bonuses, hits, time: w.t };
     const all = loadStars(), key = this.mode + '-' + w.level.num;
     if (stars > (all[key] || 0)) { all[key] = stars; saveStars(all); }
+    this.stats.stars = totalStars(all);
+    if (w.hits === 0) this.unlock('sansfaute');
     if (w.levelIndex === 0) this.unlock('first');
     if (s.livesLost === 0) this.unlock('nolife');
     if (stars === 3) this.unlock('stars3');
+    this.checkGoals();
     saveStats(this.stats); this.statsDirty = false;
     const last = w.levelIndex + 1 >= C.LEVELS.length;
     this.go('done', [last ? 'CONTINUER' : 'NIVEAU SUIVANT', "RETOUR À L'ACCUEIL"], 148);
@@ -377,7 +399,7 @@ export class App {
     add('MODE : ' + MODE_NAMES[this.mode], 'mode');
     add('MEILLEURS SCORES', 'scores');
     add('SUCCÈS ' + this.unlocked.size + '/' + ACHIEVEMENTS.length, 'succes');
-    add('SOUCOUPES', 'skins');
+    add('APPARENCE', 'skins');
     add('RÉGLAGES', 'settings');
     this.titleActions = acts;
     const idx = this.menu && this.state === 'title' ? Math.min(this.menu.idx, items.length - 1) : 0;
@@ -412,8 +434,8 @@ export class App {
     const a = this.titleActions[i], sv = this.saved;
     if (a === 'mode') this.toggleMode();
     else if (a === 'scores') { this.highlight = null; this.openScores('title'); }
-    else if (a === 'succes') { this.sel = 0; this.go('succes'); }
-    else if (a === 'skins') { this.sel = Math.max(0, SKINS.findIndex((s) => s.id === this.skin)); this.go('skins'); }
+    else if (a === 'succes') { this.sel = 0; this.succPage = 0; this.go('succes'); }
+    else if (a === 'skins') this.openApparence();
     else if (a === 'settings') this.openSettings('title');
     else if (a === 'continue' && sv) { this.devRun = false; this.startLevel(sv.level, sv.carry); }
     else if (this.mode === 'infini') this.startEndless(1);
@@ -489,36 +511,51 @@ export class App {
     }
   }
 
-  // ---------- écran des succès ----------
+  // ---------- écran des succès (page 1 : les succès ; page 2 : les succès des chats) ----------
+  private succList() { return ACHIEVEMENTS.filter((a) => !!a.cat === (this.succPage === 1)); }
   private updateSucces(c: AppInput) {
-    const n = ACHIEVEMENTS.length;
+    const list = this.succList(), n = list.length;
+    let page = (c.right ? 1 : 0) - (c.left ? 1 : 0);
+    if (c.tapX >= 0 && c.tapY < 32) page = 1; // toucher le haut : changer de page
+    if (page) { this.succPage = 1 - this.succPage; this.sel = 0; this.sfx.play('swap'); return; }
     if (c.up) this.sel = (this.sel + n - 1) % n;
     if (c.down) this.sel = (this.sel + 1) % n;
     if (c.tapX >= 0) {
-      const row = Math.floor((c.tapY - 25 + 1) / 8);
-      if (row >= 0 && row < n && c.tapY < 140) this.sel = row; else this.go('title');
+      const row = this.succPage ? Math.floor((c.tapY - 36 + 3) / 17) : Math.floor((c.tapY - 34 + 1) / 8);
+      if (row >= 0 && row < n && c.tapY < 142) this.sel = row; else this.go('title');
       return;
     }
     if (this.stateT > 0.3 && (c.confirm || c.pause)) this.go('title');
   }
 
-  // ---------- écran des soucoupes ----------
+  // ---------- écran Apparence : onglet soucoupe et onglet chat ----------
   private equip(i: number) {
-    const s = SKINS[i];
-    if (!this.skinOpen(s.id)) { this.sfx.play('hurt'); return; }
-    this.skin = s.id; saveSkin(s.id); setHeroSkin(s.id); this.sfx.play('pickup');
+    if (this.appTab === 1) {
+      const k = CATS[i];
+      if (!this.catOpen(k.id)) { this.sfx.play('hurt'); return; }
+      this.cat = k.id; saveCat(k.id);
+    } else {
+      const s = SKINS[i];
+      if (!this.skinOpen(s.id)) { this.sfx.play('hurt'); return; }
+      this.skin = s.id; saveSkin(s.id);
+    }
+    setHeroSkin(this.skin, this.cat); this.sfx.play('pickup');
+  }
+  private openApparence() {
+    this.appTab = 1; this.sel = Math.max(0, CATS.findIndex((k) => k.id === this.cat)); this.go('skins');
   }
   private updateSkins(c: AppInput) {
-    const n = SKINS.length;
+    const items = this.appTab ? CATS : SKINS, n = items.length;
+    const tab = (t: number) => { this.appTab = t; this.sel = Math.max(0, t ? CATS.findIndex((k) => k.id === this.cat) : SKINS.findIndex((s) => s.id === this.skin)); this.sfx.play('swap'); };
     if (c.left) this.sel = (this.sel + n - 1) % n;
     if (c.right) this.sel = (this.sel + 1) % n;
-    if (c.up || c.down) this.sel = (this.sel + 4) % n;
+    if (c.up || c.down) tab(1 - this.appTab);
     if (c.tapX >= 0) {
-      const col = Math.floor((c.tapX - 16) / 72), row = Math.floor((c.tapY - 26) / 56);
-      if (col >= 0 && col < 4 && row >= 0 && row < 2 && c.tapY < 138) {
-        const i = row * 4 + col;
+      if (c.tapY >= 22 && c.tapY < 38) { const t = c.tapX < 160 ? 0 : 1; if (t !== this.appTab) tab(t); return; }
+      const step = this.appTab ? 44 : 39, x0 = this.appTab ? 8 : 4, i = Math.floor((c.tapX - x0 + 3) / step);
+      if (c.tapY >= 122 && c.tapY < 160 && i >= 0 && i < n) {
         if (i === this.sel) this.equip(i); else { this.sel = i; this.sfx.play('swap'); }
-      } else this.go('title');
+      } else if (c.tapY >= 160 || c.tapY < 22) this.go('title');
       return;
     }
     if (c.confirm && this.stateT > 0.3) this.equip(this.sel);
@@ -643,41 +680,82 @@ export class App {
 
   private drawSucces(scr: Pix) {
     this.drawTitleBackground(scr);
-    center(scr, 'SUCCÈS ' + this.unlocked.size + '/' + ACHIEVEMENTS.length, 6, P.y, { sc: 2, outline: P.P });
-    ACHIEVEMENTS.forEach((a, i) => {
-      const y = 25 + i * 8, got = this.unlocked.has(a.id), on = i === this.sel;
-      if (on) scr.rect(30, y - 1, 262, 7, FC.alpha(P.P, 170));
-      scr.rect(34, y, 5, 5, got ? P.g : P.k);
-      if (got) { scr.put(35, y + 2, P.W); scr.put(36, y + 3, P.W); scr.put(37, y + 1, P.W); }
-      FC.text(scr, a.name, 44, y, got ? P.W : P.M);
-      if (a.goal && !got) right(scr, Math.min(this.stats[a.goal.stat], a.goal.n) + '/' + a.goal.n, 288, y, P.q);
+    const list = this.succList(), p2 = this.succPage === 1, a2 = Math.floor(this.t * 3) % 2;
+    center(scr, 'SUCCÈS ' + this.unlocked.size + '/' + ACHIEVEMENTS.length, 4, P.y, { sc: 2, outline: P.P });
+    const head = p2 ? 'PAGE 2/2 · LES CHATS' : 'PAGE 1/2 · SOUCOUPES ET EXPLOITS';
+    center(scr, head, 22, P.q, { outline: P.K });
+    const hw = FC.textWidth(head);
+    FC.text(scr, '<', 160 - hw / 2 - 10 - a2, 22, P.y, { outline: P.K }); FC.text(scr, '>', 160 + hw / 2 + 6 + a2, 22, P.y, { outline: P.K });
+    list.forEach((a, i) => {
+      const got = this.unlocked.has(a.id), on = i === this.sel;
+      const y = p2 ? 36 + i * 17 : 34 + i * 8, h = p2 ? 16 : 7, ty = p2 ? y + 3 : y;
+      if (on) scr.rect(30, y - (p2 ? 3 : 1), 262, h, FC.alpha(P.P, 170)); else if (p2) scr.rect(30, y - 3, 262, h, FC.alpha(P.K, 120));
+      scr.rect(34, ty, 5, 5, got ? P.g : P.k);
+      if (got) { scr.put(35, ty + 2, P.W); scr.put(36, ty + 3, P.W); scr.put(37, ty + 1, P.W); }
+      FC.text(scr, a.name, 44, ty, got || on ? P.W : P.M);
+      const prog = a.goal && !got ? Math.min(this.stats[a.goal.stat], a.goal.n) + '/' + a.goal.n : '';
+      if (p2) { // la tête du chat à gagner, en grisé tant qu'il n'est pas gagné
+        if (prog) right(scr, prog, 254, ty, P.q);
+        scr.blit(FC.catHead(a.cat), 268, y - 4, false, got || on ? 1 : 0.45);
+      } else if (prog) right(scr, prog, 288, y, P.q);
       else if (a.skin) { // mini-soucoupe à la couleur gagnée
         const sk = SKINS.find((k) => k.id === a.skin)!, col = sk.rainbow ? P.P : FC.col(sk.frosting![0]);
         scr.ell(284, y + 3, 5, 2.4, FC.alpha(col, got ? 255 : 80)); scr.ell(284, y + 1, 2.5, 2, FC.alpha(P.c, got ? 255 : 80));
       }
     });
-    const a = ACHIEVEMENTS[this.sel], skin = a.skin && SKINS.find((s) => s.id === a.skin);
-    scr.rect(20, 142, 280, 24, FC.alpha(P.K, 200));
-    center(scr, a.desc, 146, P.W);
-    center(scr, skin ? 'RÉCOMPENSE : SOUCOUPE ' + skin.name : (this.unlocked.has(a.id) ? 'RÉUSSI !' : ''), 156, P.y);
+    const a = list[Math.min(this.sel, list.length - 1)], skin = a.skin && SKINS.find((s) => s.id === a.skin), cat = a.cat && CATS.find((k) => k.id === a.cat);
+    scr.rect(20, 144, 280, 23, FC.alpha(P.K, 200));
+    center(scr, a.desc, 147, P.W);
+    center(scr, skin ? 'RÉCOMPENSE : SOUCOUPE ' + skin.name : cat ? 'RÉCOMPENSE : CHAT ' + cat.name : (this.unlocked.has(a.id) ? 'RÉUSSI !' : ''), 157, P.y);
     this.drawBack(scr);
   }
 
   private drawSkins(scr: Pix) {
     this.drawTitleBackground(scr);
-    center(scr, 'SOUCOUPES', 6, P.y, { sc: 2, outline: P.P });
-    SKINS.forEach((s, i) => {
-      const x = 16 + (i % 4) * 72, y = 26 + Math.floor(i / 4) * 56, open = this.skinOpen(s.id);
-      if (s.id === this.skin) scr.rect(x + 2, y, 68, 52, FC.alpha(P.P, 90));
-      if (i === this.sel) { scr.rect(x + 2, y, 68, 1, P.y); scr.rect(x + 2, y + 51, 68, 1, P.y); scr.rect(x + 2, y, 1, 52, P.y); scr.rect(x + 69, y, 1, 52, P.y); }
-      scr.blit(heroSprite(s.id, Math.floor(this.t * 5) % 4), x + 16, y + 6, false, open ? 1 : 0.25);
-      center(scr, open ? s.name : '???', y + 42, open ? P.W : P.M, {}, x + 36);
+    const t = this.t, f = Math.floor(t * 5) % 4, catTab = this.appTab === 1;
+    center(scr, 'APPARENCE', 4, P.y, { sc: 2, outline: P.P });
+    [['SOUCOUPE', 104], ['CHAT', 216]].forEach(([label, cx], i) => {
+      const w = FC.textWidth(label as string) + 20, x = Math.round((cx as number) - w / 2), on = i === this.appTab;
+      scr.rect(x, 24, w, 12, on ? FC.alpha(P.P, 220) : FC.alpha(P.K, 170));
+      if (on) scr.rect(x, 35, w, 1, P.U);
+      center(scr, label as string, 27, on ? P.W : P.v, {}, cx as number);
     });
-    const s = SKINS[this.sel], open = this.skinOpen(s.id), a = skinUnlockedBy(s.id);
-    center(scr, s.name, 142, P.y, { outline: P.K });
-    const line = !open ? 'À GAGNER AVEC LE SUCCÈS : ' + (a ? a.name : '')
-      : s.id === this.skin ? "C'EST TA SOUCOUPE !" : (this.touch ? 'TOUCHE-LA ENCORE POUR LA CHOISIR' : 'ENTRÉE POUR LA CHOISIR');
-    center(scr, line, 154, open ? P.q : P.v, { outline: P.K });
+    // grand aperçu : le chat choisi dans la soucoupe choisie (ou celle qu'on regarde)
+    const selSkin = catTab ? this.skin : SKINS[this.sel].id, selCat = catTab ? CATS[this.sel].id : this.cat;
+    const open = catTab ? this.catOpen(selCat) : this.skinOpen(selSkin);
+    const by = Math.round(Math.sin(t * 2.4) * 2);
+    FC.trail(scr, 26, 92 + by, t, true);
+    const big = this.bigHero['app' + selSkin + selCat + f] ?? (this.bigHero['app' + selSkin + selCat + f] = heroSprite(selSkin, f, selCat).scale(2));
+    scr.blit(open ? big : FC.catLocked().scale(2), 22, 44 + by, false, open ? 1 : 0.8);
+    const name = catTab ? 'CHAT ' + CATS[this.sel].name : 'SOUCOUPE ' + SKINS[this.sel].name;
+    FC.text(scr, name, 128, 48, P.y, { sc: FC.textWidth(name, 2) <= 186 ? 2 : 1, outline: P.K });
+    const ach = catTab ? catUnlockedBy(selCat) : skinUnlockedBy(selSkin);
+    const lines = ach ? wrap(ach.desc, 180) : [];
+    if (!ach) FC.text(scr, catTab ? 'LE CHAT DE DÉPART' : 'LA SOUCOUPE DE DÉPART', 128, 70, P.v);
+    else {
+      FC.text(scr, open ? 'GAGNÉ AVEC LE SUCCÈS' : 'À GAGNER AVEC LE SUCCÈS', 128, 70, P.v);
+      FC.text(scr, ach.name, 128, 80, P.W, { outline: P.K });
+      lines.slice(0, 2).forEach((l, k) => FC.text(scr, l, 128, 92 + k * 8, P.q));
+      if (!open && ach.goal) FC.text(scr, 'PROGRESSION : ' + Math.min(this.stats[ach.goal.stat], ach.goal.n) + '/' + ach.goal.n, 128, 110, P.y);
+    }
+    const chosen = catTab ? selCat === this.cat : selSkin === this.skin;
+    if (open) FC.text(scr, chosen ? 'CHOISI !' : (this.touch ? 'TOUCHE-LE ENCORE POUR LE CHOISIR' : 'ENTRÉE POUR LE CHOISIR'), 128, 112, chosen ? P.g : P.W);
+    // la rangée des choix
+    const items = catTab ? CATS : SKINS, step = catTab ? 44 : 39, x0 = catTab ? 8 : 4;
+    items.forEach((it, i) => {
+      const x = x0 + i * step, y = 126, on = i === this.sel, ok = catTab ? this.catOpen(it.id) : this.skinOpen(it.id);
+      const mine = catTab ? it.id === this.cat : it.id === this.skin;
+      scr.rect(x - 2, y - 3, step - 2, 36, on ? FC.alpha(P.P, 170) : FC.alpha(P.K, 150));
+      if (on && Math.floor(t * 3) % 2) scr.rect(x - 2, y + 32, step - 2, 1, P.y);
+      if (mine) scr.rect(x - 2, y - 3, step - 2, 1, P.g);
+      const spr = ok ? heroSprite(catTab ? this.skin : it.id, on ? f : 0, catTab ? it.id : this.cat) : FC.catLocked();
+      scr.blit(spr, x + Math.round((step - 2 - 40) / 2) - 2, y, false, 1);
+      if (!ok) { // cadenas
+        const lx = x + step - 14;
+        scr.rect(lx, y + 22, 7, 6, P.Y); scr.rect(lx + 1, y + 18, 5, 1, P.m); scr.rect(lx + 1, y + 18, 1, 4, P.m); scr.rect(lx + 5, y + 18, 1, 4, P.m); scr.put(lx + 3, y + 24, P.K);
+      }
+    });
+    if (t % 1.2 < 0.8) center(scr, this.touch ? 'TOUCHE UN ONGLET OU UN CHOIX' : 'GAUCHE/DROITE : CHOISIR · HAUT/BAS : ONGLET', 162, P.W, { outline: P.K });
     this.drawBack(scr);
   }
 
@@ -734,8 +812,8 @@ export class App {
     scr.blit(logo, Math.round((C.W - logo.w) / 2), 4);
     center(scr, "LE CHAT LICORNE DE L'ESPACE", 37, P.q, { shadow: P.U });
     // le chat licorne à gauche, le menu à droite
-    const f = Math.floor(t * 5) % 4, key = this.skin + f;
-    if (!this.bigHero[key]) this.bigHero[key] = heroSprite(this.skin, f).scale(2);
+    const f = Math.floor(t * 5) % 4, key = this.skin + this.cat + f;
+    if (!this.bigHero[key]) this.bigHero[key] = heroSprite(this.skin, f, this.cat).scale(2);
     const big = this.bigHero[key], by = Math.round(Math.sin(t * 2.4) * 2), hx = 16, hy = 62 + by;
     FC.trail(scr, hx + 8, hy + 48, t, true);
     scr.blit(big, hx, hy);

@@ -243,6 +243,9 @@ le test doit donc être plus malin :
    La nouvelle apparence des comètes sera aussi sur la maquette.
 2. Étapes 12 et 13 ensemble, car elles se règlent avec le même robot.
 3. Après ta validation de la maquette : les couleurs du chat dans le jeu (nouvelle étape 14).
+   **Étape 14 faite le 28 octobre** : les 6 couleurs du chat et leurs 6 succès (page 2 de l'écran des succès),
+   l'écran « Apparence » (onglets SOUCOUPE et CHAT) à la place de « Soucoupes », la petite tête des vies
+   à la couleur du chat, la vitre du dôme plus légère.
 4. Nouveaux niveaux : idées à venir de ta part.
 
 ---

@@ -1,6 +1,7 @@
 // Moteur pixel art (le même que celui des maquettes)
 import './core.js';
 import './sprites.js';
+import './cats.js';
 import './decor.js';
 import './scenes.js';
 import './extra.js';

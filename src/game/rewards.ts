@@ -1,5 +1,6 @@
 // Succès, soucoupes à gagner, statistiques cumulées et réglages (tout est gardé sur l'appareil).
 import { FC, Pix, Color } from '../art';
+import { LEVELS } from './config';
 
 function read<T>(key: string, def: T): T {
   try { const v = JSON.parse(localStorage.getItem(key) || 'null'); return v === null ? def : { ...def, ...v } as T; } catch { return def; }
@@ -13,13 +14,22 @@ export const loadSettings = () => read<Settings>('foocat.settings', DEFAULT_SETT
 export const saveSettings = (s: Settings) => write('foocat.settings', s);
 
 // ---------- statistiques cumulées (toutes parties confondues) ----------
-export interface Stats { flies: number; waves: number; bonuses: number; rainbowKills: number; jawBreaks: number }
-const DEFAULT_STATS: Stats = { flies: 0, waves: 0, bonuses: 0, rainbowKills: 0, jawBreaks: 0 };
+// stars : total des meilleures étoiles par niveau ; bestZone : zone atteinte en mode infini ;
+// dailyWins : défis du jour réussis (dailyLast : date du dernier, AAAAMMJJ) ; cleanBosses : boss vaincus sans perdre de vie
+export interface Stats {
+  flies: number; waves: number; bonuses: number; rainbowKills: number; jawBreaks: number;
+  stars: number; bestZone: number; dailyWins: number; dailyLast: number; cleanSpider: number; cleanSkel: number; cleanBosses: number;
+}
+const DEFAULT_STATS: Stats = {
+  flies: 0, waves: 0, bonuses: 0, rainbowKills: 0, jawBreaks: 0,
+  stars: 0, bestZone: 0, dailyWins: 0, dailyLast: 0, cleanSpider: 0, cleanSkel: 0, cleanBosses: 0,
+};
 export const loadStats = () => read<Stats>('foocat.stats', DEFAULT_STATS);
 export const saveStats = (s: Stats) => write('foocat.stats', s);
 
 // ---------- succès ----------
-export interface Achievement { id: string; name: string; desc: string; skin?: string; goal?: { stat: keyof Stats; n: number } }
+// skin : soucoupe gagnée ; cat : couleur du chat gagnée (ces succès-là sont sur la page 2)
+export interface Achievement { id: string; name: string; desc: string; skin?: string; cat?: string; goal?: { stat: keyof Stats; n: number } }
 export const ACHIEVEMENTS: Achievement[] = [
   { id: 'first', name: 'PREMIER VOYAGE', desc: 'TERMINER LE NIVEAU 1', skin: 'choco' },
   { id: 'flies', name: 'CHASSE-MOUCHES', desc: 'VAINCRE 300 MOUCHES (AU TOTAL)', skin: 'mint', goal: { stat: 'flies', n: 300 } },
@@ -35,7 +45,21 @@ export const ACHIEVEMENTS: Achievement[] = [
   { id: 'waves', name: 'VAGUES PARFAITES', desc: "ABATTRE 20 GROUPES D'ENNEMIS EN ENTIER (AU TOTAL)", goal: { stat: 'waves', n: 20 } },
   { id: 'bonus', name: 'GOURMAND', desc: 'RAMASSER 100 BONUS (AU TOTAL)', goal: { stat: 'bonuses', n: 100 } },
   { id: 'rainbow', name: 'TOUT EN COULEURS', desc: "VAINCRE 100 ENNEMIS À L'ARC-EN-CIEL (AU TOTAL)", goal: { stat: 'rainbowKills', n: 100 } },
+  // les succès des chats, plus durs
+  { id: 'sansfaute', name: 'SANS FAUTE', desc: 'FINIR UN NIVEAU SANS ÊTRE TOUCHÉ UNE SEULE FOIS', cat: 'roux' },
+  { id: 'nuitnoire', name: 'NUIT NOIRE', desc: 'FINIR LE JEU EN MODE DIFFICILE', cat: 'noir' },
+  { id: 'collection', name: 'COLLECTIONNEUR', desc: '3 ÉTOILES SUR LES ' + LEVELS.length + ' NIVEAUX', cat: 'dore', goal: { stat: 'stars', n: LEVELS.length * 3 } },
+  { id: 'marathon', name: 'MARATHON', desc: 'ATTEINDRE LA ZONE 15 EN MODE INFINI', cat: 'galaxie', goal: { stat: 'bestZone', n: 15 } },
+  { id: 'fidele', name: 'FIDÈLE', desc: 'RÉUSSIR 7 DÉFIS DU JOUR', cat: 'fantome', goal: { stat: 'dailyWins', n: 7 } },
+  { id: 'chasseur', name: 'CHASSEUR DE BOSS', desc: 'VAINCRE LES 2 BOSS SANS PERDRE DE VIE', cat: 'squelette', goal: { stat: 'cleanBosses', n: 2 } },
 ];
+
+// meilleures étoiles de chaque niveau (tous modes confondus), additionnées
+export function totalStars(all: Record<string, number>): number {
+  let n = 0;
+  for (const l of LEVELS) n += Math.max(0, ...Object.entries(all).filter(([k]) => k.endsWith('-' + l.num)).map(([, v]) => v));
+  return n;
+}
 export function loadUnlocked(): Set<string> {
   try { const v = JSON.parse(localStorage.getItem('foocat.ach') || '[]'); return new Set(Array.isArray(v) ? v : []); } catch { return new Set(); }
 }
@@ -59,16 +83,26 @@ export const SKINS: Skin[] = [
   { id: 'rainbow', name: 'ARC-EN-CIEL', rainbow: true },
 ];
 export function skinUnlockedBy(id: string) { return ACHIEVEMENTS.find((a) => a.skin === id); }
+
+// ---------- couleurs du chat ----------
+export interface CatSkin { id: string; name: string }
+export const CATS: CatSkin[] = [
+  { id: 'classic', name: 'LICORNE' }, { id: 'roux', name: 'ROUX' }, { id: 'noir', name: 'NOIR' }, { id: 'dore', name: 'DORÉ' },
+  { id: 'galaxie', name: 'GALAXIE' }, { id: 'fantome', name: 'FANTÔME' }, { id: 'squelette', name: 'SQUELETTE' },
+];
+export function catUnlockedBy(id: string) { return ACHIEVEMENTS.find((a) => a.cat === id); }
+export function loadCat() { try { return localStorage.getItem('foocat.cat') || 'classic'; } catch { return 'classic'; } }
+export function saveCat(id: string) { try { localStorage.setItem('foocat.cat', id); } catch { /* stockage indisponible */ } }
 export function loadSkin() { try { return localStorage.getItem('foocat.skin') || 'classic'; } catch { return 'classic'; } }
 export function saveSkin(id: string) { try { localStorage.setItem('foocat.skin', id); } catch { /* stockage indisponible */ } }
 
 const same = (d: Uint8ClampedArray, i: number, c: Color) => d[i] === c[0] && d[i + 1] === c[1] && d[i + 2] === c[2] && d[i + 3] === 255;
-// la soucoupe du chat, aux couleurs de la soucoupe choisie
-export function heroSprite(skinId: string, f: number): Pix {
+// le chat licorne (à sa couleur) dans sa soucoupe (aux couleurs de la soucoupe choisie)
+export function heroSprite(skinId: string, f: number, catId = 'classic'): Pix {
   const skin = SKINS.find((s) => s.id === skinId);
-  if (!skin || skin.id === 'classic') return FC.spr('hero', f);
-  return FC.mk('hero_' + skin.id + '_' + f, () => {
-    const base: Pix = FC.spr('hero', f), p = new FC.Pix(base.w, base.h), d = p.d, P = FC.P;
+  if (!skin || skin.id === 'classic') return FC.catHero(f, catId);
+  return FC.mk('hero_' + skin.id + '_' + catId + '_' + f, () => {
+    const base: Pix = FC.catHero(f, catId), p = new FC.Pix(base.w, base.h), d = p.d, P = FC.P;
     d.set(base.d);
     const fr = skin.frosting?.map((h) => FC.col(h)), dg = skin.dough?.map((h) => FC.col(h));
     const from = [P.P, P.q, P.i], doughFrom = [P.d, P.D, P.e];
