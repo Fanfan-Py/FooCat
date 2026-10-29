@@ -36,7 +36,7 @@ export const WEAPONS = {
   // Dragibus : gros, lents et puissants ; dans l'espace, partent en diagonale et rebondissent sur les bords et les obstacles.
   // Quand il y a un sol, ils tombent et rebondissent par terre comme des balles (contre les monstres au sol) :
   // lob = vitesse de départ (un tir sur deux plus long), pesanteur g, keep = part de la vitesse gardée à chaque rebond
-  drag: { rate: 2.8, dmg: 4, speed: 165, angle: 16, bounces: 3, start: 40, max: 90, pickup: 25, lob: { vx: [150, 112], vy: [-80, -25], g: 280, keep: 0.72 } },
+  drag: { rate: 2.8, dmg: 4, speed: 165, angle: 16, bounces: 3, start: 40, max: 90, pickup: 25, lob: { vx: [150, 112], vy: [-30, 10], g: 520, keep: 0.72 } },
   // Arc-en-ciel (la corne) : infini, courte portée, grandit et traverse les ennemis et les obstacles
   rain: { rate: 2.6, dmg: 2, speed: 150, range: 115 },
   // Piñata : gros bonbon lent qui éclate en petits bonbons quand il touche (ou au bout de sa course) ;
