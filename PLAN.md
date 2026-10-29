@@ -331,3 +331,6 @@ Points d'attention :
       en plus des toiles suspendues.
 - [ ] ~~L'arc-en-ciel comme arme de départ, plus petit et moins fort~~ : essayé puis **annulé** à ta demande ;
       les armes sont redevenues comme avant (et le Scorpion de feu aussi).
+- [x] Dragibus : dans les niveaux avec un sol, ils retombent et rebondissent par terre comme des balles
+      (3 rebonds de plus en plus petits), pour toucher les monstres au sol ; dans l'espace, ils partent toujours
+      en diagonale. L'équilibre mesuré par le robot ne change presque pas.

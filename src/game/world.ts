@@ -218,7 +218,10 @@ export class World implements BossHost, SkelHost, ScorpHost {
     } else if (k === 'drag') {
       const D = C.WEAPONS.drag, a = rad(D.angle * (h.shotCount % 2 ? 1 : -1));
       h.fireCD = 1 / D.rate; h.ammo.drag--;
-      shot({ x: h.x + 33, y: h.y + 10, vx: Math.cos(a) * D.speed, vy: Math.sin(a) * D.speed, dmg: D.dmg, life: 3.2, frame: h.shotCount % 6, bounces: D.bounces });
+      if (this.level.ground) { // ils retombent et rebondissent par terre comme des balles
+        const i = h.shotCount % 2;
+        shot({ x: h.x + 33, y: h.y + 10, vx: D.lob.vx[i], vy: D.lob.vy[i], g: D.lob.g, dmg: D.dmg, life: 4, frame: h.shotCount % 6, bounces: D.bounces });
+      } else shot({ x: h.x + 33, y: h.y + 10, vx: Math.cos(a) * D.speed, vy: Math.sin(a) * D.speed, dmg: D.dmg, life: 3.2, frame: h.shotCount % 6, bounces: D.bounces });
     } else if (k === 'pinata') {
       const PI = C.WEAPONS.pinata;
       h.fireCD = 1 / PI.rate; h.ammo.pinata--;
@@ -991,6 +994,7 @@ export class World implements BossHost, SkelHost, ScorpHost {
   private updateShots(dt: number) {
     const bottom = this.floor, born: Shot[] = []; // born : les éclats de Piñata créés pendant cette image
     for (const s of this.shots) {
+      if (s.g) s.vy += s.g * dt;
       s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt; s.age += dt;
       if (s.life <= 0 || s.x > C.W + 10 || s.x < -20 || s.y < -20 || s.y > bottom + 4) {
         s.dead = true;
@@ -998,7 +1002,10 @@ export class World implements BossHost, SkelHost, ScorpHost {
         continue;
       }
       // les dragibus rebondissent sur le haut, le bas et le sol
-      if (s.kind === 'drag' && s.bounces > 0 && ((s.y < C.HUD_H + 1 && s.vy < 0) || (s.y > bottom - 8 && s.vy > 0))) {
+      if (s.kind === 'drag' && s.g && s.y > bottom - 8 && s.vy > 0) { // par terre : rebonds de plus en plus petits
+        if (s.bounces > 0) { s.y = bottom - 8; s.vy = -s.vy * C.WEAPONS.drag.lob.keep; s.bounces--; this.sfx.play('bounce'); }
+        else { s.dead = true; this.burst(s.x + 4, bottom - 2, 5, [FC.P.W, FC.P.v], 30); continue; }
+      } else if (s.kind === 'drag' && s.bounces > 0 && ((s.y < C.HUD_H + 1 && s.vy < 0) || (s.y > bottom - 8 && s.vy > 0))) {
         s.vy = -s.vy; s.bounces--; this.sfx.play('bounce');
       }
       const sb = shotBox(s);
