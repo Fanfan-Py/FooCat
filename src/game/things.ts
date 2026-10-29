@@ -30,7 +30,7 @@ export interface Jet { offset: number; down: boolean }
 // algue qui pousse (h : taille actuelle) ; herse qui monte et descend
 export interface Grow { h: number; max: number; kind: number; top: boolean }
 export interface Obstacle { kind: C.ObstacleKind; pix: Pix; x: number; y: number; shapes: Shape[]; speed: number; dead: boolean; belt: boolean; elec?: Elec; top?: boolean; jet?: Jet; grow?: Grow; herse?: { offset: number };
-  tree?: { h: number; seed: number }; liana?: Liana; lava?: { offset: number } }
+  tree?: { h: number; seed: number }; liana?: Liana; lava?: { offset: number }; webGround?: boolean }
 // liane : longueur qui varie entre min et max (ou fixe), qui peut se détacher et tomber
 export interface Liana { len: number; min: number; max: number; ph: number; seed: number; drop: boolean; at: number; vy: number }
 export interface Bonus { kind: BonusKind; x: number; y: number; baseY: number; speed: number; t: number; dead: boolean }

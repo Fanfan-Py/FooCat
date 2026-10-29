@@ -47,7 +47,7 @@
   };
   // arc-en-ciel qui grandit en avançant (taille 0, 1, 2)
   S.rainArc = function (f) {
-    var k = [1, 1.45, 1.9][f % 3], w = Math.round(9 * k), h = Math.round(13 * k), p = new Pix(w + 1, h + 1);
+    var k = [0.8, 1, 1.2][f % 3], w = Math.round(9 * k), h = Math.round(13 * k), p = new Pix(w + 1, h + 1);
     var cx = 1, cy = h / 2, rx = 7.5 * k, ry = 6.2 * k, band = (rx - 2.2 * k) / 6;
     for (var y = 0; y <= h; y++) for (var x = 0; x <= w; x++) {
       var dx = (x + 0.5 - cx), dy = (y + 0.5 - cy);

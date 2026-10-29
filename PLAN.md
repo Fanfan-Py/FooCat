@@ -325,3 +325,12 @@ Points d'attention :
       pluie de bonbons et tous les amis, puis « FIN » sous un arc-en-ciel.
 - [x] Musiques de Vulcano et du Scorpion (28 octobre) : « cap sur Vulcano » (niveaux 11-12), « Vulcano » (13),
       « la grotte » (14 et salle du trône du 15), « le Scorpion » (son combat), « le vaisseau » (16).
+
+## Retouches du 29 octobre
+- [x] Niveau 3 (et forteresse du niveau 5) : des toiles d'araignée posées au sol, en violet pour bien se voir,
+      en plus des toiles suspendues.
+- [x] L'arc-en-ciel devient l'arme de départ de chaque niveau (infini) : plus petit et moins fort (1 dégât au lieu
+      de 2), il traverse toujours tout. Les vermicelles deviennent l'arme principale : un peu moins de tirs par
+      seconde, réserve de départ 600 (au lieu de 400), jusqu'à 999, bonus de 300.
+- [x] Pour compenser, le Scorpion de feu est un peu moins résistant, crache ses boules de feu moins souvent,
+      et la traversée avant lui est plus courte.

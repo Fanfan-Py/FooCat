@@ -81,7 +81,7 @@ function robot(w: World, t: number, look = 95): Controls {
   wantX = Math.min(wantX, retreat);
   return {
     dx: Math.max(-1, Math.min(1, (wantX - h.x) / 20)), dy, fire: true, special: jaw || frame % 400 === 0,
-    swap: !fight && frame % 600 === 300, select: fight ? (h.ammo.verm > 0 ? 0 : -1) : -1,
+    swap: !fight && frame % 600 === 300, select: (fight || h.weapon === 'rain') && h.ammo.verm > 0 ? 0 : -1, // l'arc-en-ciel est faible : il repasse aux vermicelles
   };
 }
 
