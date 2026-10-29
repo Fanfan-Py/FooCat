@@ -22,8 +22,7 @@ Jeu en ligne : https://fanfan-py.github.io/FooCat/
 - [x] Affichage sur iPhone 12 et iPhone SE : le jeu se recadre tout seul, sans avoir à tourner le téléphone.
       Sur les petits écrans comme l'iPhone SE, le jeu est un peu réduit pour que les boutons ne cachent rien.
       **À confirmer sur les vrais téléphones.**
-- [x] Choix du niveau retiré de l'accueil ; gardé en mode développeur
-      (automatique sur l'ordinateur de développement ; sur le site, ajouter **#dev** à la fin de l'adresse, ou **toucher 5 fois le logo** ; #nodev ou 5 touchers pour le couper).
+- [x] Choix du niveau retiré de l'accueil ; gardé en mode développeur.
 - [x] « Continuer au niveau X » sur l'écran d'accueil (une sauvegarde par mode, au début de chaque niveau).
 - [x] Niveau 4 : le courant reste coupé 1,8 s au lieu de 1 s quand un bonus est entre les poteaux,
       avertissement 0,6 s avant, voyants sur les pylônes (vert = coupé, orange = va revenir, rouge = branché).
