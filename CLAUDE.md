@@ -13,5 +13,7 @@ Ce dépôt est **public** (GitHub Pages). À chaque modification du code :
 2. **Toujours commiter avec l'identité anonyme du dépôt** : `FooCat <foocat@noreply.invalid>`
    (configurée localement), jamais avec l'identité globale de l'ordinateur.
 3. **Ne pas pousser** : c'est la personne qui gère le dépôt qui synchronise depuis VS Code.
-4. **Tenir à jour `README.md` et `PLAN.md`** quand le jeu change (niveaux, armes, modes, commandes, tests).
-5. Vérifier avec `npx tsc --noEmit` et le robot (`npm test`, voir le README) avant de commiter.
+4. **Tenir à jour `README.md`, `DEVELOPPEMENT.md` et `PLAN.md`** quand le jeu change (niveaux, armes, modes, commandes, tests).
+5. Vérifier avec `npx tsc --noEmit` et le robot (`npm test`, voir DEVELOPPEMENT.md) avant de commiter.
+6. Le README est pour les joueurs : n'y mettre rien de propre au développement (mode développeur, options de test…) ;
+   ces notes vont dans DEVELOPPEMENT.md, sans jamais expliquer comment activer le mode développeur sur le site.
