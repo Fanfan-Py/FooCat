@@ -405,7 +405,7 @@ export function drawWorld(scr: Pix, w: World) {
   const top = w.top;
   for (const o of w.obstacles) {
     if (o.kind === 'web') { // fils qui retiennent la toile (au ciel, ou au sol)
-      const r = o.pix.w / 2, c = o.webGround ? FC.alpha(P.U, 200) : FC.alpha(P.W, 150);
+      const r = o.pix.w / 2, c = o.webGround ? FC.alpha(FC.col('2a1640'), 230) : FC.alpha(P.W, 150);
       if (o.webGround) {
         scr.line(o.x + r * 0.55, o.y + r * 1.65, o.x + r * 0.3, w.floor, c);
         scr.line(o.x + r * 1.45, o.y + r * 1.65, o.x + r * 1.7, w.floor, c);

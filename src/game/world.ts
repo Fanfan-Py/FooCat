@@ -32,7 +32,7 @@ export interface Sfx {
 export interface Carry { score: number; lives: number; ammo: { verm: number; drag: number; pinata: number; jaw: number } }
 
 const HERO_BOX = { x: 8, y: 9, w: 24, h: 16 };
-const RAIN_SIZE = [0.8, 1, 1.2]; // (le même tableau que dans le dessin rainArc)
+const RAIN_SIZE = [1, 1.45, 1.9];
 const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 const rad = (deg: number) => deg * Math.PI / 180;
 
@@ -110,10 +110,11 @@ export class World implements BossHost, SkelHost, ScorpHost {
       x: C.HERO_START.x, y: C.HERO_START.y, energy: this.mode.energy, energyMax: this.mode.energy,
       lives: carry ? carry.lives : this.mode.lives,
       inv: C.INVINCIBLE_AFTER_RESPAWN, slow: 0, ghost: 0, dead: 0, sleep: 0, fireCD: 0, jawCD: 0, shotCount: 0,
-      weapon: 'rain' as WeaponKind, // l'arc-en-ciel (infini) est l'arme de départ de chaque niveau
+      weapon: 'verm' as WeaponKind,
       // (une ancienne sauvegarde n'a pas encore de Piñatas : on en donne le stock de départ)
       ammo: carry ? { ...carry.ammo, pinata: carry.ammo.pinata ?? W.pinata.start } : { verm: W.verm.start, drag: W.drag.start, pinata: W.pinata.start, jaw: W.jaw.start },
     };
+    if (this.hero.ammo.verm <= 0 && this.hero.ammo.drag > 0) this.hero.weapon = 'drag';
     if (o.rushFrom && this.level.boss === 'rush') this.startScore -= this.level.points; // on passe directement au combat
   }
 
@@ -385,8 +386,8 @@ export class World implements BossHost, SkelHost, ScorpHost {
     }
     if (kind === 'web') { // toile suspendue au ciel, ou (s'il y a un sol) posée au sol
       const d0 = webDef(this.rnd), onGround = !!G && this.rnd() < 0.45;
-      // au sol, la toile est violette pour bien se voir sur les collines claires
-      const d = onGround ? { ...d0, pix: FC.mk('webGround' + d0.pix.w, () => { const p = new FC.Pix(d0.pix.w, d0.pix.h); p.blit(d0.pix, 0, 0); return p.tint(FC.col('6a3fd1'), 0.55); }) } : d0;
+      // au sol, la toile est foncée pour bien se voir sur les collines claires
+      const d = onGround ? { ...d0, pix: FC.mk('webGround' + d0.pix.w, () => { const p = new FC.Pix(d0.pix.w, d0.pix.h); p.blit(d0.pix, 0, 0); return p.tint(FC.col('2a1640'), 0.75); }) } : d0;
       for (let tries = 0; tries < 6; tries++) {
         const y = onGround ? G - d.pix.h - 4 - this.rnd() * 14 : this.top + 8 + this.rnd() * (this.floor - this.top - 70) - d.pix.h / 4;
         if (this.passageOk(d, y)) { this.place(d, y, speed); this.obstacles[this.obstacles.length - 1].webGround = onGround; return; }

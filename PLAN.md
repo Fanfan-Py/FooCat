@@ -327,10 +327,7 @@ Points d'attention :
       « la grotte » (14 et salle du trône du 15), « le Scorpion » (son combat), « le vaisseau » (16).
 
 ## Retouches du 29 octobre
-- [x] Niveau 3 (et forteresse du niveau 5) : des toiles d'araignée posées au sol, en violet pour bien se voir,
+- [x] Niveau 3 (et forteresse du niveau 5) : des toiles d'araignée posées au sol, foncées pour bien se voir,
       en plus des toiles suspendues.
-- [x] L'arc-en-ciel devient l'arme de départ de chaque niveau (infini) : plus petit et moins fort (1 dégât au lieu
-      de 2), il traverse toujours tout. Les vermicelles deviennent l'arme principale : un peu moins de tirs par
-      seconde, réserve de départ 600 (au lieu de 400), jusqu'à 999, bonus de 300.
-- [x] Pour compenser, le Scorpion de feu est un peu moins résistant, crache ses boules de feu moins souvent,
-      et la traversée avant lui est plus courte.
+- [ ] ~~L'arc-en-ciel comme arme de départ, plus petit et moins fort~~ : essayé puis **annulé** à ta demande ;
+      les armes sont redevenues comme avant (et le Scorpion de feu aussi).

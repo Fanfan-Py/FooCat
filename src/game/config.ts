@@ -32,12 +32,11 @@ export const HERO_START = { x: 24, y: 70 };
 // Armes : chacune a un vrai rôle
 export const WEAPONS = {
   // Vermicelles : mitraillette rapide et faible, qui part en éventail (contre les nuées de mouches)
-  verm: { rate: 12, dmg: 1, speed: 250, spread: 8, start: 600, max: 999, pickup: 300 },
+  verm: { rate: 14, dmg: 1, speed: 250, spread: 8, start: 400, max: 700, pickup: 200 },
   // Dragibus : gros, lents et puissants ; partent en diagonale et rebondissent sur les bords et les obstacles
   drag: { rate: 2.8, dmg: 4, speed: 165, angle: 16, bounces: 3, start: 40, max: 90, pickup: 25 },
-  // Arc-en-ciel (la corne) : l'arme de départ, infinie ; petit, courte portée, faible (1 dégât),
-  // mais il traverse les ennemis et les obstacles
-  rain: { rate: 2.6, dmg: 1, speed: 150, range: 115 },
+  // Arc-en-ciel (la corne) : infini, courte portée, grandit et traverse les ennemis et les obstacles
+  rain: { rate: 2.6, dmg: 2, speed: 150, range: 115 },
   // Piñata : gros bonbon lent qui éclate en petits bonbons quand il touche (ou au bout de sa course) ;
   // les éclats partent en étoile et touchent d'autres monstres
   pinata: { rate: 1.4, dmg: 5, speed: 120, life: 2.2, shards: 8, shardDmg: 2, shardSpeed: 140, shardLife: 0.5, start: 10, max: 30, pickup: 8 },
@@ -258,11 +257,11 @@ export const LEVELS: Level[] = [
     ],
   },
   {
-    num: 15, name: 'LA SALLE DU TRÔNE DU VOLCAN', points: 9000, decor: 'volcanoThrone', ground: 158, ceiling: 24, scroll: 40, fire: true, boss: 'scorp',
+    num: 15, name: 'LA SALLE DU TRÔNE DU VOLCAN', points: 12000, decor: 'volcanoThrone', ground: 158, ceiling: 24, scroll: 40, fire: true, boss: 'scorp',
     phases: [
-      { from: 0, obstacle: 3.4, obstacles: { lavaFall: 1, fireRock: 1 }, wave: 2.4, waves: { miniScorps: 1, line: 1 }, gold: 0.2 },
-      { from: 0.4, banner: 'LES GARDES DU SCORPION !', obstacle: 3.8, obstacles: { lavaFall: 1 }, wave: 2.0, waves: { scouts: 1, salamanders: 1, phoenix: 1, line: 1 }, gold: 0.25 },
-      { from: 0.75, obstacle: 4.0, obstacles: { fireRock: 1 }, wave: 2.0, waves: { emberBats: 1, miniScorps: 1, line: 1 }, gold: 0.3 },
+      { from: 0, obstacle: 3.4, obstacles: { lavaFall: 1, fireRock: 1 }, wave: 2.2, waves: { miniScorps: 1, emberBats: 1, line: 1 }, gold: 0.2 },
+      { from: 0.4, banner: 'LES GARDES DU SCORPION !', obstacle: 3.8, obstacles: { lavaFall: 1 }, wave: 1.8, waves: { scouts: 1, salamanders: 1, phoenix: 1, line: 1 }, gold: 0.25 },
+      { from: 0.75, obstacle: 4.0, obstacles: { fireRock: 1 }, wave: 1.6, waves: { emberBats: 2, miniScorps: 1, fireballs: 1 }, gold: 0.3 },
       { from: 1, event: 'boss', banner: 'LE SCORPION VOLANT DE FEU !', obstacle: 99, obstacles: {}, wave: 99, waves: {}, gold: 0 },
     ],
   },
@@ -298,7 +297,7 @@ export const SKEL = { hp: 200, points: 15000, contact: 2 };
 // Le boss du niveau 15 : le Scorpion volant de feu (3 formes ; hp pour chacune) ; breath : longueur du jet de feu
 // Niveau 16 : les 3 boss à la suite (vie un peu réduite), pause entre deux boss (secondes)
 export const RUSH = { order: ['spider', 'skel', 'scorp'] as const, hp: 0.75, pause: 4.5 };
-export const SCORP = { hp: 85, points: 20000, contact: 2, fire: 1, breath: 80 };
+export const SCORP = { hp: 100, points: 20000, contact: 2, fire: 1, breath: 80 };
 
 // La ceinture de donuts : des colonnes de planètes avec un passage qui ondule
 export const BELT = { columns: 10, every: 1.5, gap: 64, speed: 36, flies: 0.7 }; // flies : chance d'une mouche dans le passage, à chaque colonne

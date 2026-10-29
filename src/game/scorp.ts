@@ -130,7 +130,7 @@ export class ScorpBoss {
     else if (this.breath === 'fire' && this.breathT <= 0) { this.breath = 'none'; this.breathT = 3.6 - f * 0.4; }
     // boules de feu en cloche
     this.shootT -= dt;
-    if (this.shootT <= 0 && this.breath === 'none') { host.bossFireballs(this.x + 4, this.y + 36, 1 + f, false); this.shootT = 4.5 - f * 0.3; } // 1, 2 puis 3 boules de feu
+    if (this.shootT <= 0 && this.breath === 'none') { host.bossFireballs(this.x + 4, this.y + 36, 1 + f, false); this.shootT = 3.8 - f * 0.3; } // 1, 2 puis 3 boules de feu
     // l'escorte change avec la forme
     this.escortT -= dt;
     if (this.escortT <= 0) { host.bossEscort(f, this.x + 20, this.y + 30); this.escortT = 8 - f * 1; }
