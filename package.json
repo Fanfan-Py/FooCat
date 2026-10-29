@@ -9,7 +9,8 @@
     "preview": "vite preview --host",
     "test": "node scripts/smoke.mjs",
     "single": "npm run build && node scripts/single.mjs",
-    "icons": "node scripts/icons.mjs"
+    "icons": "node scripts/icons.mjs",
+    "privacy": "node scripts/check-privacy.mjs --all"
   },
   "devDependencies": {
     "@types/node": "24.19.2",

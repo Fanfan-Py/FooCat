@@ -1,0 +1,3 @@
+#!/bin/sh
+# Avant chaque commit : vérifie qu'on ne publie rien de privé (voir scripts/check-privacy.mjs).
+exec node scripts/check-privacy.mjs

@@ -334,3 +334,9 @@ Points d'attention :
 - [x] Dragibus : dans les niveaux avec un sol, ils retombent et rebondissent par terre comme des balles
       (3 rebonds de plus en plus petits ; ils tombent vite, retouche du 29 octobre), pour toucher les monstres au sol ; dans l’espace, ils partent toujours
       en diagonale. L'équilibre mesuré par le robot ne change presque pas.
+- [x] README mis à jour (16 niveaux, armes, apparence, succès, robot de test).
+- [x] Revue de confidentialité du dépôt public (29 octobre) : aucun secret ni information personnelle,
+      ni dans les fichiers ni dans l'historique ; tous les commits sont signés « FooCat ». Un export PDF du plan
+      (`out/`) avait été publié par erreur (sans rien de privé dedans) : retiré du dépôt et ignoré désormais.
+      Ajout d'une vérification automatique avant chaque commit (`npm run privacy`, `.githooks/pre-commit`)
+      et de règles pour Claude (`CLAUDE.md`).

@@ -1,3 +1,8 @@
 node_modules
 dist
 dist-single
+# exports et fichiers sensibles à ne jamais publier
+out
+.env*
+*.pem
+*.key
