@@ -339,3 +339,5 @@ Points d'attention :
       (`out/`) avait été publié par erreur (sans rien de privé dedans) : retiré du dépôt et ignoré désormais.
       Ajout d'une vérification automatique avant chaque commit (`npm run privacy`, `.githooks/pre-commit`)
       et de règles pour Claude (`CLAUDE.md`).
+- [x] Niveau 8, forêt d'algues (31 octobre) : des monstres dans le passage laissé par chaque algue (petits poissons,
+      parfois un poisson guitare ou une méduse), en plus des algues et des bulles.

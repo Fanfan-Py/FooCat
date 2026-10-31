@@ -100,6 +100,7 @@ export interface Phase {
   waves: Partial<Record<WaveKind, number>>; // lesquelles, avec leur poids
   gold: number; // part de mouches dorées
   slalom?: boolean; // obstacles en alternance en haut et en bas : il faut zigzaguer
+  foes?: number; // slalom : chance d'un monstre dans le passage laissé par chaque obstacle
 }
 
 export interface Level {
@@ -193,7 +194,7 @@ export const LEVELS: Level[] = [
     phases: [
       { from: 0, obstacle: 3.1, obstacles: { algae: 2, coral: 1 }, wave: 2.2, waves: { crab: 2, jellyBlue: 1, solo: 1, line: 1 }, gold: 0.1 },
       { from: 0.2, banner: 'ATTENTION AUX BULLES !', obstacle: 2.8, obstacles: { algae: 2, coral: 1 }, wave: 2.1, waves: { bubbles: 1, jellyBlue: 1, crab: 1, guitar: 1, line: 1 }, gold: 0.2 },
-      { from: 0.45, banner: "LA FORÊT D'ALGUES !", obstacle: 1.7, obstacles: { algae: 1 }, slalom: true, wave: 2.9, waves: { solo: 1, bubbles: 1 }, gold: 0 },
+      { from: 0.45, banner: "LA FORÊT D'ALGUES !", obstacle: 1.7, obstacles: { algae: 1 }, slalom: true, foes: 0.8, wave: 2.9, waves: { solo: 1, bubbles: 1 }, gold: 0 },
       { from: 0.62, obstacle: 2.6, obstacles: { algae: 2, coral: 1 }, wave: 1.85, waves: { jellyPink: 1, jellyBlue: 1, crab: 1, guitar: 1, bubbles: 1, batShrimp: 1, line: 1 }, gold: 0.3 },
       { from: 0.88, banner: 'LE CHÂTEAU EN VUE !', obstacle: 2.2, obstacles: { algae: 1 }, slalom: true, wave: 1.6, waves: { crab: 2, jellyPink: 1, guitar: 1, batShrimp: 1 }, gold: 0.3 },
     ],

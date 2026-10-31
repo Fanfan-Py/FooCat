@@ -625,6 +625,15 @@ export class World implements BossHost, SkelHost, ScorpHost {
       this.place(herseDef(), this.top - 54, speed);
       this.obstacles[this.obstacles.length - 1].herse = { offset: this.rnd() * 6 };
     } else this.placeAlgae(this.slalomTop, max, speed, false);
+    if (this.phase.foes && this.rnd() < this.phase.foes) this.slalomFoe(this.slalomTop, max, speed);
+  }
+  // un monstre dans le passage laissé par l'obstacle (sous une algue du plafond, au-dessus d'une algue du sol)
+  private slalomFoe(top: boolean, len: number, speed: number) {
+    const R = this.rnd, lo = top ? this.top + len + 6 : this.top + 6, hi = top ? this.floor - 22 : this.floor - len - 22;
+    const y = lo + (hi - lo) * (0.3 + R() * 0.4), x = C.W + 10, k = R();
+    if (k < 0.6) { for (let i = 0; i < 2; i++) this.enemies.push(newEnemy('fish', x + i * 18, y + i * 6, { speed: speed + 10, amp: 6, phase: R() * 6 })); }
+    else if (k < 0.8) this.enemies.push(newEnemy('guitarFish', x, y - 4, { phase: R() * 6, speed: speed + 8, amp: 4, holdX: 150 + R() * 60, holdT: 1.5, shootT: 1 }));
+    else this.enemies.push(newEnemy('jellyBlue', x, y - 6, { phase: R() * 6, speed: speed + 6, amp: 6, holdX: 120 + R() * 80, holdT: 2.5, shootT: 1.5 }));
   }
 
   private spawnFormation(f: C.WaveKind, gold: number, side = 0) { // side : -1 tout en haut, 1 tout en bas
