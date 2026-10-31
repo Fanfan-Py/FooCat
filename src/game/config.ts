@@ -223,19 +223,19 @@ export const LEVELS: Level[] = [
   {
     num: 11, name: "RETOUR DANS L'ESPACE", points: 33000, decor: 'space3', ground: null, ceiling: null, scroll: 34,
     phases: [
-      { from: 0, obstacle: 4.33, obstacles: { planet: 2 }, wave: 1.97, waves: { line: 1, comets: 1, sorbets: 1, scouts: 1 }, gold: 0.2 },
+      { from: 0, obstacle: 4.33, obstacles: { planet: 2, jet: 1 }, wave: 1.97, waves: { line: 1, comets: 1, sorbets: 1, scouts: 1 }, gold: 0.2 },
       { from: 0.2, banner: 'PLUIE DE MÉTÉORITES !', obstacle: 6, obstacles: { planet: 1 }, wave: 1.07, waves: { comets: 3, scouts: 1 }, gold: 0 },
-      { from: 0.4, banner: 'LES SORBETS VOLANTS !', obstacle: 4.13, obstacles: { planet: 2 }, wave: 1.64, waves: { sorbets: 2, line: 1, scouts: 1, v: 1 }, gold: 0.25 },
-      { from: 0.65, obstacle: 3.94, obstacles: { planet: 2 }, wave: 1.48, waves: { comets: 2, sorbets: 1, scouts: 2, swarm: 1 }, gold: 0.3 },
-      { from: 0.88, banner: 'DERNIER EFFORT !', obstacle: 4.33, obstacles: { planet: 1 }, wave: 1.23, waves: { scouts: 2, comets: 2, sorbets: 1 }, gold: 0.35 },
+      { from: 0.4, banner: 'LES SORBETS VOLANTS !', obstacle: 4.13, obstacles: { planet: 2, jet: 1 }, wave: 1.64, waves: { sorbets: 2, line: 1, scouts: 1, v: 1 }, gold: 0.25 },
+      { from: 0.65, obstacle: 3.94, obstacles: { planet: 2, jet: 2 }, wave: 1.48, waves: { comets: 2, sorbets: 1, scouts: 2, swarm: 1 }, gold: 0.3 },
+      { from: 0.88, banner: 'DERNIER EFFORT !', obstacle: 4.33, obstacles: { planet: 1, jet: 1 }, wave: 1.23, waves: { scouts: 2, comets: 2, sorbets: 1 }, gold: 0.35 },
     ],
   },
   {
     num: 12, name: 'APPROCHE DE VULCANO', points: 44000, decor: 'approach', ground: null, ceiling: null, scroll: 36, outro: 'o',
     phases: [
-      { from: 0, obstacle: 3.6, obstacles: { fireRock: 2, planet: 1 }, wave: 1.95, waves: { emberBats: 2, scouts: 1, line: 1, sorbets: 1 }, gold: 0.2 },
-      { from: 0.25, banner: 'CHAUVES-SOURIS DE BRAISE !', obstacle: 3.1, obstacles: { fireRock: 2 }, wave: 1.6, waves: { emberBats: 3, dragonet: 2, line: 1 }, gold: 0.2 },
-      { from: 0.5, banner: 'ATTENTION AUX DRAGONNETS !', obstacle: 3.2, obstacles: { fireRock: 2 }, wave: 1.8, waves: { dragonet: 2, emberBats: 1, scouts: 1, sorbets: 1 }, gold: 0.25 },
+      { from: 0, obstacle: 3.6, obstacles: { fireRock: 2, planet: 1, jet: 1 }, wave: 1.95, waves: { emberBats: 2, scouts: 1, line: 1, sorbets: 1 }, gold: 0.2 },
+      { from: 0.25, banner: 'CHAUVES-SOURIS DE BRAISE !', obstacle: 3.1, obstacles: { fireRock: 2, jet: 1 }, wave: 1.6, waves: { emberBats: 3, dragonet: 2, line: 1 }, gold: 0.2 },
+      { from: 0.5, banner: 'ATTENTION AUX DRAGONNETS !', obstacle: 3.2, obstacles: { fireRock: 2, jet: 1 }, wave: 1.8, waves: { dragonet: 2, emberBats: 1, scouts: 1, sorbets: 1 }, gold: 0.25 },
       { from: 0.75, banner: 'VULCANO EN VUE !', obstacle: 2.7, obstacles: { fireRock: 3 }, wave: 1.45, waves: { emberBats: 2, dragonet: 1, comets: 1, scouts: 1 }, gold: 0.3 },
     ],
   },

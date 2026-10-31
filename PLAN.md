@@ -341,3 +341,4 @@ Points d'attention :
       et de règles pour Claude (`CLAUDE.md`).
 - [x] Niveau 8, forêt d'algues (31 octobre) : des monstres dans le passage laissé par chaque algue (petits poissons,
       parfois un poisson guitare ou une méduse), en plus des algues et des bulles.
+- [x] Niveaux 11 et 12 (31 octobre) : retour des jets de paillettes (sauf pendant la pluie de météorites et « Vulcano en vue »).
