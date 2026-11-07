@@ -424,8 +424,9 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 - [ ] Tableau 8 **FOOCAT** : en grandes lettres de réglisse, entre deux bandes de sucre.
 - [ ] Tableau 9 **le labyrinthe** : des murs de caramel, des salles de briques à casser ; des ouvertures
       d'une brique de large (vérifié : chaque brique peut être atteinte).
-- [ ] Des **monstres** en bonbons (3 au plus) descendent doucement ; ils ne font rien au chat,
-      la bonbille rebondit dessus. À décider : peut-on les faire éclater ?
+- [ ] Des **monstres** en bonbons, petits (3 au plus), sortent de **trappes** qui s'ouvrent en haut de l'écran
+      et descendent doucement ; ils ne font rien au chat. Quand la bonbille les touche, ils **explosent** (+100)
+      et un nouveau monstre sort d'une trappe.
 
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
