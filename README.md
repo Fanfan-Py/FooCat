@@ -68,11 +68,13 @@ Au choix sur la ligne « MODE » de l'accueil :
 
 ## Apparence, succès et scores
 
-- **Apparence** : on choisit la soucoupe (8) et la couleur du chat (7 : licorne, roux, noir, doré, galaxie,
-  fantôme, squelette). Les soucoupes et les chats se gagnent avec les **succès** (21, sur 2 pages).
+- **Apparence** : on choisit la soucoupe (15) et le chat (13 couleurs et costumes : licorne, roux, noir, doré,
+  galaxie, fantôme, squelette, pirate, dragon, arc-en-ciel, abeille, guimauve, zèbre). Chaque **succès** fait
+  gagner une soucoupe, un chat ou un personnage (21 succès, et 6 de plus pour les niveaux secrets).
 - **Meilleurs scores** : enregistrés sur chaque appareil (pas de compte), avec un pseudonyme filtré
   (pas de gros mots ni d'insultes).
 - **Réglages** : volume de la musique et des effets, tir automatique, commandes pour gaucher, vibrations,
+  l'aide sur les commandes (montrée aussi au premier lancement sur un téléphone),
   et la ligne **Code secret**.
 - **Récompenses secrètes** : 6 surprises qui se débloquent seulement avec un code secret
   (des personnages, une soucoupe, un compagnon, des niveaux secrets…). Elles apparaissent dans l'onglet

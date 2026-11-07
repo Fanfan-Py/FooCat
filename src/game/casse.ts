@@ -32,13 +32,13 @@ const HP: Record<Brick, number> = { choc: 1, fraise: 1, menthe: 1, citron: 1, su
 interface Cell { kind: Brick; hp: number; x: number; y: number; w: number; h: number; small: boolean }
 // stuck : posée sur la soucoupe (off : décalage depuis le milieu ; hold : temps avant de partir toute seule)
 interface Ball { x: number; y: number; vx: number; vy: number; stuck: boolean; off: number; hold: number }
-export type CapsuleKind = 'L' | 'M' | 'T' | 'V' | 'C' | 'Z';
+export type CapsuleKind = 'L' | 'M' | 'T' | 'V' | 'C' | 'Z' | 'H'; // H : le cœur (rare)
 interface Capsule { kind: CapsuleKind; x: number; y: number }
 interface Part { x: number; y: number; vx: number; vy: number; life: number; c: number[] }
 const R = 3.5; // rayon de la bonbille
 // chance de chaque capsule (Z est un piège)
-const CAPSULES: [CapsuleKind, number][] = [['L', 2], ['M', 2], ['T', 1], ['V', 2], ['C', 2], ['Z', 2]];
-const CAP_COLOR: Record<CapsuleKind, number[]> = { L: P.b, M: P.g, T: P.y, V: P.r, C: P.o, Z: P.u };
+const CAPSULES: [CapsuleKind, number][] = [['L', 2], ['M', 2], ['T', 1], ['V', 2], ['C', 2], ['Z', 2], ['H', 0.6]];
+const CAP_COLOR: Record<CapsuleKind, number[]> = { L: P.b, M: P.g, T: P.y, V: P.r, C: P.o, Z: P.u, H: P.P };
 
 // les tableaux : une lettre par brique (. = vide ; C chocolat, F fraise, M menthe, J citron, S sucre, R réglisse, O caramel)
 // small : petites briques (27 colonnes de 11 pixels, lignes de 6 pixels)
@@ -110,6 +110,8 @@ export class Casse {
   private monsterT = CASSE.firstMonster; // temps avant le prochain monstre
   banner: { text: string; t: number } | null = null;
   popups: { text: string; x: number; y: number; t: number }[] = [];
+  events: { type: string; n?: number; clean?: boolean }[] = []; // lus (puis vidés) par l'application, pour les succès
+  private lostHere = false; // un cœur perdu dans ce tableau
   private stars = FC.stars(77, C.W, C.H, 80);
   private rnd: () => number;
   private prevFire = false;
@@ -135,7 +137,7 @@ export class Casse {
     const pd = this.paddle;
     Object.assign(pd, { x: 140, wide: 0, through: 0, gun: 0, glue: 0, slow: 0 });
     this.caps = []; this.shots = []; this.exit = null;
-    this.monsters = []; this.monsterT = CASSE.firstMonster;
+    this.monsters = []; this.monsterT = CASSE.firstMonster; this.lostHere = false;
     this.serve();
     this.banner = { text: this.tableau === TABLEAUX.length + 1 ? 'ON RECOMMENCE, PLUS VITE !' : 'TABLEAU ' + this.tableau + ' : ' + TABLEAUX[(this.tableau - 1) % TABLEAUX.length].name, t: 0 };
     this.sfx.play(this.tableau > 1 ? 'level' : 'start');
@@ -236,6 +238,7 @@ export class Casse {
     this.burst(m.x + 7, m.y + 7, null, 14);
     this.score += CASSE.monsterPoints; this.popups.push({ text: '+' + CASSE.monsterPoints, x: m.x, y: m.y, t: 0 });
     m.y = 1e9; this.monsterT = Math.max(this.monsterT, 1.2);
+    this.events.push({ type: 'monster' });
     this.sfx.play('kill');
   }
 
@@ -308,6 +311,7 @@ export class Casse {
     }
     if (!this.bricks.some((b) => b.hp > 0 && b.kind !== 'caramel') && !this.exit) {
       // le mur est vide : le passage secret s'ouvre
+      this.events.push({ type: 'tableau', n: (this.tableau - 1) % TABLEAUX.length + 1, clean: !this.lostHere });
       this.score += 500; this.banner = { text: 'TABLEAU TERMINÉ ! +500', t: 0 };
       for (const b of this.balls) this.burst(b.x, b.y, P.b, 6);
       this.balls = []; this.caps = []; this.shots = [];
@@ -319,6 +323,12 @@ export class Casse {
 
   private take(kind: CapsuleKind) {
     const pd = this.paddle, say = (text: string) => { this.banner = { text, t: 0 }; };
+    if (kind === 'H') {
+      this.score += 50; this.sfx.play('level');
+      if (this.lives < CASSE.maxLives) { this.lives++; say('UN COEUR EN PLUS !'); } else say('+50');
+      this.popups.push({ text: '+1 COEUR', x: this.paddle.x + 4, y: CASSE.paddleY - 6, t: 0 });
+      return;
+    }
     if (kind === 'Z') { pd.slow = CASSE.slow; say("ZZZ... LA SOUCOUPE S'ENDORT !"); this.sfx.play('yawn'); return; }
     this.score += 50; this.sfx.play('pickup');
     if (kind === 'L') { pd.wide = CASSE.wide; say('SOUCOUPE PLUS LARGE !'); }
@@ -338,7 +348,7 @@ export class Casse {
 
   private loseHeart() {
     const pd = this.paddle;
-    this.lives--; pd.wide = 0; pd.through = 0; pd.gun = 0; pd.glue = 0; this.caps = []; this.shots = [];
+    this.lives--; this.lostHere = true; pd.wide = 0; pd.through = 0; pd.gun = 0; pd.glue = 0; this.caps = []; this.shots = [];
     this.sfx.play(this.lives > 0 ? 'hurt' : 'lose');
     if (this.lives <= 0) { this.lives = 0; this.state = 'dying'; this.stateT = 0; this.burst(pd.x + 20, CASSE.paddleY + 16, null, 30); return; }
     this.banner = { text: 'BONBILLE PERDUE !', t: 0 };
@@ -390,6 +400,7 @@ export class Casse {
     HATCHES.forEach((x, i) => FC.hatch(scr, x, this.hatches[i]));
     for (const c of this.caps) {
       const y = Math.round(c.y), x = Math.round(c.x), trap = c.kind === 'Z';
+      if (c.kind === 'H') { FC.heartCapsule(scr, x, y, t); continue; }
       scr.rect(x, y, 14, 7, CAP_COLOR[c.kind]); scr.rect(x, y, 7, 7, trap ? P.k : P.P); scr.rect(x, y, 14, 1, trap ? P.v : P.W);
       FC.text(scr, c.kind, x + 5, y + 1, P.W, { outline: P.K });
     }

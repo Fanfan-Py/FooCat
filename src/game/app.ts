@@ -24,7 +24,7 @@ export interface AppInput extends Controls {
 
 type After = 'over' | 'end' | 'title';
 type State = 'title' | 'play' | 'pause' | 'over' | 'done' | 'end' | 'name' | 'scores' | 'settings' | 'succes' | 'skins' | 'story'
-  | 'mini' | 'code' | 'bossSel'; // mini : un niveau secret ; code : l'écran du code secret ; bossSel : le choix du mode boss
+  | 'mini' | 'code' | 'bossSel' | 'help'; // mini : un niveau secret ; code : l'écran du code secret ; bossSel : le choix du mode boss ; help : l'aide
 function loadText(key: string): string { try { return localStorage.getItem(key) || ''; } catch { return ''; } }
 function load(key: string): number { try { return Number(localStorage.getItem(key)) || 0; } catch { return 0; } }
 function save(key: string, n: number) { try { localStorage.setItem(key, String(n)); } catch { /* stockage indisponible */ } }
@@ -129,12 +129,13 @@ class Menu {
 }
 
 // lignes de l'écran Réglages
-const SETTING_ROWS: { key: keyof Settings | 'back' | 'code'; label: string }[] = [
+const SETTING_ROWS: { key: keyof Settings | 'back' | 'code' | 'help'; label: string }[] = [
   { key: 'music', label: 'MUSIQUE' },
   { key: 'sfx', label: 'EFFETS SONORES' },
   { key: 'autoFire', label: 'TIR AUTOMATIQUE' },
   { key: 'leftHanded', label: 'COMMANDES GAUCHER' },
   { key: 'vibrate', label: 'VIBRATIONS (ANDROID)' },
+  { key: 'help', label: 'AIDE : LES COMMANDES' },
   { key: 'code', label: 'CODE SECRET' },
   { key: 'back', label: 'RETOUR' },
 ];
@@ -198,7 +199,7 @@ export class App {
     if (!CATS.some((c) => c.id === this.cat) || !this.catOpen(this.cat)) this.cat = 'classic';
     if (this.skin === 'disco' && this.secrets.has('disco')) { /* la soucoupe disco reste */ }
     else if (!SKINS.some((s) => s.id === this.skin) || !this.skinOpen(this.skin)) this.skin = 'classic';
-    if (this.special && !this.secrets.has(this.special as SecretId)) this.special = '';
+    if (this.special && !this.specialOpen(SPECIALS.findIndex((x) => x.id === this.special))) this.special = '';
     if (!this.secrets.has('buddy')) this.buddyOn = false;
     setHeroSkin(this.skin, this.heroCat);
     this.stats.stars = totalStars(loadStars()); // (pour les étoiles gagnées avant ce succès)
@@ -340,11 +341,15 @@ export class App {
         if (!m) return;
         if (c.pause) { this.openPause(); return; }
         m.update(dt, this.settings.autoFire && m instanceof Invasion ? { ...c, fire: true } : c);
+        this.readMiniEvents(m);
         if (m.state === 'over') { this.record(); this.sfx.music?.(null); this.afterGame('over'); }
         break;
       }
       case 'code': if (this.codeMsg) this.codeMsg.t += dt; break; // la saisie se fait dans le formulaire (main.ts)
       case 'bossSel': this.updateBossSel(c); break;
+      case 'help':
+        if (this.stateT > 0.6 && (c.confirm || c.pause || c.tapX >= 0)) { if (this.helpFrom === 'settings') { this.state = 'settings'; this.stateT = 0; } else this.go('title'); }
+        break;
       case 'pause': {
         if (c.pause) { this.resume(); break; }
         const i = this.menu!.handle(c);
@@ -422,15 +427,38 @@ export class App {
     this.checkGoals();
     if (w.score >= 100000) this.unlock('score100k');
   }
+  // les succès des niveaux secrets
+  private readMiniEvents(m: Invasion | Casse) {
+    const st = this.stats;
+    if (m instanceof Invasion && m.kills > st.invBest) { st.invBest = m.kills; this.statsDirty = true; this.checkGoals(); }
+    if (!m.events.length) return;
+    for (const ev of m.events as { type: string; n?: number; clean?: boolean }[]) {
+      if (ev.type === 'wave' && (ev.n ?? 0) > st.invWave) st.invWave = ev.n!;
+      else if (ev.type === 'mallow') this.unlock('mallow');
+      else if (ev.type === 'monster') st.casseMonsters++;
+      else if (ev.type === 'tableau') {
+        st.casseSet |= 1 << ((ev.n ?? 1) - 1);
+        st.casseCount = st.casseSet.toString(2).split('1').length - 1;
+        if (ev.clean) this.unlock('sansbavure');
+      }
+    }
+    m.events = [];
+    this.statsDirty = true;
+    this.checkGoals();
+  }
   private checkGoals() { for (const a of ACHIEVEMENTS) if (a.goal && this.stats[a.goal.stat] >= a.goal.n) this.unlock(a.id); }
   private unlock(id: string) {
     if (this.unlocked.has(id)) return;
     const a = ACHIEVEMENTS.find((x) => x.id === id);
     if (!a) return;
     this.unlocked.add(id); saveUnlocked(this.unlocked);
-    const skin = a.skin && SKINS.find((s) => s.id === a.skin), cat = a.cat && CATS.find((c) => c.id === a.cat);
-    this.toasts.push({ title: 'SUCCÈS : ' + a.name, sub: skin ? 'NOUVELLE SOUCOUPE : ' + skin.name : cat ? 'NOUVEAU CHAT : ' + cat.name : a.desc, t: 0 });
+    this.toasts.push({ title: 'SUCCÈS : ' + a.name, sub: this.rewardText(a) || a.desc, t: 0 });
     this.sfx.play('level');
+  }
+  // ce que fait gagner un succès (vide s'il ne fait rien gagner)
+  private rewardText(a: { skin?: string; cat?: string; hero?: string }) {
+    const skin = a.skin && SKINS.find((s) => s.id === a.skin), cat = a.cat && CATS.find((c) => c.id === a.cat), hero = a.hero && SPECIALS.find((x) => x.id === a.hero);
+    return skin ? 'NOUVELLE SOUCOUPE : ' + skin.name : cat ? 'NOUVEAU CHAT : ' + cat.name : hero ? 'NOUVEAU PERSONNAGE : ' + hero.name : '';
   }
   private skinOpen(id: string) { const a = skinUnlockedBy(id); return !a || this.unlocked.has(a.id); }
   private catOpen(id: string) { const a = catUnlockedBy(id); return !a || this.unlocked.has(a.id); }
@@ -517,7 +545,7 @@ export class App {
       : this.dev ? 'JOUER LE NIVEAU ' + (this.choice + 1) : 'NOUVELLE PARTIE', 'new');
     add('MODE : ' + MODE_NAMES[this.mode], 'mode');
     add('MEILLEURS SCORES', 'scores');
-    add('SUCCÈS ' + this.unlocked.size + '/' + ACHIEVEMENTS.length, 'succes');
+    add('SUCCÈS ' + this.succCount(), 'succes');
     add('APPARENCE', 'skins');
     add('RÉGLAGES', 'settings');
     this.titleActions = acts;
@@ -608,6 +636,7 @@ export class App {
     const key = SETTING_ROWS[row].key, s = this.settings;
     if (key === 'back') return this.closeSettings();
     if (key === 'code') { this.openCode(); return; }
+    if (key === 'help') { this.openHelp('settings'); return; }
     if (key === 'music' || key === 'sfx') s[key] = Math.max(0, Math.min(10, s[key] + d));
     else s[key] = !s[key];
     saveSettings(s); this.applySettings(); this.settingsVersion++;
@@ -621,7 +650,7 @@ export class App {
     if (c.left || c.right) this.changeSetting(this.sel, c.right ? 1 : -1);
     else if (c.confirm) this.changeSetting(this.sel, 1);
     if (c.tapX >= 0) {
-      const row = Math.floor((c.tapY - 40 + 5) / 15);
+      const row = Math.floor((c.tapY - 36 + 5) / 13);
       if (row < 0 || row >= n) return;
       this.sel = row;
       this.changeSetting(row, c.tapX < 210 ? -1 : 1); // à gauche : moins, à droite : plus
@@ -629,16 +658,20 @@ export class App {
   }
 
   // ---------- écran des succès (page 1 : les succès ; page 2 : les succès des chats) ----------
-  private succList() { return ACHIEVEMENTS.filter((a) => !!a.cat === (this.succPage === 1)); }
+  // les pages : 1 soucoupes et exploits, 2 les chats, 3 les niveaux secrets (dès qu'un niveau secret est débloqué)
+  private get succPages() { return this.secrets.has('invasion') || this.secrets.has('casse') ? [1, 2, 3] : [1, 2]; }
+  private succVisible() { const pg = this.succPages; return ACHIEVEMENTS.filter((a) => pg.includes(a.page ?? 1)); }
+  private succCount() { const v = this.succVisible(); return v.filter((a) => this.unlocked.has(a.id)).length + '/' + v.length; }
+  private succList() { const pg = this.succPages[Math.min(this.succPage, this.succPages.length - 1)]; return ACHIEVEMENTS.filter((a) => (a.page ?? 1) === pg); }
   private updateSucces(c: AppInput) {
-    const list = this.succList(), n = list.length;
+    const list = this.succList(), n = list.length, np = this.succPages.length;
     let page = (c.right ? 1 : 0) - (c.left ? 1 : 0);
-    if (c.tapX >= 0 && c.tapY < 32) page = 1; // toucher le haut : changer de page
-    if (page) { this.succPage = 1 - this.succPage; this.sel = 0; this.sfx.play('swap'); return; }
+    if (c.tapX >= 0 && c.tapY < 32) page = c.tapX < 160 ? -1 : 1; // toucher le haut : changer de page
+    if (page) { this.succPage = (this.succPage + page + np) % np; this.sel = 0; this.sfx.play('swap'); return; }
     if (c.up) this.sel = (this.sel + n - 1) % n;
     if (c.down) this.sel = (this.sel + 1) % n;
     if (c.tapX >= 0) {
-      const row = this.succPage ? Math.floor((c.tapY - 36 + 3) / 17) : Math.floor((c.tapY - 34 + 1) / 7);
+      const row = this.succPage ? Math.floor((c.tapY - 36 + 3) / 17) : Math.floor((c.tapY - 34 + 1) / 7); // (pages 2 et 3 : lignes plus hautes)
       if (row >= 0 && row < n && c.tapY < 142) this.sel = row; else this.go('title');
       return;
     }
@@ -646,7 +679,7 @@ export class App {
   }
 
   // ---------- écran Apparence : onglets soucoupe, chat et spécial (récompenses secrètes) ----------
-  private specialOpen(i: number) { return this.secrets.has(SPECIALS[i].id); }
+  private specialOpen(i: number) { const it = SPECIALS[i]; return !!it && (it.ach ? this.unlocked.has(it.ach) : this.secrets.has(it.id as SecretId)); }
   private specialOn(i: number) {
     const id = SPECIALS[i].id;
     return id === 'buddy' ? this.buddyOn : id === 'disco' ? this.skin === 'disco' && !this.special : this.special === id;
@@ -674,7 +707,12 @@ export class App {
     this.appTab = 1; this.sel = Math.max(0, CATS.findIndex((k) => k.id === this.cat)); this.go('skins');
   }
   private appRow() { // la rangée des choix de l'onglet : nombre, écart, début
-    return this.appTab === 2 ? { n: SPECIALS.length, step: 76, x0: 10 } : this.appTab === 1 ? { n: CATS.length, step: 44, x0: 8 } : { n: SKINS.length, step: 39, x0: 4 };
+    return this.appTab === 2 ? { n: SPECIALS.length, step: 62, x0: 7 } : this.appTab === 1 ? { n: CATS.length, step: 44, x0: 12 } : { n: SKINS.length, step: 39, x0: 10 };
+  }
+  // les rangées trop longues défilent : nombre de cases visibles et première case montrée
+  private appWindow() {
+    const { n, step } = this.appRow(), vis = Math.min(n, Math.floor(300 / step));
+    return { vis, off: Math.max(0, Math.min(n - vis, this.sel - Math.floor(vis / 2))) };
   }
   private updateSkins(c: AppInput) {
     const { n, step, x0 } = this.appRow();
@@ -689,7 +727,9 @@ export class App {
     else if (c.down) tab((this.appTab + 1) % 3);
     if (c.tapX >= 0) {
       if (c.tapY >= 22 && c.tapY < 38) { const t = c.tapX < 115 ? 0 : c.tapX < 205 ? 1 : 2; if (t !== this.appTab) tab(t); return; }
-      const i = Math.floor((c.tapX - x0 + 3) / step);
+      const { vis, off } = this.appWindow();
+      if (c.tapY >= 122 && c.tapY < 160 && (c.tapX < 9 || c.tapX > 311) && vis < n) { this.sel = Math.max(0, Math.min(n - 1, this.sel + (c.tapX < 9 ? -vis : vis))); this.sfx.play('swap'); return; }
+      const i = off + Math.floor((c.tapX - x0 + 3) / step);
       if (c.tapY >= 122 && c.tapY < 160 && i >= 0 && i < n) {
         if (i === this.sel) this.equip(i); else { this.sel = i; this.sfx.play('swap'); }
       } else if (c.tapY >= 160 || c.tapY < 22) this.go('title');
@@ -700,6 +740,46 @@ export class App {
   }
 
   // ---------- écran du code secret (la saisie se fait dans le formulaire de main.ts) ----------
+  // ---------- l'aide : les commandes (au premier lancement sur un téléphone, et dans les Réglages) ----------
+  private helpFrom: 'title' | 'settings' = 'title';
+  private openHelp(from: 'title' | 'settings') { this.helpFrom = from; this.state = 'help'; this.stateT = 0; this.menu = null; this.sfx.play('pickup'); }
+  // appelé quand on découvre que l'écran est tactile : la première fois, on montre l'aide
+  firstTouchHelp() {
+    if (this.state !== 'title' || load('foocat.help') === 1) return;
+    save('foocat.help', 1); this.openHelp('title');
+  }
+  private drawHelp(scr: Pix) {
+    this.drawTitleBackground(scr);
+    scr.rect(0, 0, C.W, C.H, FC.alpha(P.K, 110));
+    const t = this.t;
+    center(scr, 'COMMENT JOUER ?', 8, P.y, { sc: 2, outline: P.P });
+    const bubble = (x: number, y: number, lines: string[], c: number[]) => {
+      const w = Math.max(...lines.map((l) => FC.textWidth(l)));
+      scr.rect(x, y, w + 8, lines.length * 8 + 5, FC.alpha(P.K, 230)); scr.rect(x, y, w + 8, 1, c);
+      lines.forEach((l, i) => FC.text(scr, l, x + 4, y + 4 + i * 8, i ? P.W : c));
+    };
+    if (!this.touch) { // au clavier et à la manette
+      const rows: [string, string][] = [['BOUGER', 'FLÈCHES OU ZQSD · STICK'], ['TIRER', 'ESPACE · A'], ["CHANGER D'ARME", 'X OU 1 À 4 · Y'], ['CASSE-DENTS', 'C · B'], ['PAUSE', 'ÉCHAP OU P'], ['SON', 'M']];
+      rows.forEach(([a, b], i) => { FC.text(scr, a, 60, 44 + i * 16, P.y, { outline: P.K }); FC.text(scr, b, 160, 44 + i * 16, P.W, { outline: P.K }); });
+    } else { // sur téléphone : le joystick d'un côté, les boutons de l'autre (inversés pour les gauchers)
+      const L = this.settings.leftHanded, X = (x: number) => (L ? C.W - x : x);
+      const jx = X(38), jy = 118, pulse = 1 + 0.12 * Math.sin(t * 4);
+      for (let a = 0; a < 24; a += 2) { const an = a / 24 * Math.PI * 2; scr.put(jx + Math.cos(an) * 22 * pulse, jy + Math.sin(an) * 22 * pulse, P.W); }
+      scr.ell(jx + Math.cos(t * 2) * 9, jy + Math.sin(t * 2) * 9, 8, 8, FC.alpha(P.W, 170));
+      bubble(L ? C.W - 150 : 66, 108, ['POUR BOUGER', 'POSE TON POUCE ICI', 'ET GLISSE-LE'], P.y);
+      const btn: [number, number, number, number[], string][] = [[290, 146, 13, P.P, 'TIR'], [262, 118, 10, P.b, 'ARME'], [292, 98, 10, P.o, 'CASSE'], [298, 36, 7, P.M, 'II']];
+      for (const [bx, by, r, col, label] of btn) {
+        scr.ell(X(bx), by, r, r, FC.alpha(col, 210));
+        FC.text(scr, label, Math.round(X(bx) - FC.textWidth(label) / 2), by - 2, P.W);
+      }
+      bubble(L ? 52 : 168, 140, ['TIRER', 'GARDE APPUYÉ'], P.p);
+      bubble(L ? 86 : 150, 112, ["CHANGER D'ARME"], P.b);
+      bubble(L ? 52 : 210, 80, ['CASSE-DENTS'], P.o);
+      bubble(L ? 34 : 252, 32, ['PAUSE'], P.v);
+    }
+    if (this.stateT > 0.6 && t % 1.2 < 0.8) center(scr, this.touch ? 'TOUCHE POUR CONTINUER' : 'ENTRÉE POUR CONTINUER', 170, P.W, { outline: P.K });
+  }
+
   private openCode() { this.codeMsg = null; this.state = 'code'; this.stateT = 0; this.menu = null; this.sfx.play('pickup'); }
   get codeRequest() { return this.state === 'code'; }
   // renvoie le message à afficher sous la case
@@ -756,6 +836,7 @@ export class App {
     if (this.state === 'skins') return this.drawSkins(scr);
     if (this.state === 'story') return this.drawStory(scr);
     if (this.state === 'code') return this.drawCode(scr);
+    if (this.state === 'help') return this.drawHelp(scr);
     if (this.state === 'bossSel') return this.drawBossSel(scr);
     if (this.state !== 'title' && this.mini) return this.drawMini(scr, this.mini);
     if (this.state === 'title' || !this.world) return this.drawTitle(scr);
@@ -928,9 +1009,10 @@ export class App {
     center(scr, 'RÉGLAGES', 10, P.y, { sc: 2, outline: P.P });
     const s = this.settings;
     SETTING_ROWS.forEach((r, i) => {
-      const y = 40 + i * 15, on = i === this.sel;
+      const y = 36 + i * 13, on = i === this.sel;
       if (on) scr.rect(28, y - 4, 264, 13, FC.alpha(P.P, 170));
       if (r.key === 'back') { center(scr, 'RETOUR', y, on ? P.W : P.v); return; }
+      if (r.key === 'help') { FC.text(scr, r.label, 40, y, on ? P.W : P.v, { outline: P.K }); center(scr, '>', y, P.y, {}, 239); return; }
       if (r.key === 'code') {
         FC.text(scr, r.label, 40, y, on ? P.W : P.v, { outline: P.K });
         center(scr, this.secrets.size + '/' + SECRETS.length + ' >', y, P.y, {}, 239);
@@ -947,11 +1029,21 @@ export class App {
     if (s.autoFire) center(scr, 'TIR AUTOMATIQUE : ATTENTION, IL USE LES MUNITIONS !', 166, P.q);
   }
 
+  // une petite image (18 x 18) de ce que fait gagner un succès : la tête du chat ou du personnage, ou la soucoupe
+  private rewardIcon(a: { skin?: string; cat?: string; hero?: string }): Pix {
+    return FC.mk('rewIcon_' + (a.skin || a.cat || a.hero), () => {
+      const p = new FC.Pix(18, 18) as Pix;
+      if (a.skin) { p.blit(heroSprite(a.skin, 0, 'classic'), -11, -12); return p; }
+      p.blit(heroSprite('classic', 0, a.cat || a.hero), -11, -2);
+      return p;
+    });
+  }
+
   private drawSucces(scr: Pix) {
     this.drawTitleBackground(scr);
-    const list = this.succList(), p2 = this.succPage === 1, a2 = Math.floor(this.t * 3) % 2;
-    center(scr, 'SUCCÈS ' + this.unlocked.size + '/' + ACHIEVEMENTS.length, 4, P.y, { sc: 2, outline: P.P });
-    const head = p2 ? 'PAGE 2/2 · LES CHATS' : 'PAGE 1/2 · SOUCOUPES ET EXPLOITS';
+    const list = this.succList(), p2 = this.succPage > 0, a2 = Math.floor(this.t * 3) % 2, np = this.succPages.length;
+    center(scr, 'SUCCÈS ' + this.succCount(), 4, P.y, { sc: 2, outline: P.P });
+    const head = 'PAGE ' + (this.succPage + 1) + '/' + np + ' · ' + ['SOUCOUPES ET EXPLOITS', 'LES CHATS', 'NIVEAUX SECRETS'][this.succPage];
     center(scr, head, 22, P.q, { outline: P.K });
     const hw = FC.textWidth(head);
     FC.text(scr, '<', 160 - hw / 2 - 10 - a2, 22, P.y, { outline: P.K }); FC.text(scr, '>', 160 + hw / 2 + 6 + a2, 22, P.y, { outline: P.K });
@@ -963,19 +1055,20 @@ export class App {
       if (got) { scr.put(35, ty + 2, P.W); scr.put(36, ty + 3, P.W); scr.put(37, ty + 1, P.W); }
       FC.text(scr, a.name, 44, ty, got || on ? P.W : P.M);
       const prog = a.goal && !got ? Math.min(this.stats[a.goal.stat], a.goal.n) + '/' + a.goal.n : '';
-      if (p2) { // la tête du chat à gagner, en grisé tant qu'il n'est pas gagné
+      if (p2) { // la récompense à gagner, en grisé tant qu'elle n'est pas gagnée
         if (prog) right(scr, prog, 254, ty, P.q);
-        scr.blit(FC.catHead(a.cat), 268, y - 4, false, got || on ? 1 : 0.45);
-      } else if (prog) right(scr, prog, 288, y, P.q);
-      else if (a.skin) { // mini-soucoupe à la couleur gagnée
-        const sk = SKINS.find((k) => k.id === a.skin)!, col = sk.rainbow ? P.P : FC.col(sk.frosting![0]);
+        scr.blit(this.rewardIcon(a), 268, y - 4, false, got || on ? 1 : 0.45);
+      } else if (prog) right(scr, prog, a.skin || a.cat ? 276 : 288, y, P.q);
+      if (!p2 && a.cat) scr.blit(FC.lifeIconCat(a.cat), 280, y - 2, false, got ? 1 : 0.4); // la petite tête du chat à gagner
+      else if (!p2 && a.skin) { // mini-soucoupe à la couleur gagnée
+        const sk = SKINS.find((k) => k.id === a.skin)!, col = sk.rainbow ? P.P : sk.frosting ? FC.col(sk.frosting[0]) : FC.mk('skinCol_' + sk.id, () => heroSprite(sk.id, 0, 'classic').get(10, 24));
         scr.ell(284, y + 3, 5, 2.4, FC.alpha(col, got ? 255 : 80)); scr.ell(284, y + 1, 2.5, 2, FC.alpha(P.c, got ? 255 : 80));
       }
     });
-    const a = list[Math.min(this.sel, list.length - 1)], skin = a.skin && SKINS.find((s) => s.id === a.skin), cat = a.cat && CATS.find((k) => k.id === a.cat);
+    const a = list[Math.min(this.sel, list.length - 1)], rw = this.rewardText(a);
     scr.rect(20, 144, 280, 23, FC.alpha(P.K, 200));
     center(scr, a.desc, 147, P.W);
-    center(scr, skin ? 'RÉCOMPENSE : SOUCOUPE ' + skin.name : cat ? 'RÉCOMPENSE : CHAT ' + cat.name : (this.unlocked.has(a.id) ? 'RÉUSSI !' : ''), 157, P.y);
+    center(scr, rw ? 'RÉCOMPENSE : ' + rw.replace(/^NOUVE(AU|LLE) /, '').replace(' : ', ' ') : (this.unlocked.has(a.id) ? 'RÉUSSI !' : ''), 157, P.y);
     this.drawBack(scr);
   }
 
@@ -996,9 +1089,10 @@ export class App {
       const it = SPECIALS[this.sel], cat = this.cat;
       open = this.specialOpen(this.sel); chosen = this.specialOn(this.sel); name = it.name;
       const key = 'sp' + it.id + this.skin + cat + f;
-      big = this.bigHero[key] ?? (this.bigHero[key] = (it.id === 'toad' || it.id === 'ghost' ? heroSprite(this.skin, f, it.id)
+      big = this.bigHero[key] ?? (this.bigHero[key] = (it.id === 'toad' || it.id === 'ghost' || it.id === 'penguin' ? heroSprite(this.skin, f, it.id)
         : it.id === 'disco' ? heroSprite('disco', f, cat) : heroSprite(this.skin, f, this.heroCat)).scale(2));
       if (open) wrap(it.desc, 180).slice(0, 2).forEach((l) => lines.push([l, P.q]));
+      else if (it.ach) { const a = ACHIEVEMENTS.find((x) => x.id === it.ach)!; lines.push(['À GAGNER AVEC LE SUCCÈS', P.v]); lines.push([a.name, P.W]); wrap(a.desc, 180).slice(0, 2).forEach((l) => lines.push([l, P.q])); }
       else { lines.push(['À DÉBLOQUER AVEC UN CODE SECRET', P.v]); lines.push(['(RÉGLAGES · CODE SECRET)', P.M]); }
     } else {
       // grand aperçu : le chat choisi dans la soucoupe choisie (ou celle qu'on regarde)
@@ -1019,16 +1113,18 @@ export class App {
     }
     FC.trail(scr, 26, 92 + by, t, true);
     scr.blit(open ? big : FC.catLocked().scale(2), 22, 44 + by, false, open ? 1 : 0.8);
-    if (open && (spTab ? this.buddyOn || this.sel === 3 : this.buddyOn)) scr.blit(FC.spr('companion', Math.floor(t * 12)), 6, 40 + Math.round(Math.sin(t * 3) * 2));
+    const isBuddy = spTab && SPECIALS[this.sel].id === 'buddy';
+    if (open && (spTab ? this.buddyOn || isBuddy : this.buddyOn)) scr.blit(FC.spr('companion', Math.floor(t * 12)), 6, 40 + Math.round(Math.sin(t * 3) * 2));
     FC.text(scr, name, 128, 48, P.y, { sc: FC.textWidth(name, 2) <= 186 ? 2 : 1, outline: P.K });
     lines.slice(0, 5).forEach(([l, c], k) => FC.text(scr, l, 128, 66 + k * 9, c, k === 1 && !spTab ? { outline: P.K } : {}));
-    const isBuddy = spTab && this.sel === 3;
     if (open) FC.text(scr, chosen ? (isBuddy ? 'ACTIVÉ !' : 'CHOISI !') + (spTab ? (this.touch ? ' (TOUCHE POUR RETIRER)' : ' (ENTRÉE POUR RETIRER)') : '')
       : (this.touch ? 'TOUCHE-LE ENCORE POUR LE CHOISIR' : 'ENTRÉE POUR LE CHOISIR'), 128, 112, chosen ? P.g : P.W);
     // la rangée des choix
-    const { n, step, x0 } = this.appRow();
-    for (let i = 0; i < n; i++) {
-      const x = x0 + i * step, y = 126, on = i === this.sel;
+    const { n, step, x0 } = this.appRow(), { vis, off } = this.appWindow();
+    if (off > 0) FC.text(scr, '<', 2, 138, P.y, { outline: P.K }); // il y a d'autres choix de ce côté
+    if (off + vis < n) FC.text(scr, '>', 315, 138, P.y, { outline: P.K });
+    for (let i = off; i < off + vis; i++) {
+      const x = x0 + (i - off) * step, y = 126, on = i === this.sel;
       const ok = spTab ? this.specialOpen(i) : catTab ? this.catOpen(CATS[i].id) : this.skinOpen(SKINS[i].id);
       const mine = spTab ? this.specialOn(i) : !this.special && (catTab ? CATS[i].id === this.cat : SKINS[i].id === this.skin);
       scr.rect(x - 2, y - 3, step - 2, 36, on ? FC.alpha(P.P, 170) : FC.alpha(P.K, 150));

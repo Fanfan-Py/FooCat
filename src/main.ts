@@ -104,6 +104,7 @@ const R = 40; // course du joystick en pixels
 function enableTouch() {
   if (app.touch) return;
   app.touch = true; touchUI.hidden = false; layout();
+  app.firstTouchHelp(); // la première fois : l'aide sur les commandes
 }
 // ?touch dans l'adresse : affiche les commandes tactiles même sur ordinateur (pour tester)
 if ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || new URLSearchParams(location.search).has('touch')) enableTouch();

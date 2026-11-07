@@ -3,6 +3,7 @@
 // Les monstres en bonbons descendent en vagues. Un monstre qui touche la ligne rouge, ou une goutte qui touche
 // le personnage, fait perdre un cœur. Sans fin : un cœur en plus tous les 50 monstres abattus.
 // Les lettres FANFAN PY servent de bouclier (contre les monstres et leurs gouttes ; nos tirs passent à travers).
+// Toutes les 10 vagues : la guimauve géante, un boss qui lance des gerbes de gouttes et des petites guimauves.
 import { FC, Pix } from '../art';
 import * as C from './config';
 import type { Controls, Sfx } from './world';
@@ -13,6 +14,8 @@ export const INVASION = {
   heroY: 143, heroSpeed: 150, fireRate: 9, shotSpeed: 270,
   line: 176, // la ligne rouge à défendre
   shieldY: 116, block: 4, shieldHp: 2,
+  // la guimauve géante : toutes les bossEvery vagues ; sa vie, ses tirs, ses petites guimauves, les points qu'elle rapporte
+  bossEvery: 10, bossHp: 50, bossHpPerWave: 2, bossShoot: 2.2, bossSpawn: 3.5, bossKills: 10,
 };
 type Kind = 'invBerlingot' | 'invGuimauve' | 'invReglisse';
 const KINDS: Record<Kind, { hp: number; w: number; h: number }> = {
@@ -20,7 +23,8 @@ const KINDS: Record<Kind, { hp: number; w: number; h: number }> = {
 };
 interface Foe { kind: Kind; col: number; row: number; x: number; y: number; hp: number; flash: number; dive: number; vx: number; vy: number; dead: boolean }
 interface Shot { x: number; y: number; vx: number; dead: boolean; c: number }
-interface Drop { x: number; y: number; vy: number; dead: boolean }
+interface Drop { x: number; y: number; vx?: number; vy: number; dead: boolean }
+interface Boss { x: number; y: number; dir: number; hp: number; max: number; shootT: number; spawnT: number; flash: number }
 interface Part { x: number; y: number; vx: number; vy: number; life: number; c: number[] }
 
 export class Invasion {
@@ -32,6 +36,8 @@ export class Invasion {
   foes: Foe[] = []; shots: Shot[] = []; drops: Drop[] = []; parts: Part[] = [];
   popups: { text: string; x: number; y: number; t: number }[] = [];
   banner: { text: string; t: number } | null = null;
+  boss: Boss | null = null;
+  events: { type: string; n?: number }[] = []; // lus (puis vidés) par l'application, pour les succès
   private form = { x: 0, y: 0, speed: 0, dropRate: 0, diveRate: 0, ph: 0 };
   private shield = new Map<number, number>(); // morceau de sucre -> solidité
   private shieldX = 0;
@@ -80,6 +86,16 @@ export class Invasion {
     if (n > 1 && n % 5 === 1) { this.shield.clear(); this.buildShield(); } // le bouclier se répare toutes les 5 vagues
     this.banner = { text: 'VAGUE ' + n, t: 0 };
     this.sfx.play(n > 1 ? 'wave' : 'start');
+    this.events.push({ type: 'wave', n });
+    if (n % INVASION.bossEvery === 0) { // la guimauve géante, avec juste une rangée de berlingots
+      this.foes = this.foes.filter((f) => f.row === this.foes.reduce((m, g) => Math.max(m, g.row), 0) && f.kind === 'invBerlingot');
+      this.foes.forEach((f) => { f.row = 0; });
+      const hp = INVASION.bossHp + n * INVASION.bossHpPerWave;
+      this.boss = { x: 124, y: -70, dir: 1, hp, max: hp, shootT: 2.5, spawnT: 4, flash: 0 };
+      this.form.y = 70; this.form.speed *= 0.5;
+      this.banner = { text: 'VAGUE ' + n + ' : LA GUIMAUVE GÉANTE !', t: 0 };
+      this.sfx.play('alarm');
+    }
   }
 
   update(dt: number, c: Controls) {
@@ -94,13 +110,14 @@ export class Invasion {
         this.shots.push({ x: h.x + 19, y: I.heroY + 2, vx: (this.rnd() * 2 - 1) * 14, dead: false, c: Math.floor(this.rnd() * 7) });
         this.sfx.play('shoot_verm');
       }
-      if (!this.foes.some((f) => !f.dead)) {
+      if (!this.foes.some((f) => !f.dead) && !this.boss) {
         this.nextWaveT -= dt;
         if (this.nextWaveT <= 0) { this.startWave(); this.nextWaveT = 1.6; }
       }
     }
     if (this.state === 'dying' && this.stateT > 1.8) { this.state = 'over'; this.stateT = 0; }
     this.updateFoes(dt);
+    this.updateBoss(dt);
     this.updateShots(dt);
     for (const p of this.parts) { p.x += p.vx * dt; p.y += p.vy * dt; p.vy += 60 * dt; p.life -= dt; }
     this.parts = this.parts.filter((p) => p.life > 0);
@@ -145,11 +162,45 @@ export class Invasion {
     }
   }
 
+  // la guimauve géante : elle entre, va de gauche à droite, lance des gouttes et des petites guimauves
+  private updateBoss(dt: number) {
+    const b = this.boss, I = INVASION;
+    if (!b) return;
+    b.flash = Math.max(0, b.flash - dt);
+    if (b.y < 22) { b.y += 30 * dt; return; }
+    b.x += b.dir * (36 + this.wave) * dt;
+    if (b.x < 6) { b.x = 6; b.dir = 1; } else if (b.x > C.W - 78) { b.x = C.W - 78; b.dir = -1; }
+    if (this.state !== 'play') return;
+    if ((b.shootT -= dt) <= 0) { // une gerbe de 5 gouttes
+      b.shootT = I.bossShoot;
+      for (let k = -2; k <= 2; k++) this.drops.push({ x: b.x + 34, y: b.y + 60, vx: k * 22, vy: 75 + this.wave * 2, dead: false });
+      this.sfx.play('throw');
+    }
+    if ((b.spawnT -= dt) <= 0) { // une petite guimauve plonge vers le chat
+      b.spawnT = I.bossSpawn;
+      const f: Foe = { kind: 'invGuimauve', col: 0, row: 0, x: b.x + 28, y: b.y + 50, hp: 2, flash: 0, dive: 0.01, vx: 0, vy: 55, dead: false };
+      f.vx = Math.max(-60, Math.min(60, (this.hero.x + 14 - f.x) * 0.4));
+      this.foes.push(f); this.sfx.play('dive');
+    }
+  }
+  private hitBoss() {
+    const b = this.boss!;
+    b.flash = 0.06;
+    if (--b.hp > 0) { if (b.hp % 4 === 0) this.sfx.play('pop'); return; }
+    for (let k = 0; k < 4; k++) this.burst(b.x + 14 + k * 14, b.y + 30 + (k % 2) * 14, null, 16);
+    this.kills += INVASION.bossKills; this.boss = null;
+    this.banner = { text: 'LA GUIMAUVE GÉANTE EST VAINCUE ! +' + INVASION.bossKills, t: 0 };
+    this.events.push({ type: 'mallow' });
+    this.sfx.play('level');
+  }
+
   private updateShots(dt: number) {
     const I = INVASION, h = this.hero;
     for (const s of this.shots) {
       s.y -= I.shotSpeed * dt; s.x += s.vx * dt;
       if (s.y < 14) { s.dead = true; continue; }
+      const b = this.boss;
+      if (b && b.y > 0 && s.x > b.x + 9 && s.x < b.x + 63 && s.y < b.y + 62 && s.y > b.y + 14) { s.dead = true; this.hitBoss(); continue; }
       for (const f of this.foes) {
         if (f.dead) continue;
         const k = KINDS[f.kind];
@@ -162,7 +213,7 @@ export class Invasion {
     }
     this.shots = this.shots.filter((s) => !s.dead);
     for (const d of this.drops) {
-      d.y += d.vy * dt;
+      d.y += d.vy * dt; d.x += (d.vx ?? 0) * dt;
       if (d.y > C.H) d.dead = true;
       else if (this.hitShield(d.x, d.y, 4, 6)) d.dead = true;
       else if (this.state === 'play' && h.inv <= 0 && d.y + 6 > I.heroY + 10 && d.y < I.heroY + 26 && d.x + 4 > h.x + 9 && d.x < h.x + 31) { d.dead = true; this.loseHeart(); }
@@ -218,6 +269,7 @@ export class Invasion {
       scr.blit(s, Math.round(f.x), Math.round(f.y), false, 1);
       if (f.flash > 0) scr.rect(Math.round(f.x) + 2, Math.round(f.y) + 2, KINDS[f.kind].w - 4, KINDS[f.kind].h - 4, FC.alpha(P.W, 150));
     }
+    if (this.boss) { const b = this.boss, hp = b.hp / b.max; scr.blit(FC.giantMallow(Math.floor(t * 3) % 2, hp > 0.66 ? 0 : hp > 0.33 ? 1 : 2), Math.round(b.x), Math.round(b.y), false, b.flash > 0 ? 0.55 : 1); }
     for (const d of this.drops) scr.blit(FC.spr('invDrop', Math.floor(t * 6)), Math.round(d.x), Math.round(d.y));
     for (const s of this.shots) scr.rect(Math.round(s.x), Math.round(s.y), 1, 4, FC.SPRINKLES[s.c]);
     for (const p of this.parts) scr.rect(Math.round(p.x), Math.round(p.y), 2, 2, p.c);
@@ -234,6 +286,12 @@ export class Invasion {
     FC.text(scr, 'INVASION', 4, 4, P.y);
     const label = 'MONSTRES ABATTUS : ' + String(this.kills).padStart(3, '0');
     FC.text(scr, label, Math.round(C.W / 2 - FC.textWidth(label) / 2), 4, P.W);
+    if (this.boss) { // le nom et la jauge de la guimauve géante
+      const b = this.boss;
+      scr.rect(0, 14, C.W, 9, FC.alpha(P.K, 170));
+      FC.text(scr, 'VAGUE ' + this.wave + ' · LA GUIMAUVE GÉANTE', 4, 16, P.q);
+      scr.rect(150, 16, 164, 5, P.k); scr.rect(151, 17, Math.round(162 * b.hp / b.max), 3, P.P); scr.rect(151, 17, Math.round(162 * b.hp / b.max), 1, P.q);
+    }
     const shown = Math.max(INVASION.lives, this.lives);
     for (let i = 0; i < shown; i++) scr.blit(FC.spr('heart'), C.W - 4 - shown * 9 + i * 9, 3, false, i < this.lives ? 1 : 0.2);
     if (this.banner && Math.floor(this.banner.t * 4) % 4 !== 3) {

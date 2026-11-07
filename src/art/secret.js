@@ -80,7 +80,7 @@
   var DISCO = [col('e8ecf5'), col('b8c0d4'), col('8a93ad'), col('ffffff')];
   FC.discoHero = function (f, catId) {
     return FC.mk('disco_' + catId + '_' + f, function () {
-      var src = FC.catHero(f, catId), p = new Pix(src.w, src.h), d = p.d; d.set(src.d);
+      var src = FC.costumeCat(f, catId), p = new Pix(src.w, src.h), d = p.d; d.set(src.d);
       var from = [P.P, P.q, P.i, P.d, P.D, P.e], same = function (i, c) { return src.d[i] === c[0] && src.d[i + 1] === c[1] && src.d[i + 2] === c[2]; };
       for (var i = 0; i < d.length; i += 4) {
         if (src.d[i + 3] < 255) continue;
@@ -206,4 +206,144 @@
     return o;
   };
   FC.bossIcons = function () { return FC.mk('bossIcons', function () { return [FC.half(spr('boss', 0)), FC.half(spr('skelBoss', 0)), FC.half(FC.fireScorp('fire', 0))]; }); };
+
+  // ---------- récompenses des succès : soucoupes repeintes (glaçage ET beignet), costumes, pingouin ----------
+  var RB = FC.RAINBOW;
+  var same = function (d, i, c) { return d[i] === c[0] && d[i + 1] === c[1] && d[i + 2] === c[2]; };
+  var dk = function (c, k) { return k ? FC.mix(c, P.K, k * 0.22) : c; };
+  // pour chaque soucoupe : frost(x, y, k) pour le glaçage, dough(x, y, k) pour le beignet (k : 0 clair, 1 moyen, 2 foncé)
+  FC.SAUCER_PATTERNS = {
+    berlingot: { frost: function (x, y, k) { return k === 2 ? P.i : (x + y) % 6 < 3 ? P.W : col('ff7fb0'); },
+      dough: function (x, y, k) { return dk(Math.floor(x / 3) % 3 === 0 ? col('fff0f6') : col('ff9cc8'), k); } },
+    sucredorge: { frost: function (x, y, k) { return [col('b8f5cc'), P.g, P.G][k]; },
+      dough: function (x, y, k) { return dk(Math.floor((x - y * 1.5 + 40) / 3) % 2 ? P.r : P.W, k); } },
+    etoilee: { frost: function (x, y, k) { return [col('d6b8ff'), P.u, P.U][k]; },
+      dough: function (x, y, k) { return (x * 7 + y * 13) % 17 === 0 ? P.y : [col('2b3db8'), col('1a2380'), col('0d1250')][k]; } },
+    gourmande: { frost: function (x, y, k) { return [col('a8703f'), col('7b4a2a'), col('4a2614')][k]; },
+      dough: function (x, y, k) { return (x * 5 + y * 3) % 9 === 0 ? RB[(x + y) % 6] : dk(col('f2c27a'), k); } },
+    vagues: { frost: function (x, y, k) { return (y + Math.round(Math.sin(x * 0.7) * 1.2)) % 3 === 0 ? P.W : [col('c8f0ff'), P.b, P.B][k]; },
+      dough: function (x, y, k) { return [col('f2d39a'), col('e0b070'), col('b8834a')][k]; } },
+    cassedents: { frost: function (x, y, k) { return k === 0 ? P.W : dk(RB[Math.floor((x + y * 2) / 3) % 6], k - 1); },
+      dough: function (x, y, k) { return dk(RB[Math.floor(x / 3) % 6], k * 0.8 + 0.2); } },
+    pinata: { frost: function (x, y, k) { return dk(RB[Math.floor(x / 2) % 6], k ? 1 : 0); },
+      dough: function (x, y, k) { return dk(Math.floor((x + y) / 2) % 2 ? P.P : col('ffd23f'), k); } },
+  };
+  FC.patternSaucer = function (base, id) {
+    var pat = FC.SAUCER_PATTERNS[id], p = new Pix(base.w, base.h); p.d.set(base.d);
+    var F = [P.P, P.q, P.i], D = [P.d, P.D, P.e];
+    for (var i = 0; i < p.d.length; i += 4) {
+      if (base.d[i + 3] < 255) continue;
+      var x = (i / 4) % p.w, y = Math.floor(i / 4 / p.w), c = null;
+      if (y < 17) continue; // le chat et le dôme ne changent pas
+      for (var k = 0; k < 3 && !c; k++) {
+        if (same(base.d, i, F[k])) c = pat.frost(x, y, [1, 0, 2][k]);
+        else if (same(base.d, i, D[k])) c = pat.dough(x, y, k);
+      }
+      if (c) { p.d[i] = c[0]; p.d[i + 1] = c[1]; p.d[i + 2] = c[2]; }
+    }
+    return p;
+  };
+  // les costumes du chat : une couleur, et parfois un accessoire dessiné par-dessus
+  function setCat(id, o) { FC.CATS[id] = Object.assign({}, FC.CATS.classic, o); }
+  setCat('pirate', { name: 'PIRATE', fur: col('fbf3e8'), shade: col('d9c7a8') });
+  setCat('dragon', { name: 'DRAGON', fur: col('6be38f'), shade: P.G, ear: col('ffd23f'), cheek: col('ff9a3c'), nose: P.G, mouth: col('1f6b3a'),
+    mane: [P.r, P.o, P.y, P.o, P.r, P.y], tuft: [P.r, P.o, P.y, P.o], eyeLo: P.o });
+  setCat('abeille', { name: 'ABEILLE', fur: col('ffd23f'), shade: col('d9a520'), ear: col('2a2233'), cheek: col('ff9a3c'), nose: P.K, mouth: P.K,
+    mane: [P.K, P.y, P.K, P.y, P.K, P.y], tuft: [P.K, P.y, P.K, P.y] });
+  setCat('arcenciel', { name: 'ARC-EN-CIEL', fur: col('fefefd'), shade: col('fdfcfb') });
+  setCat('zebre', { name: 'ZÈBRE', fur: col('fffffe'), shade: col('d8d4e0'), mane: [P.K, P.W, P.K, P.W, P.K, P.W], tuft: [P.K, P.W, P.K, P.W] });
+  setCat('guimauve', { name: 'GUIMAUVE', fur: col('ffd6e8'), shade: col('f5aecb'), ear: col('ff9cc8'), cheek: col('ff7fb0'), nose: P.P, mouth: col('c25a8a'),
+    mane: [col('fff0f6'), col('ffd6e8'), col('ffc0dc'), col('ff9cc8'), col('ffc0dc'), col('fff0f6')], tuft: [col('fff0f6'), col('ffc0dc'), col('ff9cc8'), col('ffd6e8')],
+    horn: [P.W, col('ffd6e8')], eye: col('7a3a6a'), eyeHi: P.W, eyeLo: P.P });
+  var COSTUMES = { pirate: 1, dragon: 1, abeille: 1, arcenciel: 1, zebre: 1 };
+  // le chat de cette couleur, avec son costume
+  FC.costumeCat = function (f, id) {
+    if (!COSTUMES[id]) return FC.catHero(f, id);
+    return FC.mk('costume_' + id + '_' + f, function () {
+      var base = FC.catHero(f, id), p = new Pix(base.w, base.h); p.d.set(base.d);
+      // la couleur du pelage telle qu'on la voit à travers le verre du dôme
+      var glass = function (c0) { var q = new Pix(1, 1); q.put(0, 0, c0); q.put(0, 0, alpha(P.c, 40)); return q.get(0, 0); };
+      var fur = glass(FC.CATS[id].fur), sh = glass(FC.CATS[id].shade);
+      var near = function (i, c0) { return Math.abs(base.d[i] - c0[0]) + Math.abs(base.d[i + 1] - c0[1]) + Math.abs(base.d[i + 2] - c0[2]) < 12; };
+      for (var i = 0; i < p.d.length; i += 4) {
+        var x = (i / 4) % p.w, y = Math.floor(i / 4 / p.w), c = null;
+        if (y > 21 || !(near(i, fur) || near(i, sh))) continue;
+        if (id === 'arcenciel') c = FC.mix(RB[Math.floor((y - 6) / 2) % 6], P.W, 0.35);
+        if (id === 'zebre' && Math.floor(x + Math.sin(y * 0.9) * 1.2) % 4 === 0) c = col('2a2233');
+        if (id === 'abeille' && (y === 10 || y === 11 || y === 17 || y === 18)) c = P.K;
+        if (c) { p.d[i] = c[0]; p.d[i + 1] = c[1]; p.d[i + 2] = c[2]; }
+      }
+      if (id === 'pirate') { // bandana rouge à pois et bandeau sur l'œil
+        p.rect(14, 9, 12, 2, P.r); p.put(16, 9, P.W); p.put(20, 10, P.W); p.put(23, 9, P.W);
+        p.rect(25, 10, 2, 1, P.r); p.put(27, 11, P.r); p.put(26, 12, P.r);
+        p.line(14, 12, 25, 11, P.K); p.rect(14, 12, 4, 4, P.K);
+      }
+      if (id === 'abeille') { p.line(16, 9, 14, 5, P.K); p.line(23, 9, 25, 5, P.K); p.put(14, 4, P.K); p.put(25, 4, P.K); p.put(13, 4, P.y); p.put(26, 4, P.y); }
+      if (id === 'dragon') {
+        p.tri(11, 12, 13, 12, 12, 9, P.G); p.tri(12, 15, 14, 15, 12.5, 12, P.G); // petites piques
+        if (f % 2) { p.put(27, 15, alpha(P.v, 200)); p.put(28, 14, alpha(P.v, 160)); p.put(29, 13, alpha(P.v, 120)); } // petite fumée
+      }
+      return p;
+    });
+  };
+  // le pingouin dans sa soucoupe macaron
+  S.penguinHero = function (f) {
+    var p = new Pix(40, 31), m1 = col('a8f0c8'), m2 = col('6bd69a'), m3 = col('3a9a6a');
+    p.ell(19.5, 27.5, 17.5, 3.5, function (x, y, dx, dy) { return dy > 0.3 ? m3 : m2; }); // coque du dessous
+    for (var x = 3; x < 37; x++) p.rect(x, 24, 1, 2, x % 3 ? col('fff6e0') : col('f2e2c0')); // la crème
+    p.ell(19.5, 22.5, 18.5, 4.2, function (x, y, dx, dy) { return dy < -0.4 ? col('d8fbe6') : dy > 0.5 ? m2 : m1; }); // coque du dessus
+    for (var k = 3; k < 37; k += 2) p.put(k, 26, m3); // la collerette
+    dome(p, function (d) {
+      var bob = f % 2;
+      d.ell(19.5, 13 + bob, 7, 6, col('1e1a2e')); // la tête noire
+      d.ell(19.5, 15 + bob, 5, 4.4, P.W); // le visage blanc
+      if (f % 4 === 3) { d.rect(16, 13 + bob, 2, 1, P.K); d.rect(22, 13 + bob, 2, 1, P.K); }
+      else { d.rect(16, 12 + bob, 2, 2, P.K); d.rect(22, 12 + bob, 2, 2, P.K); d.put(16, 12 + bob, P.W); d.put(22, 12 + bob, P.W); }
+      d.tri(18, 15 + bob, 21, 15 + bob, 19.5, 17.5 + bob, P.o); // le bec
+      d.put(15, 15 + bob, P.p); d.put(24, 15 + bob, P.p);
+      d.rect(13, 19 + bob, 14, 2, P.r); d.rect(24, 20 + bob, 2, 2, P.r); // l'écharpe
+    });
+    p.outline(P.K);
+    return p;
+  };
+
+  // ---------- la guimauve géante (boss de l'invasion, toutes les 10 vagues) ----------
+  // hurt : 0, 1 ou 2 (elle se fait croquer à mesure qu'elle perd de la vie)
+  FC.giantMallow = function (f, hurt) {
+    return FC.mk('mallow' + f + '_' + hurt, function () {
+      var p = new Pix(72, 70), sq = f % 2;
+      var pink = col('ffe4f0'), mid = col('ffc7de'), deep = col('f59cc2'), top = 22 + sq, bot = 54;
+      p.ell(24, 61, 6, 3.5, deep); p.ell(48, 61, 6, 3.5, deep); // les pieds
+      p.ell(8, 40, 4, 6, mid); p.ell(64, 38 - sq, 4, 6, mid); // les bras
+      p.rect(66, 10, 2, 30, P.W); // le sceptre-sucette
+      p.ell(67, 9, 6, 6, function (x, y, dx, dy) { return Math.floor((Math.atan2(dy, dx) + Math.sqrt(dx * dx + dy * dy) * 4) * 1.6) % 2 ? P.r : P.W; });
+      for (var x = 9; x <= 63; x++) { var dx = (x - 36) / 27; p.rect(x, top, 1, bot - top, dx < -0.45 ? mid : dx > 0.55 ? deep : pink); } // le corps
+      p.ell(36, bot, 27.5, 8, function (x, y, dx, dy) { return dy > 0 ? deep : (dx < -0.45 ? mid : dx > 0.55 ? deep : pink); });
+      p.ell(36, top, 27.5, 8, function (x, y, dx, dy) { var a = Math.atan2(dy * 3, dx) + Math.sqrt(dx * dx + dy * dy) * 7; return Math.sin(a) > 0.55 ? mid : P.W; });
+      if (hurt > 0) { // croquée
+        for (var yy = 0; yy < p.h; yy++) for (var xx = 0; xx < p.w; xx++) {
+          var a1 = (xx - 12) / 6, b1 = (yy - top - 3) / 5, a2 = (xx - 16) / 4, b2 = (yy - top - 1) / 3, a3 = (xx - 60) / 5, b3 = (yy - top - 14) / 6;
+          if (a1 * a1 + b1 * b1 < 1 || a2 * a2 + b2 * b2 < 1 || (hurt > 1 && a3 * a3 + b3 * b3 < 1)) { var j = (yy * p.w + xx) * 4; p.d[j + 3] = 0; }
+        }
+      }
+      p.rect(23, top - 12, 26, 7, P.Y); p.rect(23, top - 12, 26, 1, P.y); p.rect(23, top - 6, 26, 1, P.j); // la couronne
+      p.tri(23, top - 12, 29, top - 12, 24, top - 19, P.Y); p.tri(33, top - 12, 39, top - 12, 36, top - 21, P.Y); p.tri(43, top - 12, 49, top - 12, 48, top - 19, P.Y);
+      p.ell(36, top - 9, 2, 2, P.r); p.rect(28, top - 9, 2, 1, P.b); p.rect(43, top - 9, 2, 1, P.g);
+      var ey = top + 12; // le visage en colère
+      p.ell(26, ey, 5, 5, P.W); p.ell(46, ey, 5, 5, P.W);
+      p.rect(25, ey, 3, 3, P.K); p.rect(45, ey, 3, 3, P.K); p.put(25, ey, P.W); p.put(45, ey, P.W);
+      p.line(19, ey - 7, 30, ey - 4, P.K); p.line(19, ey - 6, 30, ey - 3, P.K);
+      p.line(53, ey - 7, 42, ey - 4, P.K); p.line(53, ey - 6, 42, ey - 3, P.K);
+      p.ell(36, ey + 12, 10, 5, P.K, function (x, y, dx, dy) { return dy > -0.2; });
+      for (var t2 = 0; t2 < 5; t2++) p.rect(28 + t2 * 4, ey + 11, 3, 2, P.W);
+      p.ell(17, ey + 6, 3, 2, alpha(P.P, 140)); p.ell(55, ey + 6, 3, 2, alpha(P.P, 140));
+      return p.outline(P.K);
+    });
+  };
+  // la capsule cœur (rare) du casse-bonbons
+  FC.heartCapsule = function (scr, x, y, t) {
+    scr.rect(x, y, 14, 7, P.P); scr.rect(x, y, 14, 1, P.W); scr.rect(x, y + 6, 14, 1, P.i);
+    scr.rows(['.W.W.', 'WWWWW', '.WWW.', '..W..'], x + 5, y + 1);
+    if (Math.floor(t * 6) % 2) { scr.put(x - 2, y - 1, P.W); scr.put(x + 15, y + 7, P.W); }
+  };
 })(typeof window !== 'undefined' ? window : globalThis);
