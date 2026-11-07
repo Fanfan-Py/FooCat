@@ -344,3 +344,49 @@ Points d'attention :
 - [x] Niveaux 11 et 12 (31 octobre) : retour des jets de paillettes (sauf pendant la pluie de météorites et « Vulcano en vue »).
 - [x] Fin de niveau (7 novembre) : le chat ne reste plus coincé derrière un obstacle en sortant de l'écran
       (il était repoussé à chaque image) ; pendant la sortie, il traverse obstacles et monstres.
+
+---
+
+# Récompenses secrètes et nouveau nom des dragibus (plan du 7 novembre 2026)
+
+Maquettes : planches « Récompenses secrètes », « Écran Code secret » et « Le niveau secret ».
+
+## Étape A : un nouveau nom pour les dragibus
+« Dragibus » est une vraie marque de bonbons. Propositions (à choisir) :
+- **Bonbilles** (bonbon + billes : des bonbons qui rebondissent comme des billes) — ma préférée ;
+- **Boules de gomme** (nom courant, pas une marque, mais plus long) ;
+- **Gélibonds** (gelée + bonds).
+
+- [ ] Changer le nom partout : écran de pause, messages, succès, README.
+
+## Étape B : les codes secrets
+- [ ] Un écran « Code secret » : on tape un code ; s'il est bon, « Code accepté ! » et la récompense se débloque.
+- [ ] Un code débloque **une seule** récompense ; **plusieurs codes** peuvent débloquer la même.
+- [ ] Les codes ne s'usent pas (le jeu tourne dans le navigateur, sans serveur) ; la récompense reste
+      débloquée sur l'appareil, comme les succès.
+- [ ] **Dépôt public** : les codes ne sont jamais écrits en clair dans le jeu. On n'y garde qu'une
+      « empreinte » de chaque code (impossible à retourner pour retrouver le code). La liste des vrais codes
+      reste chez toi, hors du dépôt ; la vérification avant commit les bloquera s'ils se glissaient dans un fichier.
+- [ ] L'écran montre les récompenses secrètes trouvées (« 1/3 ») ; les autres restent des « ? ».
+
+## Étape C : les personnages secrets
+- [ ] **Le roi crapaud** dans sa **cacahuète spatiale** (avec sa couronne).
+- [ ] **Le fantôme** dans sa **citrouille spatiale** (visage sculpté qui brille).
+- [ ] Ils remplacent à la fois le chat et sa soucoupe : un onglet « SPÉCIAL » dans l'écran Apparence.
+      Même taille et mêmes réglages que le chat (rien ne change pour la difficulté).
+
+## Étape D : le niveau secret (tir vers le haut)
+- [ ] Pas d'obstacles. Le personnage reste **en bas** et se déplace **de gauche à droite**.
+- [ ] Seule arme : les **vermicelles, en illimité**, tirés vers le haut.
+- [ ] Les monstres, en bonbons (berlingots, guimauves, roues de réglisse), **descendent par vagues** en ondulant ;
+      certains plongent ou lâchent des bonbons. Il faut les abattre **avant qu'ils touchent la ligne rouge** en bas.
+- [ ] Les lettres **FANFAN PY** servent de **bouclier** : elles s'abîment morceau par morceau.
+- [ ] Un **compteur de monstres abattus** en haut ; les vagues vont de plus en plus vite.
+- [ ] Un tableau des meilleurs scores pour ce niveau (le nombre de monstres abattus).
+
+## Idées en plus (à choisir)
+1. **Des soucoupes secrètes** à débloquer aussi avec des codes (par exemple une soucoupe boule à facettes).
+2. **Les fêtes du calendrier** : des citrouilles dans le décor à Halloween, de la neige en décembre, automatiquement.
+3. **Une galerie** : revoir les BD déjà vues et écouter les musiques du jeu.
+4. **Le mode « boss »** : rejouer seulement les boss déjà vaincus, contre la montre.
+5. **Un petit compagnon** (un bonbon volant qui tire à côté du chat), débloqué par un code.
