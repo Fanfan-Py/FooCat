@@ -24,6 +24,10 @@ const CODES: Record<string, SecretId> = {
   '8b30c7fe5aaa3a66a8a618b42bb96cbd07866c5ed1a71f5af4d843197b2a652e': 'casse',
 };
 
+// empreinte du code qui active ou coupe le mode développeur
+const DEV_CODE = 'a464b61d79d34325f2e23f28d8c3e2b78a09f334c670d72bfc719077dedc0f44';
+export function isDevCode(raw: string) { return !!normCode(raw) && codeHash(raw) === DEV_CODE; }
+
 // « ab cd-éf » -> « ABCDEF »
 export function normCode(raw: string): string {
   return raw.normalize('NFD').replace(/[̀-ͯ]/g, '').toUpperCase().replace(/[^A-Z0-9]/g, '');

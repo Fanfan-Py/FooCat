@@ -11,9 +11,9 @@ import {
   loadStars, saveStars, SKINS, skinUnlockedBy, loadSkin, saveSkin, heroSprite,
   CATS, catUnlockedBy, loadCat, saveCat, totalStars, SPECIALS,
 } from './rewards';
-import { SECRETS, SecretId, loadSecrets, saveSecrets, secretForCode } from './secrets';
+import { SECRETS, SecretId, loadSecrets, saveSecrets, secretForCode, isDevCode } from './secrets';
 import { Invasion } from './invasion';
-import { Casse } from './casse';
+import { Casse, TABLEAUX } from './casse';
 
 const P = FC.P;
 export interface AppInput extends Controls {
@@ -142,10 +142,11 @@ const SETTING_ROWS: { key: keyof Settings | 'back' | 'code'; label: string }[] =
 export class App {
   state: State = 'title';
   world: World | null = null;
-  // mode développeur : choix du niveau à l'accueil (automatique sur l'ordinateur de développement,
-  // ou en touchant 5 fois le logo sur le site)
+  // mode développeur : choix du niveau (ou du tableau, de la vague) à l'accueil ; automatique sur l'ordinateur
+  // de développement, ou avec un code
   dev = load('foocat.dev') === 1;
   choice = 0; // niveau choisi à l'accueil (mode développeur)
+  private miniChoice = { invasion: 0, casse: 0 }; // vague ou tableau de départ choisi (mode développeur)
   mode: GameMode = 'normal';
   private zone = 1; // zone atteinte en mode infini
   private daily = dailySetup();
@@ -156,7 +157,6 @@ export class App {
   private stateT = 0;
   private menu: Menu | null = null;
   private devRun = false; // partie lancée depuis le choix du niveau : on ne sauvegarde pas
-  private logoTaps: number[] = [];
   private notice: { text: string; t: number } | null = null;
   private levelStart: Carry | null = null; // pour rejouer le niveau après un game over
   private titleActions: string[] = [];
@@ -274,8 +274,9 @@ export class App {
   }
   // niveaux secrets
   private startMini(kind: 'invasion' | 'casse') {
-    this.devRun = false; this.levelStart = null; this.world = null;
-    this.mini = kind === 'invasion' ? new Invasion(this.sfx) : new Casse(this.sfx);
+    const start = this.dev ? this.miniChoice[kind] + 1 : 1;
+    this.devRun = start > 1; this.levelStart = null; this.world = null; // (une partie d'essai ne compte pas)
+    this.mini = kind === 'invasion' ? new Invasion(this.sfx, undefined, start) : new Casse(this.sfx, undefined, start);
     this.go('mini'); this.sfx.music?.(kind === 'invasion' ? 'space' : 'nebula');
   }
   // mode boss : un boss (0, 1, 2) ou les 3 à la suite (3)
@@ -527,23 +528,17 @@ export class App {
 
   private updateTitle(c: AppInput) {
     if (this.notice && (this.notice.t += 1 / 60) > 2.5) this.notice = null;
-    // geste secret : toucher 5 fois le logo en 3 secondes active ou coupe le mode développeur
-    if (c.tapX >= 0 && c.tapY < 36 && c.tapX > 100 && c.tapX < 220) {
-      this.logoTaps = this.logoTaps.filter((t) => this.t - t < 3).concat(this.t);
-      if (this.logoTaps.length >= 5) {
-        this.dev = !this.dev; this.logoTaps = []; save('foocat.dev', this.dev ? 1 : 0);
-        this.notice = { text: this.dev ? 'MODE DÉVELOPPEUR ACTIVÉ' : 'MODE DÉVELOPPEUR DÉSACTIVÉ', t: 0 };
-        this.sfx.play('pickup'); this.titleMenu();
-      }
-      return;
-    }
     const n = C.LEVELS.length, menu = this.menu!, act = this.titleActions[menu.idx];
-    const devRow = this.dev && c.tapX >= 0 && c.tapY >= 145 && c.tapY < 159;
+    const devRow = this.dev && this.mode !== 'boss' && this.mode !== 'infini' && this.mode !== 'defi' && c.tapX >= 0 && c.tapY >= 145 && c.tapY < 159;
     // gauche/droite : change le mode sur la ligne MODE, le niveau ailleurs (mode développeur)
     let lr = (c.right ? 1 : 0) - (c.left ? 1 : 0);
     if (devRow) lr = c.tapX < 210 ? -1 : 1;
     if (lr) {
       if (act === 'mode' && !devRow) this.toggleMode();
+      else if (this.dev && (this.mode === 'casse' || this.mode === 'invasion')) { // tableau ou vague de départ
+        const m = this.mode, max = m === 'casse' ? TABLEAUX.length : 30;
+        this.miniChoice[m] = (this.miniChoice[m] + lr + max) % max; this.sfx.play('swap');
+      }
       else if (this.dev) { this.choice = (this.choice + lr + n) % n; this.sfx.play('swap'); this.titleMenu(); }
       return;
     }
@@ -709,6 +704,12 @@ export class App {
   get codeRequest() { return this.state === 'code'; }
   // renvoie le message à afficher sous la case
   submitCode(raw: string): { ok: boolean; text: string } {
+    if (isDevCode(raw)) { // le code du mode développeur : il l'active, ou le coupe s'il était actif
+      this.setDev(!this.dev, true);
+      const text = this.dev ? 'MODE DÉVELOPPEUR ACTIVÉ' : 'MODE DÉVELOPPEUR DÉSACTIVÉ';
+      this.codeMsg = { ok: true, text, t: 0 }; this.sfx.play('pickup');
+      return { ok: true, text };
+    }
     const id = secretForCode(raw), sec = id && SECRETS.find((x) => x.id === id);
     let r: { ok: boolean; text: string };
     if (!sec) { r = { ok: false, text: 'CE CODE NE MARCHE PAS.' }; this.sfx.play('hurt'); }
@@ -1120,9 +1121,11 @@ export class App {
     if (this.buddyOn) scr.blit(FC.spr('companion', Math.floor(t * 12)), hx - 6, hy - 10 + Math.round(Math.sin(t * 3) * 2));
     if (!this.menu) this.titleMenu();
     this.menu!.draw(scr, t);
-    if (this.dev) { // ligne réservée au mode développeur
-      const a = Math.floor(t * 3) % 2;
-      center(scr, 'DEV · NIV.' + (this.choice + 1) + ' · ' + C.LEVELS[this.choice].name, 150, P.o, { outline: P.K }, 210);
+    if (this.dev && this.mode !== 'boss' && this.mode !== 'infini' && this.mode !== 'defi') { // ligne réservée au mode développeur
+      const a = Math.floor(t * 3) % 2, mc = this.miniChoice;
+      center(scr, this.mode === 'casse' ? 'DEV · TABLEAU ' + (mc.casse + 1) + ' · ' + TABLEAUX[mc.casse].name
+        : this.mode === 'invasion' ? 'DEV · VAGUE ' + (mc.invasion + 1)
+        : 'DEV · NIV.' + (this.choice + 1) + ' · ' + C.LEVELS[this.choice].name, 150, P.o, { outline: P.K }, 210);
       FC.text(scr, '<', 128 - a, 150, P.o, { outline: P.K }); FC.text(scr, '>', 290 + a, 150, P.o, { outline: P.K });
     }
     if (this.notice) center(scr, this.notice.text, 160, P.y, { outline: P.K });

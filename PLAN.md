@@ -429,6 +429,12 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
       et descendent doucement ; ils ne font rien au chat. Quand la bonbille les touche, ils **explosent** (+100)
       et un nouveau monstre sort d'une trappe. Si la soucoupe touche un monstre, il explose aussi.
 
+## Mode développeur (7 novembre 2026)
+- [x] Il ne s'active plus en touchant le logo, ni avec l'adresse du site : seulement avec un code secret
+      (écran Code secret ; le même code le coupe). Le code reste hors du dépôt, comme les autres.
+- [x] En mode développeur, on choisit le tableau de départ du casse-bonbons et la vague de départ de
+      l'invasion (ces parties d'essai ne comptent pas dans les scores).
+
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
 - [x] Un **chronomètre** et un **record par boss**, plus un record « les 3 à la suite ».

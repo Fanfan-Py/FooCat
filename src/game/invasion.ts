@@ -39,8 +39,10 @@ export class Invasion {
   private rnd: () => number;
   private nextWaveT = 1.2;
 
-  constructor(private sfx: Sfx, seed = Date.now() % 100000) {
+  // start : la vague de départ (1 d'habitude ; une autre pour essayer, en mode développeur)
+  constructor(private sfx: Sfx, seed = Date.now() % 100000, start = 1) {
     this.rnd = FC.rng(seed);
+    this.wave = start - 1;
     this.buildShield();
   }
 

@@ -112,8 +112,10 @@ export class Casse {
   private rnd: () => number;
   private prevFire = false;
 
-  constructor(private sfx: Sfx, seed = Date.now() % 100000) {
+  // start : le tableau de départ (1 d'habitude ; un autre pour essayer, en mode développeur)
+  constructor(private sfx: Sfx, seed = Date.now() % 100000, start = 1) {
     this.rnd = FC.rng(seed);
+    this.tableau = start - 1;
     this.nextTableau();
   }
 
