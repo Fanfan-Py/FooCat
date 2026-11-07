@@ -110,6 +110,22 @@ const THEMES: Record<string, Theme> = {
     bass: ['E2 E2 E3 E2 F2 F2 F3 F2 E2 E2 E3 E2 F2 F2 F3 F2', 'C2 C2 C3 C2 D2 D2 D3 D2 E2 E2 E3 E2 E2 E2 E3 E2', 'A1 A1 A2 A1 Bb1 Bb1 Bb2 Bb1 A1 A1 A2 A1 F1 F1 F2 F1', 'E2 E2 E3 E2 G2 G2 G3 G2 Bb1 Bb1 Bb2 Bb1 B1 B1 B2 B1'],
     drums: 'k . s k k . s . k k s . k . s s',
   },
+  // niveau secret « L'invasion des bonbons » : une marche entraînante, en sol mineur
+  invasion: {
+    bpm: 136,
+    lead: ['G5 . D5 . G5 . A5 Bb5 . A5 G5 . F5 . D5 .', 'Eb5 . G5 . Bb5 . C6 Bb5 . A5 G5 . F5 - - .', 'G5 . D5 . G5 . A5 Bb5 . C6 D6 . C6 . Bb5 .', 'A5 . F5 . D5 . F#5 . G5 - - - . . . .'],
+    lead2: ['G4 - - - - - - - Bb4 - - - - - - -', 'Eb4 - - - - - - - F4 - - - - - - -', 'G4 - - - - - - - D5 - - - - - - -', 'D4 - - - - - - - G4 - - - - - - -'],
+    bass: ['G2 . G3 . G2 . G3 . G2 . G3 . F2 . F3 .', 'Eb2 . Eb3 . Eb2 . Eb3 . F2 . F3 . F2 . F3 .', 'G2 . G3 . G2 . G3 . Bb2 . Bb3 . C3 . C3 .', 'D2 . D3 . D2 . D3 . G2 . D2 . G2 . . .'],
+    drums: 'k . h . s . h k k . h . s . h h',
+  },
+  // niveau secret « Le casse-bonbons » : sautillant, en fa majeur, comme une bonbille qui rebondit
+  casse: {
+    bpm: 120,
+    lead: ['F5 . A5 . C6 . A5 . Bb5 . G5 . E5 . C5 .', 'D5 . F5 . A5 . F5 . G5 - - - . . C5 .', 'F5 . A5 . C6 . D6 . C6 . A5 . Bb5 . G5 .', 'A5 . G5 . E5 . G5 . F5 - - - . . . .'],
+    lead2: ['F4 A4 C5 A4 F4 A4 C5 A4 G4 Bb4 C5 Bb4 G4 Bb4 C5 Bb4', 'D4 F4 A4 F4 D4 F4 A4 F4 C4 E4 G4 E4 C4 E4 G4 E4', 'F4 A4 C5 A4 F4 A4 C5 A4 Bb3 D4 F4 D4 Bb3 D4 F4 D4', 'C4 E4 G4 E4 C4 E4 G4 Bb4 F4 A4 C5 A4 F4 . . .'],
+    bass: ['F2 . . C3 . . F2 . C2 . . G2 . . C3 .', 'D2 . . A2 . . D2 . C2 . . G2 . . E2 .', 'F2 . . C3 . . F2 . Bb1 . . F2 . . Bb2 .', 'C2 . . G2 . . C3 . F2 . . C3 . F2 . .'],
+    drums: 'k . h . s . h . k . h k s . h .',
+  },
   boss: {
     bpm: 156,
     lead: ['E5 . G5 . B5 . A5 G5 F#5 . E5 . D5 . F#5 .', 'E5 . G5 . B5 . C6 B5 A5 . G5 . F#5 . D#5 .', 'E6 . D6 . B5 . G5 . A5 . F#5 . D5 . B4 .', 'C5 . E5 . G5 . B5 . A5 - - - D#5 - - -'],

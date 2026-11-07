@@ -277,7 +277,7 @@ export class App {
     const start = this.dev ? this.miniChoice[kind] + 1 : 1;
     this.devRun = start > 1; this.levelStart = null; this.world = null; // (une partie d'essai ne compte pas)
     this.mini = kind === 'invasion' ? new Invasion(this.sfx, undefined, start) : new Casse(this.sfx, undefined, start);
-    this.go('mini'); this.sfx.music?.(kind === 'invasion' ? 'space' : 'nebula');
+    this.go('mini'); this.sfx.music?.(kind);
   }
   // mode boss : un boss (0, 1, 2) ou les 3 à la suite (3)
   private startBoss(sel: number) {

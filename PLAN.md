@@ -435,6 +435,11 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 - [x] En mode développeur, on choisit le tableau de départ du casse-bonbons et la vague de départ de
       l'invasion (ces parties d'essai ne comptent pas dans les scores).
 
+## Ajustements du casse-bonbons et musiques (7 novembre 2026)
+- [x] La bonbille est plus lente au premier tour des 9 tableaux ; après le tableau 9 (« On recommence, plus vite ! »),
+      elle reprend la vitesse d'avant.
+- [x] Une musique pour chaque niveau secret : une marche pour l'invasion, un air sautillant pour le casse-bonbons.
+
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
 - [x] Un **chronomètre** et un **record par boss**, plus un record « les 3 à la suite ».

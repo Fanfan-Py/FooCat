@@ -14,6 +14,8 @@ import type { Controls, Sfx } from './world';
 const P = FC.P;
 export const CASSE = {
   lives: 3, maxLives: 6, paddleY: 146, speed: 170, ballSpeed: 140, ballMax: 215, bonusChance: 0.15,
+  // au premier tour des tableaux, la bonbille est plus lente ; après, on reprend la vitesse ci-dessus
+  firstSpeed: 112, firstStep: 5, firstMax: 165,
   cols: 13, bw: 22, bh: 9, top: 22, wall: 6, // largeur des murs en sucre d'orge
   wide: 15, through: 8, gun: 8, gunRate: 7, glue: 15, glueHold: 2.5, slow: 3, slowFactor: 0.35,
   // monstres : nombre maximum, premier après, attente avant le suivant, vitesse de descente, points
@@ -119,7 +121,11 @@ export class Casse {
     this.nextTableau();
   }
 
-  private get speedUp() { return Math.min(CASSE.ballMax, CASSE.ballSpeed + this.tableau * 8); }
+  private get firstRound() { return this.tableau <= TABLEAUX.length; }
+  private get speedUp() { // vitesse de départ de la bonbille
+    return this.firstRound ? CASSE.firstSpeed + (this.tableau - 1) * CASSE.firstStep : Math.min(CASSE.ballMax, CASSE.ballSpeed + this.tableau * 8);
+  }
+  private get maxSpeed() { return this.firstRound ? CASSE.firstMax : CASSE.ballMax; }
   private get pw() { return this.paddle.wide > 0 ? 58 : 36; } // largeur de la raquette
   private get px() { return this.paddle.x + 20 - this.pw / 2; }
 
@@ -131,7 +137,7 @@ export class Casse {
     this.caps = []; this.shots = []; this.exit = null;
     this.monsters = []; this.monsterT = CASSE.firstMonster;
     this.serve();
-    this.banner = { text: 'TABLEAU ' + this.tableau + ' : ' + TABLEAUX[(this.tableau - 1) % TABLEAUX.length].name, t: 0 };
+    this.banner = { text: this.tableau === TABLEAUX.length + 1 ? 'ON RECOMMENCE, PLUS VITE !' : 'TABLEAU ' + this.tableau + ' : ' + TABLEAUX[(this.tableau - 1) % TABLEAUX.length].name, t: 0 };
     this.sfx.play(this.tableau > 1 ? 'level' : 'start');
   }
   private serve() { this.balls = [{ x: 0, y: 0, vx: 0, vy: 0, stuck: true, off: 0, hold: 2.5 }]; }
@@ -260,7 +266,7 @@ export class Casse {
         return;
       }
       const u = Math.max(-1, Math.min(1, (b.x - (this.px + this.pw / 2)) / (this.pw / 2)));
-      const a = -Math.PI / 2 + u * 1.05, v = Math.min(CASSE.ballMax, Math.hypot(b.vx, b.vy) + 1.5);
+      const a = -Math.PI / 2 + u * 1.05, v = Math.min(this.maxSpeed, Math.hypot(b.vx, b.vy) + 1.5);
       b.vx = Math.cos(a) * v; b.vy = Math.sin(a) * v; b.y = top - R;
       this.sfx.play('bounce');
     }
