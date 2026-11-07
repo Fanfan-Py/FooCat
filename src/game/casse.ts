@@ -1,47 +1,64 @@
 // Niveau secret 2 : « Le casse-bonbons ».
 // La soucoupe sert de raquette en bas de l'écran et renvoie une bonbille sur un mur de briques en bonbons.
-// Les sucres (blancs) demandent 2 coups, le caramel doré est incassable. Des capsules-bonus tombent :
-// L (soucoupe plus large), M (3 bonbilles), T (la bonbille traverse tout). Bonbille perdue = un cœur en moins.
-// Quand le mur est vide, on passe au tableau suivant, plus dur.
+// Les sucres (blancs) demandent 2 coups, le caramel doré est incassable. Des capsules tombent des briques cassées :
+// L (soucoupe plus large), M (3 bonbilles), T (la bonbille traverse tout), V (la soucoupe tire des vermicelles),
+// C (la bonbille colle à la soucoupe ; on tire pour la renvoyer) et un piège, Z (la soucoupe s'endort et ralentit).
+// Bonbille perdue = un cœur en moins. Quand le mur est vide, un passage secret s'ouvre dans le mur de sucre d'orge,
+// à droite ou à gauche : on y fait entrer la soucoupe pour passer au tableau suivant.
 import { FC, Pix } from '../art';
 import * as C from './config';
 import type { Controls, Sfx } from './world';
 
 const P = FC.P;
 export const CASSE = {
-  lives: 3, maxLives: 6, paddleY: 146, speed: 170, ballSpeed: 140, ballMax: 215, bonusChance: 0.14,
-  cols: 13, bw: 22, bh: 9, top: 22,
+  lives: 3, maxLives: 6, paddleY: 146, speed: 170, ballSpeed: 140, ballMax: 215, bonusChance: 0.15,
+  cols: 13, bw: 22, bh: 9, top: 22, wall: 6, // largeur des murs en sucre d'orge
+  wide: 15, through: 8, gun: 8, gunRate: 7, glue: 15, glueHold: 2.5, slow: 3, slowFactor: 0.35,
 };
 type Brick = 'choc' | 'fraise' | 'menthe' | 'citron' | 'sucre' | 'caramel';
 const POINTS: Record<Brick, number> = { choc: 10, fraise: 10, menthe: 15, citron: 15, sucre: 30, caramel: 0 };
 interface Cell { kind: Brick; hp: number; x: number; y: number }
-interface Ball { x: number; y: number; vx: number; vy: number; stuck: boolean }
-type BonusKind = 'L' | 'M' | 'T';
-interface Capsule { kind: BonusKind; x: number; y: number }
+// stuck : posée sur la soucoupe (off : décalage depuis le milieu ; hold : temps avant de partir toute seule)
+interface Ball { x: number; y: number; vx: number; vy: number; stuck: boolean; off: number; hold: number }
+export type CapsuleKind = 'L' | 'M' | 'T' | 'V' | 'C' | 'Z';
+interface Capsule { kind: CapsuleKind; x: number; y: number }
 interface Part { x: number; y: number; vx: number; vy: number; life: number; c: number[] }
 const R = 3.5; // rayon de la bonbille
+// chance de chaque capsule (Z est un piège)
+const CAPSULES: [CapsuleKind, number][] = [['L', 2], ['M', 2], ['T', 1], ['V', 2], ['C', 2], ['Z', 2]];
+const CAP_COLOR: Record<CapsuleKind, number[]> = { L: P.b, M: P.g, T: P.y, V: P.r, C: P.o, Z: P.u };
 
 // les tableaux : une lettre par brique (. = vide ; C chocolat, F fraise, M menthe, J citron, S sucre, O caramel)
-const TABLEAUX = [
-  ['.............', '.FFFFFFFFFFF.', '.MMMMMMMMMMM.', '.JJJJJJJJJJJ.', '.CCCCCCCCCCC.'],
-  ['CCCCCCCCCCCCC', 'FF.FF.F.FF.FF', 'MMMMMMMMMMMMM', 'JJ.JJJ.JJJ.JJ', 'SSSSSSSSSSSSS'],
-  ['OCCOCCOCCOCCO', 'FFFFFFFFFFFFF', 'MMMMMMMMMMMMM', 'JJJJJJJJJJJJJ', 'S.S.S.S.S.S.S', '.SSSSSSSSSSS.'],
-  ['......F......', '.....FMF.....', '....FMJMF....', '...FMJSJMF...', '..FMJSOSJMF..', '.CCCCCCCCCCC.', 'O...........O'],
-  ['SCSCSCSCSCSCS', 'O.O.O.O.O.O.O', 'FFFFFFFFFFFFF', 'MMMMMMMMMMMMM', 'JJJJJJJJJJJJJ', 'CCCCCCCCCCCCC', 'SSSSSSSSSSSSS'],
+export const TABLEAUX: { name: string; map: string[] }[] = [
+  { name: 'LES RANGÉES', map: ['.............', '.FFFFFFFFFFF.', '.MMMMMMMMMMM.', '.JJJJJJJJJJJ.', '.CCCCCCCCCCC.'] },
+  { name: 'LE COEUR', map: ['.FFF.....FFF.', 'FFFFF...FFFFF', 'FSFFFFFFFFFFF', 'FFFFFFFFFFFFF', '.FFFFFFFFFFF.', '..FFFFFFFFF..', '...FFFFFFF...', '....FFFFF....', '.....FFF.....'] },
+  { name: "L'ARC-EN-CIEL", map: ['....FFFFF....', '..FFJJJJJFF..', '.FJJMMMMMJJF.', '.FJM.....MJF.', 'FJM.......MJF', 'FJM.......MJF', 'SSS.......SSS'] },
+  { name: 'LE CHAT DORÉ', map: ['......O......', '.S....O....S.', '.SS..JOJ..SS.', '.JJJJJJJJJJJ.', 'JJCCJJJJJCCJJ', 'JJCCJJJJJCCJJ', 'JFJJJJFJJJJFJ', '.JJJJJJJJJJJ.', '..JJJJJJJJJ..'] },
+  { name: 'LA FORTERESSE DE SUCRE', map: ['OO.OOOOOOO.OO', 'SSSSSSSSSSSSS', 'CFCFCFCFCFCFC', 'MMMMMMMMMMMMM', 'JJJJJJJJJJJJJ', 'SSSSSSSSSSSSS', 'O..O..O..O..O'] },
 ];
 const LETTER: Record<string, Brick> = { C: 'choc', F: 'fraise', M: 'menthe', J: 'citron', S: 'sucre', O: 'caramel' };
+function build(n: number): Cell[] { // le tableau n (1, 2, 3...)
+  const map = TABLEAUX[(n - 1) % TABLEAUX.length].map, x0 = Math.round((C.W - CASSE.cols * (CASSE.bw + 1)) / 2) + 1, out: Cell[] = [];
+  map.forEach((row, r) => [...row].forEach((ch, c) => {
+    const kind = LETTER[ch];
+    if (kind) out.push({ kind, hp: kind === 'sucre' ? 2 : kind === 'caramel' ? 99 : 1, x: x0 + c * (CASSE.bw + 1), y: CASSE.top + r * (CASSE.bh + 1) });
+  }));
+  return out;
+}
 
 export class Casse {
   t = 0; stateT = 0;
   state: 'play' | 'dying' | 'over' = 'play';
   score = 0; lives = CASSE.lives; tableau = 0;
-  paddle = { x: 140, wide: 0, through: 0 };
+  paddle = { x: 140, wide: 0, through: 0, gun: 0, glue: 0, slow: 0, gunCD: 0 };
   balls: Ball[] = []; bricks: Cell[] = []; caps: Capsule[] = []; parts: Part[] = [];
+  shots: { x: number; y: number }[] = []; // vermicelles de la soucoupe (capsule V)
+  // passage secret : side 0 à gauche, 1 à droite ; open : ouverture (0 à 1) ; slide : glissement vers le tableau suivant
+  exit: { side: number; open: number; slide: number; next: Cell[] } | null = null;
   banner: { text: string; t: number } | null = null;
   private stars = FC.stars(77, C.W, C.H, 80);
   private rnd: () => number;
-  private serveT = 0;
-  private between = 0; // pause entre deux tableaux
+  private prevFire = false;
 
   constructor(private sfx: Sfx, seed = Date.now() % 100000) {
     this.rnd = FC.rng(seed);
@@ -54,43 +71,64 @@ export class Casse {
 
   private nextTableau() {
     this.tableau++;
-    const map = TABLEAUX[(this.tableau - 1) % TABLEAUX.length], x0 = Math.round((C.W - CASSE.cols * (CASSE.bw + 1)) / 2) + 1;
-    this.bricks = [];
-    map.forEach((row, r) => [...row].forEach((ch, c) => {
-      const kind = LETTER[ch];
-      if (kind) this.bricks.push({ kind, hp: kind === 'sucre' ? 2 : kind === 'caramel' ? 99 : 1, x: x0 + c * (CASSE.bw + 1), y: CASSE.top + r * (CASSE.bh + 1) });
-    }));
-    this.caps = []; this.paddle.wide = 0; this.paddle.through = 0;
+    this.bricks = build(this.tableau);
+    const pd = this.paddle;
+    Object.assign(pd, { x: 140, wide: 0, through: 0, gun: 0, glue: 0, slow: 0 });
+    this.caps = []; this.shots = []; this.exit = null;
     this.serve();
-    this.banner = { text: 'TABLEAU ' + this.tableau, t: 0 };
+    this.banner = { text: 'TABLEAU ' + this.tableau + ' : ' + TABLEAUX[(this.tableau - 1) % TABLEAUX.length].name, t: 0 };
     this.sfx.play(this.tableau > 1 ? 'level' : 'start');
   }
-  private serve() { this.balls = [{ x: 0, y: 0, vx: 0, vy: 0, stuck: true }]; this.serveT = 2.5; }
+  private serve() { this.balls = [{ x: 0, y: 0, vx: 0, vy: 0, stuck: true, off: 0, hold: 2.5 }]; }
+  private launch(b: Ball) {
+    const u = Math.max(-1, Math.min(1, b.off / (this.pw / 2)));
+    const a = -Math.PI / 2 + (b.off ? u * 1.05 : (this.rnd() - 0.5) * 0.6);
+    b.stuck = false; b.vx = Math.cos(a) * this.speedUp; b.vy = Math.sin(a) * this.speedUp;
+    this.sfx.play('bounce');
+  }
 
   update(dt: number, c: Controls) {
     this.t += dt; this.stateT += dt;
     if (this.banner && (this.banner.t += dt) > 1.8) this.banner = null;
-    const pd = this.paddle;
-    pd.wide = Math.max(0, pd.wide - dt); pd.through = Math.max(0, pd.through - dt);
+    const pd = this.paddle, W = CASSE.wall, ex = this.exit;
+    const press = c.fire && !this.prevFire; this.prevFire = c.fire;
+    for (const k of ['wide', 'through', 'gun', 'glue', 'slow'] as const) pd[k] = Math.max(0, pd[k] - dt);
+    pd.gunCD -= dt;
     if (this.state === 'dying' && this.stateT > 1.8) { this.state = 'over'; this.stateT = 0; }
-    if (this.state === 'play') pd.x = Math.max(-2, Math.min(C.W - 38, pd.x + c.dx * CASSE.speed * dt));
-    if (this.between > 0) { if ((this.between -= dt) <= 0) this.nextTableau(); }
-    // la bonbille posée sur la soucoupe part quand on tire (ou toute seule au bout d'un moment)
-    this.serveT -= dt;
-    for (const b of this.balls) if (b.stuck) {
-      b.x = pd.x + 20; b.y = CASSE.paddleY + 14 - R;
-      if (this.state === 'play' && this.between <= 0 && (c.fire || this.serveT <= 0)) { b.stuck = false; const a = -Math.PI / 2 + (this.rnd() - 0.5) * 0.6; b.vx = Math.cos(a) * this.speedUp; b.vy = Math.sin(a) * this.speedUp; this.sfx.play('bounce'); }
+    // la soucoupe (quand le passage est ouvert, elle peut entrer dans le mur de ce côté)
+    if (this.state === 'play' && !(ex && ex.slide >= 0)) {
+      const sp = CASSE.speed * (pd.slow > 0 ? CASSE.slowFactor : 1);
+      const lo = ex && ex.side === 0 && ex.open >= 1 ? -44 : W - 2, hi = ex && ex.side === 1 && ex.open >= 1 ? C.W + 4 : C.W - W - 38;
+      pd.x = Math.max(lo, Math.min(hi, pd.x + c.dx * sp * dt));
     }
+    if (ex) this.updateExit(dt);
+    // la bonbille posée sur la soucoupe part quand on tire (ou toute seule au bout d'un moment)
+    for (const b of this.balls) if (b.stuck) {
+      b.x = pd.x + 20 + b.off; b.y = CASSE.paddleY + 14 - R; b.hold -= dt;
+      if (this.state === 'play' && ((b.off ? press : c.fire) || b.hold <= 0)) this.launch(b);
+    }
+    // la mitraillette : deux vermicelles parallèles
+    if (this.state === 'play' && pd.gun > 0 && c.fire && pd.gunCD <= 0 && !ex) {
+      pd.gunCD = 1 / CASSE.gunRate;
+      this.shots.push({ x: this.px + 5, y: CASSE.paddleY + 12 }, { x: this.px + this.pw - 6, y: CASSE.paddleY + 12 });
+      this.sfx.play('shoot_verm');
+    }
+    for (const s of this.shots) {
+      s.y -= 240 * dt;
+      const k = this.bricks.find((b) => b.hp > 0 && s.x >= b.x && s.x < b.x + CASSE.bw && s.y < b.y + CASSE.bh && s.y + 4 > b.y);
+      if (k) { s.y = -10; this.hitBrick(k, false); }
+    }
+    this.shots = this.shots.filter((s) => s.y > 14);
     // la bonbille avance par petits pas (pour ne pas traverser les briques)
     for (const b of this.balls) {
       if (b.stuck) continue;
       const steps = Math.ceil(Math.hypot(b.vx, b.vy) * dt / 2);
-      for (let i = 0; i < steps; i++) this.stepBall(b, dt / steps);
+      for (let i = 0; i < steps && !b.stuck; i++) this.stepBall(b, dt / steps);
     }
     const before = this.balls.length;
     this.balls = this.balls.filter((b) => b.y < C.H + 8);
-    if (before && !this.balls.length && this.state === 'play') this.loseHeart();
-    // les capsules-bonus
+    if (before && !this.balls.length && this.state === 'play' && !this.exit) this.loseHeart();
+    // les capsules
     for (const k of this.caps) {
       k.y += 50 * dt;
       if (this.state === 'play' && k.y + 7 > CASSE.paddleY + 12 && k.y < CASSE.paddleY + 24 && k.x + 14 > this.px && k.x < this.px + this.pw) { k.y = C.H + 20; this.take(k.kind); }
@@ -100,14 +138,32 @@ export class Casse {
     this.parts = this.parts.filter((p) => p.life > 0);
   }
 
+  // le passage secret : il s'ouvre, la soucoupe y entre, puis le tableau suivant glisse depuis ce côté
+  private updateExit(dt: number) {
+    const ex = this.exit!, pd = this.paddle;
+    ex.open = Math.min(1, ex.open + dt / 0.8);
+    if (ex.slide < 0) {
+      if (this.state === 'play' && (ex.side ? pd.x > C.W - 14 : pd.x < -26)) { ex.slide = 0; ex.next = build(this.tableau + 1); this.sfx.play('respawn'); }
+      return;
+    }
+    ex.slide += dt;
+    if (ex.slide >= 0.9) this.nextTableau();
+  }
+
   private stepBall(b: Ball, dt: number) {
+    const W = CASSE.wall;
     b.x += b.vx * dt; b.y += b.vy * dt;
-    if (b.x < R) { b.x = R; b.vx = Math.abs(b.vx); }
-    if (b.x > C.W - R) { b.x = C.W - R; b.vx = -Math.abs(b.vx); }
+    if (b.x < W + R) { b.x = W + R; b.vx = Math.abs(b.vx); }
+    if (b.x > C.W - W - R) { b.x = C.W - W - R; b.vx = -Math.abs(b.vx); }
     if (b.y < 14 + R) { b.y = 14 + R; b.vy = Math.abs(b.vy); }
-    // la soucoupe : l'endroit touché donne la direction
+    // la soucoupe : l'endroit touché donne la direction (avec la colle, la bonbille reste dessus)
     const top = CASSE.paddleY + 14;
     if (b.vy > 0 && b.y + R >= top && b.y + R <= top + 8 && b.x > this.px - R && b.x < this.px + this.pw + R) {
+      if (this.paddle.glue > 0) {
+        b.stuck = true; b.off = Math.max(-this.pw / 2 + 2, Math.min(this.pw / 2 - 2, b.x - (this.paddle.x + 20))) || 0.1;
+        b.hold = CASSE.glueHold; this.sfx.play('web');
+        return;
+      }
       const u = Math.max(-1, Math.min(1, (b.x - (this.px + this.pw / 2)) / (this.pw / 2)));
       const a = -Math.PI / 2 + u * 1.05, v = Math.min(CASSE.ballMax, Math.hypot(b.vx, b.vy) + 1.5);
       b.vx = Math.cos(a) * v; b.vy = Math.sin(a) * v; b.y = top - R;
@@ -135,32 +191,45 @@ export class Casse {
     this.score += POINTS[k.kind] * (1 + Math.floor((this.tableau - 1) / TABLEAUX.length));
     this.burst(k.x + 11, k.y + 4, FC.brickColor(k.kind), 10);
     this.sfx.play('kill');
-    if (this.rnd() < CASSE.bonusChance) this.caps.push({ kind: (['L', 'M', 'T'] as BonusKind[])[Math.floor(this.rnd() * 3)], x: k.x + 4, y: k.y });
-    if (!this.bricks.some((b) => b.hp > 0 && b.kind !== 'caramel') && this.between <= 0) {
+    if (this.rnd() < CASSE.bonusChance && !this.exit) {
+      let r = this.rnd() * CAPSULES.reduce((s, [, w]) => s + w, 0), kind: CapsuleKind = 'L';
+      for (const [kk, w] of CAPSULES) { if ((r -= w) < 0) { kind = kk; break; } }
+      this.caps.push({ kind, x: k.x + 4, y: k.y });
+    }
+    if (!this.bricks.some((b) => b.hp > 0 && b.kind !== 'caramel') && !this.exit) {
+      // le mur est vide : le passage secret s'ouvre
       this.score += 500; this.banner = { text: 'TABLEAU TERMINÉ ! +500', t: 0 };
-      this.balls = []; this.between = 2.2; this.sfx.play('level');
+      for (const b of this.balls) this.burst(b.x, b.y, P.b, 6);
+      this.balls = []; this.caps = []; this.shots = [];
+      this.exit = { side: this.rnd() < 0.5 ? 0 : 1, open: 0, slide: -1, next: [] };
+      this.sfx.play('level');
     }
   }
 
-  private take(kind: BonusKind) {
+  private take(kind: CapsuleKind) {
+    const pd = this.paddle, say = (text: string) => { this.banner = { text, t: 0 }; };
+    if (kind === 'Z') { pd.slow = CASSE.slow; say("ZZZ... LA SOUCOUPE S'ENDORT !"); this.sfx.play('yawn'); return; }
     this.score += 50; this.sfx.play('pickup');
-    if (kind === 'L') { this.paddle.wide = 15; this.banner = { text: 'SOUCOUPE PLUS LARGE !', t: 0 }; }
-    else if (kind === 'T') { this.paddle.through = 8; this.banner = { text: 'LA BONBILLE TRAVERSE TOUT !', t: 0 }; }
+    if (kind === 'L') { pd.wide = CASSE.wide; say('SOUCOUPE PLUS LARGE !'); }
+    else if (kind === 'T') { pd.through = CASSE.through; say('LA BONBILLE TRAVERSE TOUT !'); }
+    else if (kind === 'V') { pd.gun = CASSE.gun; say('MITRAILLETTE : TIRE !'); }
+    else if (kind === 'C') { pd.glue = CASSE.glue; say('COLLE : TIRE POUR RENVOYER !'); }
     else {
-      this.banner = { text: '3 BONBILLES !', t: 0 };
+      say('3 BONBILLES !');
       const src = this.balls.find((b) => !b.stuck) ?? this.balls[0];
       if (!src) return;
       for (const a of [-0.5, 0.5]) {
         const v = Math.max(this.speedUp, Math.hypot(src.vx, src.vy)), ang = Math.atan2(src.vy || -1, src.vx) + a;
-        this.balls.push({ x: src.x, y: src.y, vx: Math.cos(ang) * v, vy: -Math.abs(Math.sin(ang) * v) || -v, stuck: false });
+        this.balls.push({ x: src.x, y: src.stuck ? src.y - 4 : src.y, vx: Math.cos(ang) * v, vy: -Math.abs(Math.sin(ang) * v) || -v, stuck: false, off: 0, hold: 0 });
       }
     }
   }
 
   private loseHeart() {
-    this.lives--; this.paddle.wide = 0; this.paddle.through = 0; this.caps = [];
+    const pd = this.paddle;
+    this.lives--; pd.wide = 0; pd.through = 0; pd.gun = 0; pd.glue = 0; this.caps = []; this.shots = [];
     this.sfx.play(this.lives > 0 ? 'hurt' : 'lose');
-    if (this.lives <= 0) { this.lives = 0; this.state = 'dying'; this.stateT = 0; this.burst(this.paddle.x + 20, CASSE.paddleY + 16, null, 30); return; }
+    if (this.lives <= 0) { this.lives = 0; this.state = 'dying'; this.stateT = 0; this.burst(pd.x + 20, CASSE.paddleY + 16, null, 30); return; }
     this.banner = { text: 'BONBILLE PERDUE !', t: 0 };
     this.serve();
   }
@@ -172,30 +241,73 @@ export class Casse {
     }
   }
 
+  // les murs en sucre d'orge, et le passage secret qui brille
+  private drawWalls(scr: Pix) {
+    const t = this.t, ex = this.exit, W = CASSE.wall;
+    const top = ex ? Math.round(C.H - 46 * ex.open) : C.H;
+    for (let side = 0; side < 2; side++) {
+      const x = side ? C.W - W : 0, open = ex && ex.side === side;
+      for (let y = 14; y < C.H; y++) {
+        if (open && y > top && y < C.H - 2) continue;
+        scr.rect(x, y, W, 1, Math.floor((y + x) / 4) % 2 ? P.r : P.W);
+      }
+      scr.rect(side ? C.W - W - 1 : W, 14, 1, C.H - 14, FC.alpha(P.K, 160));
+    }
+    if (!ex || ex.open <= 0) return;
+    const right = ex.side === 1, h = C.H - 2 - top;
+    for (let g = 0; g < 26; g++) scr.rect(right ? C.W - W - 1 - g : W + g, top + 2 + g * 0.3, 1, h - 2 - g * 0.3, FC.alpha(P.y, Math.max(0, 70 - g * 3)));
+    scr.rect(right ? C.W - W : 0, top, W, h, FC.alpha(P.W, 200 + 40 * Math.sin(t * 8)));
+    for (let i = 0; i < 6; i++) scr.rect(right ? C.W - W - 1 - i : W + i, top - 6 + i, 1, h + 6 - i, FC.RAINBOW[i]);
+    for (let j = 0; j < 10; j++) {
+      const d = (t * 25 + j * 9) % 30;
+      scr.put(right ? C.W - 10 - d : 10 + d, top + 6 + ((j * 13) % Math.max(1, h - 8)) + Math.sin(t * 2 + j) * 2, FC.alpha(P.W, 230 - d * 7));
+    }
+  }
+
   draw(scr: Pix, hero: (f: number) => Pix) {
-    const t = this.t, pd = this.paddle;
+    const t = this.t, pd = this.paddle, ex = this.exit;
     scr.d.set(FC.bg('casseBg', C.W, C.H, [[0, '0b0a26'], [0.7, '1d1450'], [1, '2a1258']]).d);
     FC.drawStars(scr, this.stars, t, [1, 3, 6]);
-    for (const k of this.bricks) if (k.hp > 0) FC.brick(scr, k.x, k.y, k.kind, t, k.kind === 'sucre' && k.hp === 1);
-    for (const k of this.caps) {
-      const y = Math.round(k.y), x = Math.round(k.x), c = k.kind === 'L' ? P.b : k.kind === 'M' ? P.g : P.y;
-      scr.rect(x, y, 14, 7, c); scr.rect(x, y, 7, 7, P.P); scr.rect(x, y, 14, 1, P.W);
-      FC.text(scr, k.kind, x + 5, y + 1, P.W, { outline: P.K });
+    // les briques (pendant le glissement : l'ancien mur part, le nouveau arrive du côté du passage)
+    const k = ex && ex.slide >= 0 ? Math.min(1, ex.slide / 0.9) : 0, dir = ex && ex.side ? 1 : -1;
+    for (const b of this.bricks) if (b.hp > 0) FC.brick(scr, b.x - dir * k * C.W, b.y, b.kind, t, b.kind === 'sucre' && b.hp === 1);
+    if (ex && ex.slide >= 0) for (const b of ex.next) FC.brick(scr, b.x + dir * (1 - k) * C.W, b.y, b.kind, t, false);
+    this.drawWalls(scr);
+    for (const c of this.caps) {
+      const y = Math.round(c.y), x = Math.round(c.x), trap = c.kind === 'Z';
+      scr.rect(x, y, 14, 7, CAP_COLOR[c.kind]); scr.rect(x, y, 7, 7, trap ? P.k : P.P); scr.rect(x, y, 14, 1, trap ? P.v : P.W);
+      FC.text(scr, c.kind, x + 5, y + 1, P.W, { outline: P.K });
     }
+    for (const s of this.shots) { scr.rect(Math.round(s.x), Math.round(s.y), 1, 4, FC.SPRINKLES[Math.floor(s.y / 7) % 7]); }
     for (const p of this.parts) scr.rect(Math.round(p.x), Math.round(p.y), 2, 2, p.c);
-    // la soucoupe (et son tapis de sucre quand elle est plus large)
-    if (this.state === 'play') {
-      if (pd.wide > 0 && !(pd.wide < 2 && Math.floor(t * 8) % 2)) {
-        const x = Math.round(this.px), y = CASSE.paddleY + 24;
-        for (let i = 0; i < this.pw; i++) scr.rect(x + i, y, 1, 3, FC.RAINBOW[Math.floor((i + t * 20) / 4) % 6]);
-      }
-      FC.trail(scr, pd.x + 4, CASSE.paddleY + 25, t);
-      scr.blit(hero(Math.floor(t * 5) % 4), Math.round(pd.x), CASSE.paddleY);
+    // la soucoupe (tapis arc-en-ciel quand elle est plus large ; canons quand elle tire ; bulle quand elle dort)
+    if (this.state === 'play' && !(ex && ex.slide >= 0)) {
+      const x = Math.round(this.px), y = CASSE.paddleY;
+      if (pd.wide > 0 && !(pd.wide < 2 && Math.floor(t * 8) % 2)) for (let i = 0; i < this.pw; i++) scr.rect(x + i, y + 24, 1, 3, FC.RAINBOW[Math.floor((i + t * 20) / 4) % 6]);
+      FC.trail(scr, pd.x + 4, y + 25, t);
+      // il disparaît dans le passage : on ne dessine pas ce qui est dans le mur
+      const pic: Pix = hero(Math.floor(t * 5) % 4);
+      if (ex && ex.open >= 1) {
+        const clip = FC.mk('casseClip', () => new FC.Pix(40, 31)) as Pix;
+        clip.d.set(pic.d);
+        for (let yy = 0; yy < 31; yy++) for (let xx = 0; xx < 40; xx++) { const sx = pd.x + xx; if (ex.side ? sx >= C.W - CASSE.wall : sx < CASSE.wall) clip.d[(yy * 40 + xx) * 4 + 3] = 0; }
+        scr.blit(clip, Math.round(pd.x), y);
+      } else scr.blit(pic, Math.round(pd.x), y);
+      if (pd.gun > 0) for (const gx of [x + 4, x + this.pw - 7]) { scr.rect(gx, y + 15, 3, 4, P.M); scr.rect(gx, y + 14, 3, 1, P.r); }
+      if (pd.glue > 0 && Math.floor(t * 4) % 2) scr.rect(x + 2, y + 17, this.pw - 4, 1, FC.alpha(P.o, 200));
+      if (pd.slow > 0) scr.blit(FC.spr('sleepBubble', Math.floor(t * 3)), Math.round(pd.x) + 26, y - 8 - Math.round(Math.sin(t * 3) * 2));
     }
     // les bonbilles (arc-en-ciel quand elles traversent tout)
     for (const b of this.balls) {
       if (pd.through > 0) scr.ell(b.x, b.y, R + 2, R + 2, FC.alpha(FC.RAINBOW[Math.floor(t * 12) % 6], 140));
       scr.blit(FC.spr('bigDrag', 3), Math.round(b.x - 4.5), Math.round(b.y - 4));
+    }
+    // les capsules en cours, en bas à gauche, avec le temps qui reste
+    let bx = 10;
+    for (const [kk, v] of [['L', pd.wide], ['T', pd.through], ['V', pd.gun], ['C', pd.glue], ['Z', pd.slow]] as [CapsuleKind, number][]) {
+      if (v <= 0) continue;
+      scr.rect(bx, 170, 7, 7, CAP_COLOR[kk]); FC.text(scr, kk, bx + 2, 171, P.W);
+      bx = FC.text(scr, String(Math.ceil(v)), bx + 9, 171, P.W, { outline: P.K }) + 5;
     }
     // le bandeau du haut
     scr.rect(0, 0, C.W, 13, FC.alpha(P.K, 210)); scr.rect(0, 13, C.W, 1, P.U);
@@ -208,9 +320,13 @@ export class Casse {
       const b = this.banner.text;
       FC.text(scr, b, Math.round(C.W / 2 - FC.textWidth(b) / 2), 104, P.q, { outline: P.K });
     }
-    if (this.balls.some((b) => b.stuck) && this.state === 'play' && t % 1.2 < 0.8) {
-      const s = 'TIRE POUR LANCER LA BONBILLE';
-      FC.text(scr, s, Math.round(C.W / 2 - FC.textWidth(s) / 2), 124, P.W, { outline: P.K });
+    if (this.state !== 'play') return;
+    const msg = ex && ex.slide < 0 && ex.open >= 1 && !this.banner ? (ex.side ? 'PASSAGE SECRET : VA À DROITE !' : 'PASSAGE SECRET : VA À GAUCHE !')
+      : this.balls.some((b) => b.stuck) ? (this.balls.some((b) => b.stuck && b.off) ? 'TIRE POUR RENVOYER LA BONBILLE' : 'TIRE POUR LANCER LA BONBILLE') : '';
+    if (msg && t % 1.2 < 0.8) FC.text(scr, msg, Math.round(C.W / 2 - FC.textWidth(msg) / 2), 124, ex ? P.y : P.W, { outline: P.K });
+    if (ex && ex.slide < 0 && ex.open >= 1) for (let q = 0; q < 2; q++) { // des flèches vers le passage
+      const ax = (ex.side ? 262 + (t * 30) % 16 : 52 - (t * 30) % 16) + q * (ex.side ? 9 : -9);
+      if (ex.side) scr.tri(ax, 150, ax, 162, ax + 6, 156, P.y); else scr.tri(ax + 6, 150, ax + 6, 162, ax, 156, P.y);
     }
   }
 }

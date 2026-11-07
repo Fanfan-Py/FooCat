@@ -399,18 +399,21 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 - [x] Un mur de **briques en bonbons** : chocolat, fraise, menthe, citron ; les **sucres** (blancs) demandent
       2 coups ; le **caramel doré** est incassable.
 - [x] Des **capsules-bonus** tombent des briques cassées : soucoupe plus large, 3 bonbilles à la fois,
-      bonbille qui traverse tout.
+      bonbille qui traverse tout (et V, C, Z : voir plus bas).
 - [x] **Bonbille perdue = un cœur en moins.** Quand le mur est vide, on passe au tableau suivant, plus dur.
 - [x] Un tableau des meilleurs scores. Débloqué par un code ; il se lance comme l'invasion des bonbons (MODE : CASSE-BONBONS).
 
 ## Étape F2 : les 5 tableaux dessinés et le passage secret (maquette « Casse-bonbons · les 5 tableaux »)
-- [ ] 5 tableaux qui forment des dessins : 1 les rangées, 2 le cœur, 3 l'arc-en-ciel (sur des nuages en sucre),
+- [x] 5 tableaux qui forment des dessins : 1 les rangées, 2 le cœur, 3 l'arc-en-ciel (sur des nuages en sucre),
       4 le chat doré (corne en caramel incassable), 5 la forteresse de sucre (créneaux en caramel).
       Après le tableau 5, on recommence au 1, plus vite, avec plus de points.
-- [ ] Des murs en sucre d'orge à gauche et à droite.
-- [ ] Quand toutes les briques cassables sont détruites, un **passage secret** s'ouvre dans le mur, à droite ou
+- [x] Des murs en sucre d'orge à gauche et à droite.
+- [x] Quand toutes les briques cassables sont détruites, un **passage secret** s'ouvre dans le mur, à droite ou
       à gauche (au hasard) ; on y fait entrer la soucoupe pour passer au tableau suivant, qui arrive de ce côté.
 - [x] On joue avec le personnage et la soucoupe choisis dans Apparence (déjà le cas dans le jeu).
+- [x] Nouvelles capsules : **V** la mitraillette (la soucoupe tire des vermicelles parallèles, 8 s),
+      **C** la colle (la bonbille reste sur la soucoupe ; on tire pour la renvoyer, 15 s),
+      et un piège, **Z** (la soucoupe s'endort et ralentit 3 s, avec une bulle « Z » comme au niveau 8).
 
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.

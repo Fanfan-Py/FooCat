@@ -7,6 +7,7 @@ import { App, AppInput } from '../src/game/app';
 import { W, H, LEVELS, Mode, LAVA } from '../src/game/config';
 import { endlessZone, dailySetup } from '../src/game/modes';
 import { savePng } from './png';
+import fs from 'node:fs';
 import { Invasion } from '../src/game/invasion';
 import { Casse } from '../src/game/casse';
 
@@ -182,18 +183,21 @@ if (process.env.SECRET) {
   }
   console.log('invasion des bonbons :', res.join(' · '));
   res.length = 0;
+  let passages = 0;
   for (let seed = 1; seed <= runs; seed++) {
     const g = new Casse(sfx, seed); let t = 0;
     while (t < 1200 && g.state !== 'over') {
       // il suit la bonbille la plus basse qui descend (un peu en retard, comme un joueur)
       const b = g.balls.filter((x) => !x.stuck).sort((a, c) => c.y - a.y)[0], cx = g.paddle.x + 20;
-      const want = b ? b.x + Math.sin(t * 0.9) * 10 : 160;
+      let want = b ? b.x + Math.sin(t * 0.9) * 10 : 160;
+      if (g.exit) { want = g.exit.side ? 400 : -100; passages++; } // le passage secret : il y va
       g.update(STEP, { dx: Math.max(-1, Math.min(1, (want - cx) / 6)), dy: 0, fire: t % 3 < 0.1, special: false, swap: false, select: -1 }); t += STEP;
       if (shotsDir && seed === 1 && Math.abs(t - 30) < STEP / 2) { g.draw(scr, hero); savePng(scr, 3, shotsDir + '/casse.png'); }
+      if (shotsDir && seed === 1 && g.exit && g.exit.open >= 1 && !fs.existsSync(shotsDir + '/casse-passage.png')) { g.draw(scr, hero); savePng(scr, 3, shotsDir + '/casse-passage.png'); }
     }
     res.push(`tableau ${g.tableau}, score ${g.score} (${Math.round(t)} s)`);
   }
-  console.log('casse-bonbons :', res.join(' · '));
+  console.log('casse-bonbons :', res.join(' · '), passages ? '(passages secrets empruntés)' : '(aucun passage secret !)');
   for (const [from, to] of [[0, 0], [1, 1], [2, 2], [0, 2]]) {
     let ok = 0, time = 0;
     for (let seed = 1; seed <= runs; seed++) {

@@ -812,7 +812,7 @@ export class App {
       center(scr, 'PAUSE', 22, P.W, { sc: 3, outline: P.U });
       this.menu!.draw(scr, this.t);
       center(scr, inv ? 'UN MONSTRE QUI PASSE LA LIGNE ROUGE : UN COEUR EN MOINS' : 'BONBILLE PERDUE : UN COEUR EN MOINS', 110, P.W);
-      center(scr, inv ? 'UN COEUR EN PLUS TOUS LES 50 MONSTRES' : 'CAPSULES : L PLUS LARGE · M 3 BONBILLES · T TRAVERSE TOUT', 122, P.q);
+      center(scr, inv ? 'UN COEUR EN PLUS TOUS LES 50 MONSTRES' : 'L LARGE · M 3 BONBILLES · T TRAVERSE · V TIRS · C COLLE · Z DODO !', 122, P.q);
       if (!this.touch) center(scr, 'ÉCHAP : REPRENDRE · M : SON', 162, P.v);
     }
     if (this.state === 'over') {
