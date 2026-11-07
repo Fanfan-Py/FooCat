@@ -403,6 +403,15 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 - [x] **Bonbille perdue = un cœur en moins.** Quand le mur est vide, on passe au tableau suivant, plus dur.
 - [x] Un tableau des meilleurs scores. Débloqué par un code ; il se lance comme l'invasion des bonbons (MODE : CASSE-BONBONS).
 
+## Étape F2 : les 5 tableaux dessinés et le passage secret (maquette « Casse-bonbons · les 5 tableaux »)
+- [ ] 5 tableaux qui forment des dessins : 1 les rangées, 2 le cœur, 3 l'arc-en-ciel (sur des nuages en sucre),
+      4 le chat doré (corne en caramel incassable), 5 la forteresse de sucre (créneaux en caramel).
+      Après le tableau 5, on recommence au 1, plus vite, avec plus de points.
+- [ ] Des murs en sucre d'orge à gauche et à droite.
+- [ ] Quand toutes les briques cassables sont détruites, un **passage secret** s'ouvre dans le mur, à droite ou
+      à gauche (au hasard) ; on y fait entrer la soucoupe pour passer au tableau suivant, qui arrive de ce côté.
+- [x] On joue avec le personnage et la soucoupe choisis dans Apparence (déjà le cas dans le jeu).
+
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
 - [x] Un **chronomètre** et un **record par boss**, plus un record « les 3 à la suite ».
