@@ -355,7 +355,7 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 ## Étape A : les dragibus deviennent les **bonbilles**
 « Dragibus » est une vraie marque de bonbons : on les appelle désormais **bonbilles**
 (bonbon + billes : des bonbons qui rebondissent comme des billes).
-- [ ] Changer le nom partout : écran de pause, messages, succès, README, maquettes (fait sur la planche des objets).
+- [x] Changer le nom partout : écran de pause, messages, README, maquettes.
 
 ## Étape B : les codes secrets
 - [ ] Une ligne « Code secret » dans l'écran **Réglages** : on tape un code ; s'il est bon,

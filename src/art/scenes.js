@@ -61,7 +61,7 @@
         var c = FC.SPRINKLES[i % 7]; scr.rect(x, y, 4, 1, c); scr.put(x + 4, y, alpha(c, 120));
       }
     } else if (kind === 'drag') {
-      for (var j = 0; j < 4; j++) scr.blit(spr('dragibus', j), x0 + ((t * 150 + j * 52) % span), y0 - 2);
+      for (var j = 0; j < 4; j++) scr.blit(spr('bonbille', j), x0 + ((t * 150 + j * 52) % span), y0 - 2);
     } else if (kind === 'jaw') {
       scr.blit(spr('jaw', Math.floor(t * 8) % 8), x0 + ((t * 90) % span), y0 - 5);
     } else if (kind === 'rain') {

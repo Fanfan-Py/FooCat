@@ -59,7 +59,7 @@ Au choix sur la ligne « MODE » de l'accueil :
 | Arme | Ce qu'elle fait |
 |---|---|
 | Vermicelles | l'arme de départ : rafale rapide en éventail, contre les nuées |
-| Dragibus | gros et puissants ; dans l'espace, en diagonale avec des rebonds sur les bords ; avec un sol, ils retombent et rebondissent par terre comme des balles (contre les monstres au sol) |
+| Bonbilles | grosses et puissantes ; dans l'espace, en diagonale avec des rebonds sur les bords ; avec un sol, elles retombent et rebondissent par terre comme des balles (contre les monstres au sol) |
 | Piñata | gros bonbon qui éclate en petits bonbons au milieu des ennemis |
 | Arc-en-ciel | infini (la corne prend le relais quand il n'y a plus rien) ; grandit et traverse tout |
 | Casse-dents | touche spéciale : fait exploser un obstacle |

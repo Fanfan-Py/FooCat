@@ -194,7 +194,7 @@
   };
 
   // ---------- Projectiles ----------
-  S.dragibus = function (f) {
+  S.bonbille = function (f) {
     var p = new Pix(7, 6), c = [P.r, P.y, P.g, P.b, P.u, P.o][f % 6];
     p.ell(3.5, 3, 3, 2.4, c); p.put(2, 1, P.W); p.outline(P.K); return p;
   };

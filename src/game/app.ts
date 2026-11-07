@@ -615,7 +615,7 @@ export class App {
       center(scr, 'LES ARMES', 98, P.W);
       const rows: [string, string, string][] = [
         ['icoVerm', 'VERMICELLES', 'RAPIDES, EN ÉVENTAIL'],
-        ['icoDrag', 'DRAGIBUS', 'LOURDS, ILS REBONDISSENT'],
+        ['icoDrag', 'BONBILLES', 'LOURDES, ELLES REBONDISSENT'],
         ['icoPinata', 'PIÑATA', 'ÉCLATE EN PETITS BONBONS'],
         ['icoRain', 'ARC-EN-CIEL', 'INFINI, TRAVERSE TOUT'],
         ['icoJaw', 'CASSE-DENTS', 'FAIT EXPLOSER UN OBSTACLE'],

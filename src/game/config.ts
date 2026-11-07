@@ -33,7 +33,7 @@ export const HERO_START = { x: 24, y: 70 };
 export const WEAPONS = {
   // Vermicelles : mitraillette rapide et faible, qui part en éventail (contre les nuées de mouches)
   verm: { rate: 14, dmg: 1, speed: 250, spread: 8, start: 400, max: 700, pickup: 200 },
-  // Dragibus : gros, lents et puissants ; dans l'espace, partent en diagonale et rebondissent sur les bords et les obstacles.
+  // Bonbilles : grosses, lentes et puissantes ; dans l'espace, partent en diagonale et rebondissent sur les bords et les obstacles.
   // Quand il y a un sol, ils tombent et rebondissent par terre comme des balles (contre les monstres au sol) :
   // lob = vitesse de départ (un tir sur deux plus long), pesanteur g, keep = part de la vitesse gardée à chaque rebond
   drag: { rate: 2.8, dmg: 4, speed: 165, angle: 16, bounces: 3, start: 40, max: 90, pickup: 25, lob: { vx: [150, 112], vy: [-30, 10], g: 520, keep: 0.72 } },
@@ -45,7 +45,7 @@ export const WEAPONS = {
   // Casse-dents : touche spéciale ; traverse les ennemis et fait exploser un obstacle
   jaw: { rate: 1.5, dmg: 12, speed: 140, blast: 38, blastDmg: 6, start: 2, max: 5, pickup: 1 },
 };
-export const WEAPON_NAMES = { verm: 'VERMICELLES', drag: 'DRAGIBUS', pinata: 'PIÑATA', rain: 'ARC-EN-CIEL', jaw: 'CASSE-DENTS' };
+export const WEAPON_NAMES = { verm: 'VERMICELLES', drag: 'BONBILLES', pinata: 'PIÑATA', rain: 'ARC-EN-CIEL', jaw: 'CASSE-DENTS' };
 
 // Ennemis : points gagnés, résistance (nombre de dégâts), chance de laisser un bonus
 export const ENEMIES = {

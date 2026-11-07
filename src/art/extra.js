@@ -58,7 +58,7 @@
     }
     return p;
   };
-  // gros dragibus avec reflet
+  // grosse bonbille avec reflet
   S.bigDrag = function (f) {
     var p = new Pix(9, 8), c = [P.r, P.y, P.g, P.b, P.u, P.o][f % 6];
     p.ell(4.5, 4, 4, 3.2, function (x, y, dx, dy) { return dy > 0.45 ? FC.mix(c, P.K, 0.3) : c; });

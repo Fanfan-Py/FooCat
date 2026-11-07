@@ -1010,7 +1010,7 @@ export class World implements BossHost, SkelHost, ScorpHost {
         if (s.kind === 'pinata' && s.life <= 0 && s.x < C.W) this.pinataBurst(s, null, born); // éclate au bout de sa course
         continue;
       }
-      // les dragibus rebondissent sur le haut, le bas et le sol
+      // les bonbilles rebondissent sur le haut, le bas et le sol
       if (s.kind === 'drag' && s.g && s.y > bottom - 8 && s.vy > 0) { // par terre : rebonds de plus en plus petits
         if (s.bounces > 0) { s.y = bottom - 8; s.vy = -s.vy * C.WEAPONS.drag.lob.keep; s.bounces--; this.sfx.play('bounce'); }
         else { s.dead = true; this.burst(s.x + 4, bottom - 2, 5, [FC.P.W, FC.P.v], 30); continue; }
@@ -1063,7 +1063,7 @@ export class World implements BossHost, SkelHost, ScorpHost {
     this.sfx.play('pop');
   }
 
-  // rebond d'un dragibus sur un obstacle
+  // rebond d'une bonbille sur un obstacle
   private bounceOff(s: Shot, sb: Box, o: Obstacle, shape: Shape) {
     const px = sb.x + sb.w / 2, py = sb.y + sb.h / 2;
     let nx: number, ny: number;
@@ -1167,7 +1167,7 @@ export class World implements BossHost, SkelHost, ScorpHost {
     let label = '';
     switch (b.kind) {
       case 'verm': h.ammo.verm = Math.min(W.verm.max, h.ammo.verm + W.verm.pickup); label = '+' + W.verm.pickup + ' VERMICELLES'; break;
-      case 'drag': h.ammo.drag = Math.min(W.drag.max, h.ammo.drag + W.drag.pickup); label = '+' + W.drag.pickup + ' DRAGIBUS'; break;
+      case 'drag': h.ammo.drag = Math.min(W.drag.max, h.ammo.drag + W.drag.pickup); label = '+' + W.drag.pickup + ' BONBILLES'; break;
       case 'pinata': h.ammo.pinata = Math.min(W.pinata.max, h.ammo.pinata + W.pinata.pickup); label = '+' + W.pinata.pickup + ' PIÑATAS'; break;
       case 'jaw': h.ammo.jaw = Math.min(W.jaw.max, h.ammo.jaw + W.jaw.pickup); label = '+1 CASSE-DENTS'; break;
       case 'heart': h.energy = h.energyMax; label = 'ÉNERGIE'; break;
