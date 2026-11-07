@@ -441,11 +441,21 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 - [x] Une musique pour chaque niveau secret : une marche pour l'invasion, un air sautillant pour le casse-bonbons.
 
 ## Idées d'améliorations (maquette « Idées d'améliorations »)
-- [ ] 1 · **Succès des niveaux secrets** (page 3 de l'écran Succès) : 100 monstres dans une partie d'invasion
-      (soucoupe Berlingot), vague 10, vaincre la guimauve géante (chat Guimauve), finir les 9 tableaux du
-      casse-bonbons (soucoupe Sucre d'orge), un tableau sans perdre de cœur, 50 monstres du casse-bonbons au total.
+- [ ] 1 · **Succès des niveaux secrets** (page 3 de l'écran Succès) : 100 monstres dans une partie d'invasion,
+      vague 10, vaincre la guimauve géante, finir les 9 tableaux du casse-bonbons, un tableau sans perdre de cœur,
+      50 monstres du casse-bonbons au total.
+- [ ] 1b · **Une récompense pour chaque succès** (maquette du même nom) : 14 nouvelles récompenses.
+      - 7 soucoupes, glaçage ET beignet repeints : étoilée (Trois étoiles), piñata (Fiesta !),
+        casse-dents (Casse-planètes), vagues (Vagues parfaites), gourmande (Gourmand),
+        berlingot (En défense), sucre d'orge (Casse-tout).
+      - 6 costumes de chat : pirate (poisson squelette), dragon (Scorpion de feu), arc-en-ciel (Tout en couleurs),
+        abeille (Vague 10), guimauve (Roi de la guimauve), zèbre (Sans bavure).
+      - Un nouveau personnage : le pingouin dans sa soucoupe macaron (Chasseur de monstres).
+      - Les rangées de l'écran Apparence deviennent trop longues : elles défileront.
 - [ ] 2 · **Capsule cœur** dans le casse-bonbons : rare (environ une sur 20), un cœur en plus (6 au plus).
-- [ ] 3 · **La guimauve géante** : un boss toutes les 10 vagues de l'invasion (gerbes de gouttes, escorte, jauge de vie).
+- [ ] 3 · **La guimauve géante** : un boss toutes les 10 vagues de l'invasion. Une guimauve en cylindre,
+      couronnée, avec un sceptre-sucette ; elle se dandine, lance des gerbes de gouttes et des petites guimauves,
+      et se fait croquer à mesure qu'elle perd de la vie (nom et jauge en haut de l'écran).
 - [x] 4 · Une musique pour chaque niveau secret.
 - [ ] 5 · **L'aide sur téléphone** au premier lancement (joystick, TIR, ARME, CASSE, pause) ; à revoir dans les Réglages.
 
