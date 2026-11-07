@@ -440,6 +440,15 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
       elle reprend la vitesse d'avant.
 - [x] Une musique pour chaque niveau secret : une marche pour l'invasion, un air sautillant pour le casse-bonbons.
 
+## Idées d'améliorations (maquette « Idées d'améliorations »)
+- [ ] 1 · **Succès des niveaux secrets** (page 3 de l'écran Succès) : 100 monstres dans une partie d'invasion
+      (soucoupe Berlingot), vague 10, vaincre la guimauve géante (chat Guimauve), finir les 9 tableaux du
+      casse-bonbons (soucoupe Sucre d'orge), un tableau sans perdre de cœur, 50 monstres du casse-bonbons au total.
+- [ ] 2 · **Capsule cœur** dans le casse-bonbons : rare (environ une sur 20), un cœur en plus (6 au plus).
+- [ ] 3 · **La guimauve géante** : un boss toutes les 10 vagues de l'invasion (gerbes de gouttes, escorte, jauge de vie).
+- [x] 4 · Une musique pour chaque niveau secret.
+- [ ] 5 · **L'aide sur téléphone** au premier lancement (joystick, TIR, ARME, CASSE, pause) ; à revoir dans les Réglages.
+
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
 - [x] Un **chronomètre** et un **record par boss**, plus un record « les 3 à la suite ».
