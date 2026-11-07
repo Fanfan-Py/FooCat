@@ -349,25 +349,24 @@ Points d'attention :
 
 # Récompenses secrètes et nouveau nom des dragibus (plan du 7 novembre 2026)
 
-Maquettes : planches « Récompenses secrètes », « Écran Code secret » et « Le niveau secret ».
+Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Code secret »,
+« Niveau secret 1 · L'invasion des bonbons », « Niveau secret 2 · Le casse-bonbons » et « Mode boss ».
 
-## Étape A : un nouveau nom pour les dragibus
-« Dragibus » est une vraie marque de bonbons. Propositions (à choisir) :
-- **Bonbilles** (bonbon + billes : des bonbons qui rebondissent comme des billes) — ma préférée ;
-- **Boules de gomme** (nom courant, pas une marque, mais plus long) ;
-- **Gélibonds** (gelée + bonds).
-
-- [ ] Changer le nom partout : écran de pause, messages, succès, README.
+## Étape A : les dragibus deviennent les **bonbilles**
+« Dragibus » est une vraie marque de bonbons : on les appelle désormais **bonbilles**
+(bonbon + billes : des bonbons qui rebondissent comme des billes).
+- [ ] Changer le nom partout : écran de pause, messages, succès, README, maquettes (fait sur la planche des objets).
 
 ## Étape B : les codes secrets
-- [ ] Un écran « Code secret » : on tape un code ; s'il est bon, « Code accepté ! » et la récompense se débloque.
+- [ ] Une ligne « Code secret » dans l'écran **Réglages** : on tape un code ; s'il est bon,
+      « Code accepté ! » et la récompense se débloque.
 - [ ] Un code débloque **une seule** récompense ; **plusieurs codes** peuvent débloquer la même.
 - [ ] Les codes ne s'usent pas (le jeu tourne dans le navigateur, sans serveur) ; la récompense reste
       débloquée sur l'appareil, comme les succès.
 - [ ] **Dépôt public** : les codes ne sont jamais écrits en clair dans le jeu. On n'y garde qu'une
       « empreinte » de chaque code (impossible à retourner pour retrouver le code). La liste des vrais codes
       reste chez toi, hors du dépôt ; la vérification avant commit les bloquera s'ils se glissaient dans un fichier.
-- [ ] L'écran montre les récompenses secrètes trouvées (« 1/3 ») ; les autres restent des « ? ».
+- [ ] L'écran montre les récompenses secrètes trouvées (« 1/6 ») ; les autres restent des « ? ».
 
 ## Étape C : les personnages secrets
 - [ ] **Le roi crapaud** dans sa **cacahuète spatiale** (avec sa couronne).
@@ -375,18 +374,39 @@ Maquettes : planches « Récompenses secrètes », « Écran Code secret » et �
 - [ ] Ils remplacent à la fois le chat et sa soucoupe : un onglet « SPÉCIAL » dans l'écran Apparence.
       Même taille et mêmes réglages que le chat (rien ne change pour la difficulté).
 
-## Étape D : le niveau secret (tir vers le haut)
+## Étape D : la soucoupe disco et le petit compagnon
+- [ ] **La soucoupe disco** : une soucoupe boule à facettes avec des reflets de couleur ; elle s'ajoute aux
+      soucoupes de l'écran Apparence (le chat reste le même). Débloquée par un code.
+- [ ] **Le petit compagnon** : une papillote volante à hélice qui suit le chat et tire des vermicelles avec lui
+      (un peu moins fort que le chat). On peut l'activer ou non dans l'écran Apparence. Débloqué par un code.
+
+## Étape E : niveau secret 1, « L'invasion des bonbons » (tir vers le haut)
 - [ ] Pas d'obstacles. Le personnage reste **en bas** et se déplace **de gauche à droite**.
 - [ ] Seule arme : les **vermicelles, en illimité**, tirés vers le haut.
 - [ ] Les monstres, en bonbons (berlingots, guimauves, roues de réglisse), **descendent par vagues** en ondulant ;
-      certains plongent ou lâchent des bonbons. Il faut les abattre **avant qu'ils touchent la ligne rouge** en bas.
+      certains plongent ou lâchent des bonbons.
+- [ ] Un monstre qui touche la **ligne rouge** en bas fait **perdre un cœur**.
+- [ ] Le niveau est **sans fin** : les vagues vont de plus en plus vite, et on **gagne un cœur tous les
+      50 monstres abattus**.
 - [ ] Les lettres **FANFAN PY** servent de **bouclier** : elles s'abîment morceau par morceau.
-- [ ] Un **compteur de monstres abattus** en haut ; les vagues vont de plus en plus vite.
+- [ ] Un **compteur de monstres abattus** en haut.
 - [ ] Un tableau des meilleurs scores pour ce niveau (le nombre de monstres abattus).
+- [ ] Débloqué par un code ; ensuite, il se lance depuis l'écran d'accueil (ligne « MODE »).
 
-## Idées en plus (à choisir)
-1. **Des soucoupes secrètes** à débloquer aussi avec des codes (par exemple une soucoupe boule à facettes).
-2. **Les fêtes du calendrier** : des citrouilles dans le décor à Halloween, de la neige en décembre, automatiquement.
-3. **Une galerie** : revoir les BD déjà vues et écouter les musiques du jeu.
-4. **Le mode « boss »** : rejouer seulement les boss déjà vaincus, contre la montre.
-5. **Un petit compagnon** (un bonbon volant qui tire à côté du chat), débloqué par un code.
+## Étape F : niveau secret 2, « Le casse-bonbons »
+- [ ] La **soucoupe sert de raquette** en bas de l'écran et renvoie une **bonbille** qui rebondit.
+- [ ] Un mur de **briques en bonbons** : chocolat, fraise, menthe, citron ; les **sucres** (blancs) demandent
+      2 coups ; le **caramel doré** est incassable.
+- [ ] Des **capsules-bonus** tombent des briques cassées : soucoupe plus large, 3 bonbilles à la fois,
+      bonbille qui traverse tout.
+- [ ] **Bonbille perdue = un cœur en moins.** Quand le mur est vide, on passe au tableau suivant, plus dur.
+- [ ] Un tableau des meilleurs scores. Débloqué par un code ; il se lance comme l'invasion des bonbons.
+
+## Étape G : le mode boss (contre la montre)
+- [ ] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
+- [ ] Un **chronomètre** et un **record par boss**, plus un record « les 3 à la suite ».
+- [ ] Un boss pas encore vaincu reste grisé (« À vaincre d'abord »).
+- [ ] Ce mode n'a pas besoin de code : il apparaît dès qu'un boss est vaincu.
+
+## Idées écartées
+- Les fêtes du calendrier (décor d'Halloween, neige en décembre) et la galerie des BD et des musiques.
