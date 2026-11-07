@@ -300,6 +300,8 @@ export const SKEL = { hp: 200, points: 15000, contact: 2 };
 // Le boss du niveau 15 : le Scorpion volant de feu (3 formes ; hp pour chacune) ; breath : longueur du jet de feu
 // Niveau 16 : les 3 boss à la suite (vie un peu réduite), pause entre deux boss (secondes)
 export const RUSH = { order: ['spider', 'skel', 'scorp'] as const, hp: 0.75, pause: 4.5 };
+// le petit compagnon (récompense secrète) : tirs par seconde, dégâts (par rapport à un vermicelle du chat)
+export const BUDDY = { rate: 4, dmg: 0.6 };
 export const SCORP = { hp: 100, points: 20000, contact: 2, fire: 1, breath: 80 };
 
 // La ceinture de donuts : des colonnes de planètes avec un passage qui ondule

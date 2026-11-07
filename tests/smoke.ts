@@ -7,6 +7,8 @@ import { App, AppInput } from '../src/game/app';
 import { W, H, LEVELS, Mode, LAVA } from '../src/game/config';
 import { endlessZone, dailySetup } from '../src/game/modes';
 import { savePng } from './png';
+import { Invasion } from '../src/game/invasion';
+import { Casse } from '../src/game/casse';
 
 const sfx = { play() { } };
 const STEP = 1 / 60;
@@ -138,7 +140,7 @@ if (process.env.CAMP) {
   }
 }
 
-for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || process.env.DAILY || process.env.CAMP ? 0 : Number(process.env.TO || LEVELS.length)); lv++) {
+for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || process.env.DAILY || process.env.CAMP || process.env.SECRET ? 0 : Number(process.env.TO || LEVELS.length)); lv++) {
   let cleared = 0, time = 0; const causes: Record<string, number> = {};
   for (let seed = 1; seed <= runs; seed++) {
     const w = new World(sfx, { level: lv, seed: seed * 977 + lv, mode, rushFrom: Number(process.env.RUSHFROM || 0) });
@@ -158,6 +160,49 @@ for (let lv = Number(process.env.FROM || 0); lv < (process.env.ENDLESS || proces
   }
   console.log(`niveau ${lv + 1} (${mode}) : terminé ${cleared}/${runs} fois, durée moyenne ${Math.round(time / runs)} s`);
   if (process.env.CAUSES) console.log('   coups reçus :', Object.entries(causes).sort((a, b) => b[1] - a[1]).map(([k, n]) => `${k} ${n}`).join(', '));
+}
+
+// niveaux secrets et mode boss (SECRET=1) : un robot joue l'invasion des bonbons, le casse-bonbons,
+// et chaque combat du mode boss (contre la montre)
+if (process.env.SECRET) {
+  const scr = new FC.Pix(W, H), hero = () => FC.spr('hero', 0);
+  const res: string[] = [];
+  for (let seed = 1; seed <= runs; seed++) {
+    const g = new Invasion(sfx, seed); let t = 0;
+    while (t < 1200 && g.state !== 'over') {
+      // il se place sous le monstre le plus bas, et s'écarte des gouttes qui arrivent sur lui
+      const h = g.hero, low = g.foes.filter((f) => !f.dead).sort((a, b) => b.y - a.y)[0];
+      let want = low ? low.x - 12 : 140;
+      const danger = g.drops.filter((d) => d.y > 70 && d.x > h.x - 4 && d.x < h.x + 36);
+      if (danger.length) want = danger[0].x > h.x + 18 ? h.x - 40 : h.x + 40;
+      g.update(STEP, { dx: Math.max(-1, Math.min(1, (want - h.x) / 8)), dy: 0, fire: true, special: false, swap: false, select: -1 }); t += STEP;
+      if (shotsDir && seed === 1 && Math.abs(t - 40) < STEP / 2) { g.draw(scr, hero); savePng(scr, 3, shotsDir + '/invasion.png'); }
+    }
+    res.push(`${g.kills} monstres (vague ${g.wave}, ${Math.round(t)} s)`);
+  }
+  console.log('invasion des bonbons :', res.join(' · '));
+  res.length = 0;
+  for (let seed = 1; seed <= runs; seed++) {
+    const g = new Casse(sfx, seed); let t = 0;
+    while (t < 1200 && g.state !== 'over') {
+      // il suit la bonbille la plus basse qui descend (un peu en retard, comme un joueur)
+      const b = g.balls.filter((x) => !x.stuck).sort((a, c) => c.y - a.y)[0], cx = g.paddle.x + 20;
+      const want = b ? b.x + Math.sin(t * 0.9) * 10 : 160;
+      g.update(STEP, { dx: Math.max(-1, Math.min(1, (want - cx) / 6)), dy: 0, fire: t % 3 < 0.1, special: false, swap: false, select: -1 }); t += STEP;
+      if (shotsDir && seed === 1 && Math.abs(t - 30) < STEP / 2) { g.draw(scr, hero); savePng(scr, 3, shotsDir + '/casse.png'); }
+    }
+    res.push(`tableau ${g.tableau}, score ${g.score} (${Math.round(t)} s)`);
+  }
+  console.log('casse-bonbons :', res.join(' · '));
+  for (const [from, to] of [[0, 0], [1, 1], [2, 2], [0, 2]]) {
+    let ok = 0, time = 0;
+    for (let seed = 1; seed <= runs; seed++) {
+      const w = new World(sfx, { bossRun: { from, to }, seed, buddy: seed % 2 === 0 }); let t = 0;
+      while (t < 900 && w.state !== 'over' && !(w.state === 'cleared' && w.stateT > 3)) { w.update(STEP, robot(w, t)); t += STEP; }
+      if (w.state === 'cleared') { ok++; time += w.bossTime; }
+    }
+    console.log(`mode boss ${from === to ? 'boss ' + (from + 1) : 'les 3 à la suite'} : gagné ${ok}/${runs}` + (ok ? `, temps moyen ${Math.round(time / ok)} s` : ''));
+  }
 }
 
 // Captures d'écran de chaque niveau, via l'application complète

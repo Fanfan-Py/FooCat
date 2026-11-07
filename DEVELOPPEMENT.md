@@ -40,6 +40,23 @@ Options (à mettre devant la commande, par exemple `MODE=facile RUNS=12 npm test
 | `ENDLESS=1` / `DAILY=1` | mode infini / défis des 7 prochains jours |
 | `RUSHFROM=1` | niveau 16 : commencer au 2e boss (`2` : au 3e) |
 | `DEBUGLAVA=1` | explique chaque brûlure par une coulée de lave |
+| `SECRET=1` | les niveaux secrets (invasion des bonbons, casse-bonbons) et le mode boss |
+| `SHOTS=dossier` | des captures d'écran (avec `SECRET=1` : celles des niveaux secrets) |
+
+### Les récompenses secrètes
+
+Elles se débloquent seulement avec un code (`src/game/secrets.ts`) : le roi crapaud, le fantôme,
+la soucoupe disco, le petit compagnon et les deux niveaux secrets (`src/game/invasion.ts`, `src/game/casse.ts`).
+Les dessins sont dans `src/art/secret.js`.
+
+Le dépôt est public : **les codes ne sont jamais écrits en clair**. `secrets.ts` ne garde que leur empreinte
+(SHA-256 de `foocat-secret:` suivi du code en majuscules, sans espaces ni tirets). Pour ajouter un code :
+
+    node -e 'const c=process.argv[1].toUpperCase().replace(/[^A-Z0-9]/g,"");console.log(require("crypto").createHash("sha256").update("foocat-secret:"+c).digest("hex"))' MON-CODE
+
+puis ajouter l'empreinte dans `CODES` avec la récompense, et le code lui-même (avec et sans tiret) dans
+`.git/private-patterns`, pour que la vérification avant commit le bloque s'il se glissait dans un fichier.
+Un code débloque une seule récompense ; plusieurs codes peuvent débloquer la même.
 
 ## Confidentialité (dépôt public)
 

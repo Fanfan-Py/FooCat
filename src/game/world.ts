@@ -50,7 +50,9 @@ export function shotBox(s: Shot): Box {
 
 // setup : niveau et difficulté sur mesure (mode infini, défi du jour)
 // rushFrom : niveau 16, reprendre directement au boss n° rushFrom (après un game over)
-export interface WorldOptions { level?: number; seed?: number; mode?: C.Mode; carry?: Carry; setup?: Setup; rushFrom?: number }
+// buddy : le petit compagnon (récompense secrète) vole à côté du chat et tire avec lui
+// bossRun : mode boss, du boss n° from au boss n° to (dans le vaisseau du niveau 16), contre la montre
+export interface WorldOptions { level?: number; seed?: number; mode?: C.Mode; carry?: Carry; setup?: Setup; rushFrom?: number; buddy?: boolean; bossRun?: { from: number; to: number } }
 
 const RUSH_NAMES = ["L'ARAIGNÉE DE FER", 'LE POISSON SQUELETTE', 'LE SCORPION DE FEU'];
 
@@ -93,16 +95,26 @@ export class World implements BossHost, SkelHost, ScorpHost {
   rushIdx = 0; // niveau 16 : numéro du boss en cours (0, 1, 2)
   private rushPause = 0;
   private rushDone = false;
+  private rushTo = C.RUSH.order.length - 1; // dernier boss à combattre (mode boss)
+  private rushHp = C.RUSH.hp;
+  bossRun = false;
+  bossT0 = -1; // mode boss : moment où le premier boss arrive (début du chrono)
+  buddy: { x: number; y: number; cd: number } | null = null;
   // anti-planque : temps passé collé au bord du haut ou du bas
   private edge = { side: 0, t: 0 };
   private rnd: () => number;
 
   constructor(private sfx: Sfx, o: WorldOptions = {}) {
     this.rnd = FC.rng(o.seed ?? Date.now() % 100000);
+    if (o.bossRun) { // mode boss : le vaisseau des boss, directement au combat
+      o = { ...o, level: C.LEVELS.findIndex((l) => l.boss === 'rush'), rushFrom: o.bossRun.from };
+      this.bossRun = true; this.rushTo = o.bossRun!.to;
+      if (o.bossRun!.from === o.bossRun!.to) this.rushHp = 1; // un seul boss : en entier
+    }
     this.levelIndex = o.setup ? o.setup.levelIndex : Math.min(o.level ?? 0, C.LEVELS.length - 1);
     this.level = o.setup ? o.setup.level : C.LEVELS[this.levelIndex];
     this.mode = o.setup ? o.setup.mode : C.MODES[o.mode ?? 'normal'];
-    this.label = o.setup ? o.setup.label : 'NIV.' + this.level.num;
+    this.label = o.setup ? o.setup.label : this.bossRun ? 'BOSS' : 'NIV.' + this.level.num;
     if (o.rushFrom && this.level.boss === 'rush') this.rushIdx = o.rushFrom; // reprise au boss en cours
     const W = C.WEAPONS, carry = o.carry;
     this.score = this.startScore = carry ? carry.score : 0;
@@ -115,8 +127,12 @@ export class World implements BossHost, SkelHost, ScorpHost {
       ammo: carry ? { ...carry.ammo, pinata: carry.ammo.pinata ?? W.pinata.start } : { verm: W.verm.start, drag: W.drag.start, pinata: W.pinata.start, jaw: W.jaw.start },
     };
     if (this.hero.ammo.verm <= 0 && this.hero.ammo.drag > 0) this.hero.weapon = 'drag';
-    if (o.rushFrom && this.level.boss === 'rush') this.startScore -= this.level.points; // on passe directement au combat
+    if ((o.rushFrom || this.bossRun) && this.level.boss === 'rush') this.startScore -= this.level.points; // on passe directement au combat
+    if (o.buddy) this.buddy = { x: this.hero.x - 10, y: this.hero.y - 14, cd: 0 };
   }
+  // mode boss : temps du combat (depuis l'arrivée du premier boss)
+  get bossTime() { return this.bossT0 < 0 ? 0 : (this.state === 'cleared' ? this.clearedAt : this.t) - this.bossT0; }
+  private clearedAt = 0;
 
   carry(): Carry { const h = this.hero; return { score: this.score, lives: Math.max(1, h.lives), ammo: { ...h.ammo } }; }
   get progress() { return Math.max(0, Math.min(1, (this.score - this.startScore) / this.level.points)); }
@@ -151,7 +167,7 @@ export class World implements BossHost, SkelHost, ScorpHost {
     if (this.boss) { this.updateBoss(dt); this.updateRush(dt); }
 
     if (this.state === 'play' && !this.belt.active && (this.level.boss === 'rush' ? this.rushDone : this.level.boss ? !!this.boss?.dead : this.progress >= 1)) {
-      this.state = 'cleared'; this.stateT = 0;
+      this.state = 'cleared'; this.stateT = 0; this.clearedAt = this.t;
       this.eshots = [];
       for (const e of this.enemies) e.holdT = 0;
       this.sfx.play('level');
@@ -198,11 +214,27 @@ export class World implements BossHost, SkelHost, ScorpHost {
     }
 
     if (c.fire && h.fireCD <= 0) this.fire(h.weapon);
+    this.updateBuddy(dt, c.fire);
     if (c.special && h.jawCD <= 0 && h.ammo.jaw > 0) {
       const J = C.WEAPONS.jaw;
       h.ammo.jaw--; h.jawCD = 1 / J.rate; this.stats.shots++;
       this.shots.push({ kind: 'jaw', x: h.x + 32, y: h.y + 9, vx: J.speed, vy: 0, dmg: J.dmg, life: 4, age: 0, frame: 0, bounces: 0, hit: [], dead: false });
       this.sfx.play('jaw');
+    }
+  }
+
+  // le petit compagnon suit le chat (un peu au-dessus, derrière) et tire des vermicelles quand le chat tire
+  private updateBuddy(dt: number, fire: boolean) {
+    const b = this.buddy, h = this.hero;
+    if (!b) return;
+    const tx = h.x - 6, ty = Math.max(this.top, h.y - 16);
+    b.x += (tx - b.x) * Math.min(1, dt * 5); b.y += (ty - b.y) * Math.min(1, dt * 5);
+    b.cd -= dt;
+    if (fire && b.cd <= 0 && h.dead <= 0) {
+      const V = C.WEAPONS.verm;
+      b.cd = 1 / C.BUDDY.rate;
+      // (touched : ses tirs ne comptent pas dans la précision du chat)
+      this.shots.push({ kind: 'verm', x: b.x + 16, y: b.y + 8, vx: V.speed, vy: 0, dmg: V.dmg * C.BUDDY.dmg, life: 1.4, age: 0, frame: this.shotSeq % 7, bounces: 0, hit: [], dead: false, src: ++this.shotSeq, touched: true });
     }
   }
 
@@ -1321,15 +1353,16 @@ export class World implements BossHost, SkelHost, ScorpHost {
   }
 
   private spawnBoss(kind: 'spider' | 'skel' | 'scorp') {
-    const hpMul = (this.mode.bossHp ?? 1) * (this.level.boss === 'rush' ? C.RUSH.hp : 1);
+    const hpMul = (this.mode.bossHp ?? 1) * (this.level.boss === 'rush' ? this.rushHp : 1);
+    if (this.bossT0 < 0) this.bossT0 = this.t;
     this.boss = kind === 'skel' ? new SkelBoss(this.top, this.floor, hpMul) : kind === 'scorp' ? new ScorpBoss(this.top, this.floor, hpMul) : new Boss(hpMul);
     this.sfx.play('alarm'); this.sfx.music?.(kind === 'spider' ? 'boss' : kind === 'skel' ? 'skelboss' : 'scorpboss');
-    if (this.level.boss === 'rush') this.say('BOSS ' + (this.rushIdx + 1) + '/3 : ' + RUSH_NAMES[this.rushIdx] + ' !');
+    if (this.level.boss === 'rush') this.say(this.bossRun && this.rushHp === 1 ? RUSH_NAMES[this.rushIdx] + ' !' : 'BOSS ' + (this.rushIdx + 1) + '/3 : ' + RUSH_NAMES[this.rushIdx] + ' !');
   }
   // niveau 16 : une pause avec des bonus, puis le boss suivant
   private updateRush(dt: number) {
     if (this.level.boss !== 'rush' || this.rushDone || !this.boss?.dead) return;
-    if (this.rushIdx >= C.RUSH.order.length - 1) { this.rushDone = true; return; }
+    if (this.rushIdx >= this.rushTo) { this.rushDone = true; return; }
     if (this.rushPause <= 0) {
       this.rushPause = C.RUSH.pause;
       this.spawnBonus(C.W + 4, 60, this.level.scroll * 0.8, 'heart'); this.spawnBonus(C.W + 40, 100, this.level.scroll * 0.8, 'verm');

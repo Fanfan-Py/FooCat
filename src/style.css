@@ -54,6 +54,7 @@ body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit
   padding: 8px; border-radius: 10px; border: 2px solid #6fd0ff; background: #0b0a26; color: #ffffff; -webkit-user-select: text; user-select: text; }
 #nf-input:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 #nf-error { min-height: 1.3em; color: #ff9cc8; font-size: 14px; }
+#nf-error.ok { color: #7dffa8; }
 #name-form .nf-buttons { display: flex; gap: 10px; justify-content: center; }
 #name-form button { min-height: 44px; padding: 0 18px; border-radius: 10px; font: 800 15px ui-rounded, system-ui, sans-serif; cursor: pointer; }
 #name-form .nf-ok { background: #ff4f9a; color: #ffffff; border: 2px solid #1b1030; }

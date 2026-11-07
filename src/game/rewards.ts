@@ -94,12 +94,24 @@ export const CATS: CatSkin[] = [
 export function catUnlockedBy(id: string) { return ACHIEVEMENTS.find((a) => a.cat === id); }
 export function loadCat() { try { return localStorage.getItem('foocat.cat') || 'classic'; } catch { return 'classic'; } }
 export function saveCat(id: string) { try { localStorage.setItem('foocat.cat', id); } catch { /* stockage indisponible */ } }
+// ---------- l'onglet SPÉCIAL de l'écran Apparence (récompenses secrètes) ----------
+export interface SpecialItem { id: 'toad' | 'ghost' | 'disco' | 'buddy'; name: string; desc: string }
+export const SPECIALS: SpecialItem[] = [
+  { id: 'toad', name: 'ROI CRAPAUD', desc: 'UN CRAPAUD COURONNÉ DANS SA CACAHUÈTE SPATIALE' },
+  { id: 'ghost', name: 'FANTÔME', desc: 'UN PETIT FANTÔME DANS SA CITROUILLE SPATIALE' },
+  { id: 'disco', name: 'SOUCOUPE DISCO', desc: 'UNE SOUCOUPE BOULE À FACETTES' },
+  { id: 'buddy', name: 'COMPAGNON', desc: 'UNE PAPILLOTE VOLANTE QUI TIRE AVEC TOI' },
+];
 export function loadSkin() { try { return localStorage.getItem('foocat.skin') || 'classic'; } catch { return 'classic'; } }
 export function saveSkin(id: string) { try { localStorage.setItem('foocat.skin', id); } catch { /* stockage indisponible */ } }
 
 const same = (d: Uint8ClampedArray, i: number, c: Color) => d[i] === c[0] && d[i + 1] === c[1] && d[i + 2] === c[2] && d[i + 3] === 255;
 // le chat licorne (à sa couleur) dans sa soucoupe (aux couleurs de la soucoupe choisie)
+// (catId peut aussi être un personnage secret : 'toad', 'ghost' ; skinId peut être la soucoupe disco)
 export function heroSprite(skinId: string, f: number, catId = 'classic'): Pix {
+  if (catId === 'toad') return FC.spr('toadHero', f);
+  if (catId === 'ghost') return FC.spr('ghostHero', f);
+  if (skinId === 'disco') return FC.discoHero(f, catId);
   const skin = SKINS.find((s) => s.id === skinId);
   if (!skin || skin.id === 'classic') return FC.catHero(f, catId);
   return FC.mk('hero_' + skin.id + '_' + catId + '_' + f, () => {

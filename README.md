@@ -14,6 +14,8 @@ Au choix sur la ligne « MODE » de l'accueil :
 - **Infini** : des zones sans fin (les niveaux sans boss, en boucle), de plus en plus dures.
 - **Défi du jour** : le même niveau, le même hasard et la même règle spéciale (turbo, fragile, pluie de bonus,
   la horde) pour tout le monde pendant une journée, avec un tableau des scores du jour (`src/game/modes.ts`).
+- **Boss** : rejouer les boss déjà vaincus, contre la montre, avec un record par boss et un record
+  « les 3 à la suite » (il apparaît dès qu'un boss est vaincu).
 
 « Continuer » reprend au début du dernier niveau atteint (une sauvegarde par mode).
 
@@ -70,7 +72,11 @@ Au choix sur la ligne « MODE » de l'accueil :
   fantôme, squelette). Les soucoupes et les chats se gagnent avec les **succès** (21, sur 2 pages).
 - **Meilleurs scores** : enregistrés sur chaque appareil (pas de compte), avec un pseudonyme filtré
   (pas de gros mots ni d'insultes).
-- **Réglages** : volume de la musique et des effets, tir automatique, commandes pour gaucher, vibrations.
+- **Réglages** : volume de la musique et des effets, tir automatique, commandes pour gaucher, vibrations,
+  et la ligne **Code secret**.
+- **Récompenses secrètes** : 6 surprises qui se débloquent seulement avec un code secret
+  (des personnages, une soucoupe, un compagnon, des niveaux secrets…). Elles apparaissent dans l'onglet
+  « Spécial » de l'écran Apparence, ou comme nouveaux modes à l'accueil.
 
 ## Commandes
 

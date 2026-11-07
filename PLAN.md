@@ -358,55 +358,56 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 - [x] Changer le nom partout : écran de pause, messages, README, maquettes.
 
 ## Étape B : les codes secrets
-- [ ] Une ligne « Code secret » dans l'écran **Réglages** : on tape un code ; s'il est bon,
+- [x] Une ligne « Code secret » dans l'écran **Réglages** : on tape un code ; s'il est bon,
       « Code accepté ! » et la récompense se débloque.
-- [ ] Un code débloque **une seule** récompense ; **plusieurs codes** peuvent débloquer la même.
-- [ ] Les codes ne s'usent pas (le jeu tourne dans le navigateur, sans serveur) ; la récompense reste
+- [x] Un code débloque **une seule** récompense ; **plusieurs codes** peuvent débloquer la même.
+- [x] Les codes ne s'usent pas (le jeu tourne dans le navigateur, sans serveur) ; la récompense reste
       débloquée sur l'appareil, comme les succès.
-- [ ] **Dépôt public** : les codes ne sont jamais écrits en clair dans le jeu. On n'y garde qu'une
+- [x] **Dépôt public** : les codes ne sont jamais écrits en clair dans le jeu. On n'y garde qu'une
       « empreinte » de chaque code (impossible à retourner pour retrouver le code). La liste des vrais codes
       reste chez toi, hors du dépôt ; la vérification avant commit les bloquera s'ils se glissaient dans un fichier.
-- [ ] L'écran montre les récompenses secrètes trouvées (« 1/6 ») ; les autres restent des « ? ».
+- [x] L'écran montre les récompenses secrètes trouvées (« 1/6 ») ; les autres restent des « ? ».
 
 ## Étape C : les personnages secrets
-- [ ] **Le roi crapaud** dans sa **cacahuète spatiale** (avec sa couronne).
-- [ ] **Le fantôme** dans sa **citrouille spatiale** (visage sculpté qui brille).
-- [ ] Ils remplacent à la fois le chat et sa soucoupe : un onglet « SPÉCIAL » dans l'écran Apparence.
+- [x] **Le roi crapaud** dans sa **cacahuète spatiale** (avec sa couronne).
+- [x] **Le fantôme** dans sa **citrouille spatiale** (visage sculpté qui brille).
+- [x] Ils remplacent à la fois le chat et sa soucoupe : un onglet « SPÉCIAL » dans l'écran Apparence
+      (avec la soucoupe disco et le compagnon).
       Même taille et mêmes réglages que le chat (rien ne change pour la difficulté).
 
 ## Étape D : la soucoupe disco et le petit compagnon
-- [ ] **La soucoupe disco** : une soucoupe boule à facettes avec des reflets de couleur ; elle s'ajoute aux
+- [x] **La soucoupe disco** : une soucoupe boule à facettes avec des reflets de couleur ; elle s'ajoute aux
       soucoupes de l'écran Apparence (le chat reste le même). Débloquée par un code.
-- [ ] **Le petit compagnon** : une papillote volante à hélice qui suit le chat et tire des vermicelles avec lui
+- [x] **Le petit compagnon** : une papillote volante à hélice qui suit le chat et tire des vermicelles avec lui
       (un peu moins fort que le chat). On peut l'activer ou non dans l'écran Apparence. Débloqué par un code.
 
 ## Étape E : niveau secret 1, « L'invasion des bonbons » (tir vers le haut)
-- [ ] Pas d'obstacles. Le personnage reste **en bas** et se déplace **de gauche à droite**.
-- [ ] Seule arme : les **vermicelles, en illimité**, tirés vers le haut.
-- [ ] Les monstres, en bonbons (berlingots, guimauves, roues de réglisse), **descendent par vagues** en ondulant ;
+- [x] Pas d'obstacles. Le personnage reste **en bas** et se déplace **de gauche à droite**.
+- [x] Seule arme : les **vermicelles, en illimité**, tirés vers le haut.
+- [x] Les monstres, en bonbons (berlingots, guimauves, roues de réglisse), **descendent par vagues** en ondulant ;
       certains plongent ou lâchent des bonbons.
-- [ ] Un monstre qui touche la **ligne rouge** en bas fait **perdre un cœur**.
-- [ ] Le niveau est **sans fin** : les vagues vont de plus en plus vite, et on **gagne un cœur tous les
+- [x] Un monstre qui touche la **ligne rouge** en bas fait **perdre un cœur**.
+- [x] Le niveau est **sans fin** : les vagues vont de plus en plus vite, et on **gagne un cœur tous les
       50 monstres abattus**.
-- [ ] Les lettres **FANFAN PY** servent de **bouclier** : elles s'abîment morceau par morceau.
-- [ ] Un **compteur de monstres abattus** en haut.
-- [ ] Un tableau des meilleurs scores pour ce niveau (le nombre de monstres abattus).
-- [ ] Débloqué par un code ; ensuite, il se lance depuis l'écran d'accueil (ligne « MODE »).
+- [x] Les lettres **FANFAN PY** servent de **bouclier** : elles s'abîment morceau par morceau.
+- [x] Un **compteur de monstres abattus** en haut.
+- [x] Un tableau des meilleurs scores pour ce niveau (le nombre de monstres abattus).
+- [x] Débloqué par un code ; ensuite, il se lance depuis l'écran d'accueil (ligne « MODE » : INVASION).
 
 ## Étape F : niveau secret 2, « Le casse-bonbons »
-- [ ] La **soucoupe sert de raquette** en bas de l'écran et renvoie une **bonbille** qui rebondit.
-- [ ] Un mur de **briques en bonbons** : chocolat, fraise, menthe, citron ; les **sucres** (blancs) demandent
+- [x] La **soucoupe sert de raquette** en bas de l'écran et renvoie une **bonbille** qui rebondit.
+- [x] Un mur de **briques en bonbons** : chocolat, fraise, menthe, citron ; les **sucres** (blancs) demandent
       2 coups ; le **caramel doré** est incassable.
-- [ ] Des **capsules-bonus** tombent des briques cassées : soucoupe plus large, 3 bonbilles à la fois,
+- [x] Des **capsules-bonus** tombent des briques cassées : soucoupe plus large, 3 bonbilles à la fois,
       bonbille qui traverse tout.
-- [ ] **Bonbille perdue = un cœur en moins.** Quand le mur est vide, on passe au tableau suivant, plus dur.
-- [ ] Un tableau des meilleurs scores. Débloqué par un code ; il se lance comme l'invasion des bonbons.
+- [x] **Bonbille perdue = un cœur en moins.** Quand le mur est vide, on passe au tableau suivant, plus dur.
+- [x] Un tableau des meilleurs scores. Débloqué par un code ; il se lance comme l'invasion des bonbons (MODE : CASSE-BONBONS).
 
 ## Étape G : le mode boss (contre la montre)
-- [ ] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
-- [ ] Un **chronomètre** et un **record par boss**, plus un record « les 3 à la suite ».
-- [ ] Un boss pas encore vaincu reste grisé (« À vaincre d'abord »).
-- [ ] Ce mode n'a pas besoin de code : il apparaît dès qu'un boss est vaincu.
+- [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
+- [x] Un **chronomètre** et un **record par boss**, plus un record « les 3 à la suite ».
+- [x] Un boss pas encore vaincu reste grisé (« À vaincre d'abord »).
+- [x] Ce mode n'a pas besoin de code : il apparaît dès qu'un boss est vaincu (MODE : BOSS).
 
 ## Idées écartées
 - Les fêtes du calendrier (décor d'Halloween, neige en décembre) et la galerie des BD et des musiques.

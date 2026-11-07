@@ -4,7 +4,8 @@
 // tirés d'après la date du jour.
 import * as C from './config';
 
-export type GameMode = C.Mode | 'infini' | 'defi';
+// invasion, casse : les niveaux secrets ; boss : le mode boss (contre la montre)
+export type GameMode = C.Mode | 'infini' | 'defi' | 'invasion' | 'casse' | 'boss';
 export interface ModeCfg { lives: number; energy: number; spawn: number; speed: number; enemyFire: number; obstacle?: number; hp?: number; bossHp?: number; bonus?: number }
 
 // les niveaux sans boss, dans l'ordre du jeu

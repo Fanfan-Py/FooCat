@@ -477,6 +477,7 @@ export function drawWorld(scr: Pix, w: World) {
     const by = Math.round(Math.sin(t * 2.4) * 1.5), op = h.ghost > 0 ? 0.45 : 1;
     FC.trail(scr, h.x + 4, h.y + 25 + by, t);
     scr.blit(heroSprite(heroSkin, Math.floor(t * 5) % 4, heroCat), h.x, h.y + by, false, op);
+    if (w.buddy) scr.blit(FC.spr('companion', Math.floor(t * 12)), Math.round(w.buddy.x), Math.round(w.buddy.y + Math.sin(t * 3) * 2));
     if (h.slow > 0) scr.blit(FC.spr('stuck'), h.x + 8, h.y + 6 + by);
     if (w.level.water) for (let k = 0; k < 4; k++) { // bulles du scaphandre
       const ph = (t * 0.7 + k / 4) % 1;

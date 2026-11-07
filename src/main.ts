@@ -115,7 +115,7 @@ $('stage').addEventListener('pointerdown', (e) => {
   sfx.unlock();
   if (e.pointerType === 'touch') enableTouch();
   if ((e.target as HTMLElement).closest('.tbtn')) return;
-  if (app.state !== 'play') { tapAt(e.clientX, e.clientY); return; }
+  if (!app.playing) { tapAt(e.clientX, e.clientY); return; }
   if (e.pointerType !== 'touch') return;
   const vw = window.innerWidth, onStickSide = mirror ? e.clientX > vw * 0.55 : e.clientX < vw * 0.45;
   if (onStickSide && stickId === null) {
@@ -151,7 +151,7 @@ window.addEventListener('pointercancel', release);
 
 btn.fire.addEventListener('pointerdown', (e) => {
   sfx.unlock(); enableTouch();
-  if (app.state !== 'play') { input.touch.tapX = W / 2; input.touch.tapY = 90; return; }
+  if (!app.playing) { input.touch.tapX = W / 2; input.touch.tapY = 90; return; }
   fireId = e.pointerId; input.touch.fire = true; btn.fire.classList.add('down');
 });
 btn.swap.addEventListener('pointerdown', () => { input.touch.swap = true; });
@@ -178,27 +178,43 @@ for (const ev of ['keydown', 'pointerdown', 'pointerup', 'touchend', 'click']) w
 document.addEventListener('visibilitychange', () => { if (document.hidden) app.pause(); });
 window.addEventListener('blur', () => app.pause());
 
-// ---------- saisie du pseudonyme (nouveau record) ----------
+// ---------- saisie du pseudonyme (nouveau record) ou d'un code secret (même formulaire) ----------
 const nameForm = $<HTMLFormElement>('name-form'), nameInput = $<HTMLInputElement>('nf-input');
-const nameErr = $('nf-error'), nameScore = $('nf-score');
-let nameOpen = false;
+const nameErr = $('nf-error'), nameScore = $('nf-score'), nameTitle = $('nf-title'), nameLabel = $('nf-label'), nameSkip = $('nf-skip');
+let formKind: 'name' | 'code' | null = null;
+const lower = (s: string) => s.charAt(0) + s.slice(1).toLowerCase();
 function syncNameForm() {
-  const req = app.nameRequest;
-  if (req && !nameOpen) {
-    nameOpen = true; nameForm.hidden = false;
-    nameScore.textContent = 'Score : ' + req.score.toLocaleString('fr-FR');
-    nameErr.textContent = ''; nameInput.value = app.lastName;
-    setTimeout(() => { nameInput.focus(); nameInput.select(); }, 60);
-  } else if (!req && nameOpen) {
-    nameOpen = false; nameForm.hidden = true; nameInput.blur();
+  const req = app.nameRequest, want = req ? 'name' : app.codeRequest ? 'code' : null;
+  if (want === formKind) return;
+  formKind = want;
+  if (!want) { nameForm.hidden = true; nameInput.blur(); return; }
+  nameForm.hidden = false; nameErr.textContent = ''; nameErr.classList.remove('ok');
+  if (want === 'name') {
+    nameTitle.textContent = 'Nouveau record !'; nameLabel.textContent = 'Ton pseudonyme (12 lettres au maximum)';
+    nameScore.hidden = false; nameScore.textContent = 'Score : ' + req!.score.toLocaleString('fr-FR');
+    nameInput.maxLength = 12; nameInput.placeholder = 'Pseudonyme'; nameInput.setAttribute('autocomplete', 'nickname');
+    nameInput.value = app.lastName; nameSkip.textContent = 'Passer';
+  } else {
+    nameTitle.textContent = 'Code secret'; nameLabel.textContent = 'Entre un code pour débloquer une récompense';
+    nameScore.hidden = true;
+    nameInput.maxLength = 24; nameInput.placeholder = 'Code'; nameInput.setAttribute('autocomplete', 'off');
+    nameInput.value = ''; nameSkip.textContent = 'Retour';
   }
+  setTimeout(() => { nameInput.focus(); nameInput.select(); }, 60);
 }
 nameForm.addEventListener('submit', (e) => {
   e.preventDefault();
+  if (formKind === 'code') {
+    const r = app.submitCode(nameInput.value);
+    nameErr.textContent = lower(r.text); nameErr.classList.toggle('ok', r.ok);
+    if (r.ok) nameInput.value = '';
+    return;
+  }
   const err = app.submitName(nameInput.value);
-  nameErr.textContent = err ? err.charAt(0) + err.slice(1).toLowerCase() + '.' : '';
+  nameErr.textContent = err ? lower(err) + '.' : '';
 });
-$('nf-skip').addEventListener('click', () => app.skipName());
+nameSkip.addEventListener('click', () => { if (formKind === 'code') app.closeCode(); else app.skipName(); });
+nameInput.addEventListener('keydown', (e) => { if (e.key === 'Escape' && formKind === 'code') { e.preventDefault(); app.closeCode(); } });
 
 // ---------- boucle : logique à 60 images/s, affichage à chaque rafraîchissement ----------
 const STEP = 1 / 60;
