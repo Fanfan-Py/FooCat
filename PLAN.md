@@ -416,17 +416,18 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
       et un piège, **Z** (la soucoupe s'endort et ralentit 3 s, avec une bulle « Z » comme au niveau 8).
 
 ## Étape F3 : tableaux 6 à 9 et monstres (maquette « Casse-bonbons · tableaux 6 à 9 et monstres »)
-- [ ] Une nouvelle brique, la **réglisse** : 3 coups (des fissures apparaissent).
-- [ ] Des **petites briques** (deux fois plus petites) pour écrire des mots.
-- [ ] Tableau 6 **FANFAN PY** : les lettres en petites briques, dans un cadre de caramel incassable
+- [x] Une nouvelle brique, la **réglisse** : 3 coups (des fissures apparaissent).
+- [x] Des **petites briques** (deux fois plus petites) pour écrire des mots.
+- [x] Tableau 6 **FANFAN PY** : les lettres en petites briques, dans un cadre de caramel incassable
       avec trois ouvertures en bas.
-- [ ] Tableau 7 **la mine de caramel** : presque tout en caramel, six sucres cachés dans des galeries.
-- [ ] Tableau 8 **FOOCAT** : en grandes lettres de réglisse, entre deux bandes de sucre.
-- [ ] Tableau 9 **le labyrinthe** : des murs de caramel, des salles de briques à casser ; des ouvertures
+- [x] Tableau 7 **la mine de caramel** : presque tout en caramel, six sucres cachés dans des galeries
+      (élargies après le test du robot : environ 3 minutes pour le finir).
+- [x] Tableau 8 **FOOCAT** : en grandes lettres de réglisse, entre deux bandes de sucre.
+- [x] Tableau 9 **le labyrinthe** : des murs de caramel, des salles de briques à casser ; des ouvertures
       d'une brique de large (vérifié : chaque brique peut être atteinte).
-- [ ] Des **monstres** en bonbons, petits (3 au plus), sortent de **trappes** qui s'ouvrent en haut de l'écran
+- [x] Des **monstres** en bonbons, petits (3 au plus), sortent de **trappes** qui s'ouvrent en haut de l'écran
       et descendent doucement ; ils ne font rien au chat. Quand la bonbille les touche, ils **explosent** (+100)
-      et un nouveau monstre sort d'une trappe.
+      et un nouveau monstre sort d'une trappe. Si la soucoupe touche un monstre, il explose aussi.
 
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.

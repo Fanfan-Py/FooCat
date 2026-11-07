@@ -153,10 +153,41 @@
   var BRICK = {
     choc: [col('7b4a2a'), col('a8703f'), col('4a2614')], fraise: [P.P, P.q, P.i], menthe: [P.g, col('b8f5cc'), P.G],
     citron: [P.y, col('fff3b0'), P.Y], sucre: [P.W, P.W, P.v], caramel: [P.Y, P.y, P.j],
+    reglisse: [col('46365e'), col('9a88ba'), col('1e1530')],
+  };
+  // la brique de réglisse : 3 coups (des fissures apparaissent)
+  function reglisse(scr, x, y, w, h, hp) {
+    var c = BRICK.reglisse;
+    scr.rect(x, y, w, h, c[0]); scr.rect(x, y, w, 1, c[1]); scr.rect(x, y + h - 1, w, 1, c[2]);
+    scr.rect(x, y, 1, h, c[1]); scr.rect(x + w - 1, y, 1, h, c[2]);
+    for (var k = 2; k < w - 1; k += 3) scr.put(x + k, y + Math.floor(h / 2), P.p); // une ligne de sucre rose
+    if (hp < 3) scr.line(x + 2, y + 1, x + 4, y + h - 2, P.v);
+    if (hp < 2) scr.line(x + w - 3, y + 1, x + w - 5, y + h - 2, P.v);
+  }
+  // petite brique (11 x 5) pour écrire des mots
+  FC.miniBrick = function (scr, x, y, kind, t, hp) {
+    var w = 11, h = 5;
+    if (kind === 'reglisse') return reglisse(scr, x, y, w, h, hp);
+    var c = BRICK[kind];
+    scr.rect(x, y, w, h, c[0]); scr.rect(x, y, w, 1, c[1]); scr.rect(x, y + h - 1, w, 1, c[2]); scr.rect(x + w - 1, y, 1, h, c[2]);
+    if (kind === 'caramel' && Math.floor(t * 3 + x) % 7 === 0) scr.rect(x + 2, y + 1, 3, 1, P.W);
+    if (kind === 'sucre' && hp === 1) scr.line(x + 4, y + 1, x + 6, y + 3, P.v);
+  };
+  // une trappe en haut de l'écran (k : ouverture, de 0 fermée à 1 ouverte)
+  FC.hatch = function (scr, x, k) {
+    for (var xx = -13; xx < 13; xx++) scr.rect(x + xx, 14, 1, 6, Math.floor((xx + 20) / 3) % 2 ? P.Y : P.x); // cadre rayé
+    scr.rect(x - 13, 19, 26, 1, P.K);
+    var w = Math.round(10 * (1 - k));
+    scr.rect(x - 10, 15, 20, 4, P.K);
+    scr.rect(x - 10, 15, w, 4, P.M); scr.rect(x + 10 - w, 15, w, 4, P.M); // les deux portes qui glissent
+    if (w) { scr.rect(x - 10, 15, w, 1, P.m); scr.rect(x + 10 - w, 15, w, 1, P.m); }
+    if (k > 0.3) for (var g = 0; g < 8; g++) scr.rect(x - 8, 20 + g, 16, 1, alpha(P.y, 50 - g * 6));
+    scr.put(x - 14, 16, k > 0 ? P.R : P.g); scr.put(x + 13, 16, k > 0 ? P.R : P.g); // lampes : rouges quand ça s'ouvre
   };
   FC.brickColor = function (kind) { return BRICK[kind][0]; };
-  FC.brick = function (scr, x, y, kind, t, cracked) {
+  FC.brick = function (scr, x, y, kind, t, cracked, hp) {
     var c = BRICK[kind], w = 22, h = 9;
+    if (kind === 'reglisse') return reglisse(scr, x, y, w, h, hp == null ? 3 : hp);
     scr.rect(x, y, w, h, c[0]); scr.rect(x, y, w, 1, c[1]); scr.rect(x, y + h - 1, w, 1, c[2]); scr.rect(x + w - 1, y, 1, h, c[2]);
     if (kind === 'choc') { scr.rect(x + 11, y + 1, 1, h - 2, c[2]); scr.rect(x + 3, y + 3, 5, 3, c[1]); scr.rect(x + 14, y + 3, 5, 3, c[1]); } // carrés de chocolat
     if (kind === 'caramel' && Math.floor(t * 3 + x) % 5 === 0) scr.rect(x + 3, y + 2, 4, 1, P.W); // il brille (incassable)
