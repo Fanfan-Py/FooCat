@@ -359,13 +359,16 @@ export class App {
         if (this.mini) this.mini.update(dt, idle); else if (w) w.update(dt, idle);
         if (this.stateT < 1 || (!w && !this.mini)) break;
         const i = this.menu!.handle(c);
-        if (i === 1) this.go(this.mode === 'boss' && this.state === 'over' ? 'bossSel' : 'title');
+        if (i === 1) {
+          if (this.state === 'done') this.afterGame('title'); // (le score peut entrer au tableau des meilleurs scores)
+          else this.go(this.mode === 'boss' ? 'bossSel' : 'title');
+        }
         else if (i === 0) {
           if (this.state === 'over') this.restart();
           else if (!w) break;
           else if (STORIES[w.levelIndex + 1] && w.levelIndex + 1 < C.LEVELS.length) this.openStoryBefore(w.levelIndex + 1, w.carry());
           else if (w.levelIndex + 1 < C.LEVELS.length) this.startLevel(w.levelIndex + 1, w.carry());
-          else { if (!this.devRun) { this.writeSave(null); if (this.mode === 'difficile') this.unlock('nuitnoire'); } this.openStory(STORY_END, () => this.afterGame('end', true)); }
+          else this.openStory(STORY_END, () => this.afterGame('end', true));
         }
         break;
       }
@@ -446,6 +449,11 @@ export class App {
     this.checkGoals();
     saveStats(this.stats); this.statsDirty = false;
     const last = w.levelIndex + 1 >= C.LEVELS.length;
+    // le niveau est fait : « Continuer » reprendra au niveau suivant, même si on revient tout de suite à l'accueil
+    if (!this.devRun) {
+      if (!last) this.writeSave({ level: w.levelIndex + 1, carry: w.carry() });
+      else { this.writeSave(null); if (this.mode === 'difficile') this.unlock('nuitnoire'); }
+    }
     this.go('done', [last ? 'CONTINUER' : 'NIVEAU SUIVANT', "RETOUR À L'ACCUEIL"], 148);
     this.sfx.music?.(null);
   }
