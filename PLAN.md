@@ -342,3 +342,5 @@ Points d'attention :
 - [x] Niveau 8, forêt d'algues (31 octobre) : des monstres dans le passage laissé par chaque algue (petits poissons,
       parfois un poisson guitare ou une méduse), en plus des algues et des bulles.
 - [x] Niveaux 11 et 12 (31 octobre) : retour des jets de paillettes (sauf pendant la pluie de météorites et « Vulcano en vue »).
+- [x] Fin de niveau (7 novembre) : le chat ne reste plus coincé derrière un obstacle en sortant de l'écran
+      (il était repoussé à chaque image) ; pendant la sortie, il traverse obstacles et monstres.

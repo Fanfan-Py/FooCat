@@ -929,7 +929,7 @@ export class World implements BossHost, SkelHost, ScorpHost {
       }
       if (e.x < -32 || e.x > C.W + 220 || e.y < -40 || e.y > C.H + 40) { this.removeEnemy(e, false); continue; }
       // contact avec le chat
-      if (!e.dead && this.heroAlive() && h.inv <= 0 && !(e.kind === 'phoenix' && e.stage === 1) && !(e.kind === 'magmaSnake' && e.stage === 0) && overlap(hb, enemyBox(e))) {
+      if (!e.dead && this.heroAlive() && this.state !== 'cleared' && h.inv <= 0 && !(e.kind === 'phoenix' && e.stage === 1) && !(e.kind === 'magmaSnake' && e.stage === 0) && overlap(hb, enemyBox(e))) {
         if (e.kind === 'sleepBubble') { // la bulle éclate et le chat s'endort, sans perdre de cœur
           this.killEnemy(e, false, false); h.sleep = C.SLEEP_TIME; this.hitLog['bulle soporifique'] = (this.hitLog['bulle soporifique'] || 0) + 1;
           this.sfx.play('yawn'); continue;
@@ -1103,7 +1103,7 @@ export class World implements BossHost, SkelHost, ScorpHost {
         o.pix = FC.liana(L.len, Math.floor(this.t * 4), L.seed);
         o.shapes = [{ t: 'r', x: 3, y: 0, w: 8, h: L.len + 3 }];
       }
-      if (o.dead || !this.heroAlive() || h.ghost > 0) continue;
+      if (o.dead || !this.heroAlive() || h.ghost > 0 || this.state === 'cleared') continue; // niveau fini : le chat traverse tout
       if (o.jet && h.inv <= 0 && jetState(o, this.t) === 'on' && jetCircles(o).some(([cx, cy, r]) => boxEllipse(hb, cx, cy, r, r))) {
         this.flash = 0.2; this.flashColor = [255, 120, 200, 255];
         this.hurt(C.DAMAGE.web, 'paillettes');
