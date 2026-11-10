@@ -11,7 +11,7 @@ import type { Controls, Sfx } from './world';
 const P = FC.P;
 export const INVASION = {
   lives: 3, maxLives: 6, heartEvery: 50,
-  heroY: 143, heroSpeed: 150, fingerSpeed: 300, fireRate: 9, shotSpeed: 270,
+  heroY: 143, heroSpeed: 150, fireRate: 9, shotSpeed: 270,
   line: 176, // la ligne rouge à défendre
   shieldY: 116, block: 4, shieldHp: 2,
   // la guimauve géante : toutes les bossEvery vagues ; sa vie, ses tirs, ses petites guimauves, les points qu'elle rapporte
@@ -106,7 +106,7 @@ export class Invasion {
     h.inv = Math.max(0, h.inv - dt); h.cd -= dt; h.hit = Math.max(0, h.hit - dt);
     if (this.state === 'play') {
       let x = h.x + c.dx * I.heroSpeed * dt;
-      if (c.aimX !== undefined && c.aimX >= 0) { const max = I.fingerSpeed * dt; x = h.x + Math.max(-max, Math.min(max, c.aimX - 20 - h.x)); } // au doigt
+      if (c.dragX) x += c.dragX; // au doigt : le personnage suit le mouvement du doigt
       h.x = Math.max(0, Math.min(C.W - 40, x));
       if ((c.fire || c.finger) && h.cd <= 0) { // (au doigt : on tire tout seul)
         h.cd = 1 / I.fireRate;

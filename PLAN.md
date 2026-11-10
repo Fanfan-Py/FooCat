@@ -461,7 +461,8 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 
 ## Niveaux secrets au doigt sur téléphone (10 novembre 2026)
 - [x] Dans le casse-bonbons et l'invasion, sur téléphone : plus de joystick ni de boutons de tir (il reste la pause
-      et le son). On glisse le doigt n'importe où : la soucoupe (ou le personnage) se place sous le doigt.
+      et le son). On pose le doigt où l'on veut (même sur les bandes des côtés) et on le glisse : la soucoupe
+      (ou le personnage) suit le mouvement du doigt, comme sur un pavé tactile.
       Une petite tape lance (ou renvoie) la bonbille ; on tire tout seul dans l'invasion, la mitraillette tire toute seule.
 
 ## Étape G : le mode boss (contre la montre)

@@ -894,7 +894,7 @@ export class App {
     if (this.state === 'mini' && m.t < 2.6 && Math.floor(m.t * 4) % 4 !== 3) {
       center(scr, 'NIVEAU SECRET', 58, P.W, { sc: 2, outline: P.K });
       center(scr, inv ? "L'INVASION DES BONBONS" : 'LE CASSE-BONBONS', 78, P.y, { outline: P.K });
-      center(scr, this.touch ? (inv ? 'GLISSE TON DOIGT POUR BOUGER : ON TIRE TOUT SEUL !' : 'GLISSE TON DOIGT : LA SOUCOUPE LE SUIT')
+      center(scr, this.touch ? (inv ? 'GLISSE TON DOIGT POUR BOUGER : ON TIRE TOUT SEUL !' : 'GLISSE TON DOIGT, OÙ TU VEUX : LA SOUCOUPE SUIT')
         : inv ? 'GAUCHE/DROITE POUR BOUGER, TIRE VERS LE HAUT !' : 'RENVOIE LA BONBILLE AVEC TA SOUCOUPE !', 90, P.q, { outline: P.K });
     }
     if (this.state === 'name') {

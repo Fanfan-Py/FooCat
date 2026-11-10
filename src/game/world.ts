@@ -19,7 +19,7 @@ export const WEAPON_ORDER: WeaponKind[] = ['verm', 'drag', 'pinata', 'rain'];
 export interface Controls {
   dx: number; dy: number; // -1..1
   fire: boolean; // maintenu
-  aimX?: number; // niveaux secrets sur téléphone : position du doigt (pixels du jeu), -1 si aucun doigt
+  dragX?: number; // niveaux secrets sur téléphone : déplacement du doigt depuis l'image d'avant (pixels du jeu)
   finger?: boolean; // niveaux secrets sur téléphone : on joue au doigt (le tir se fait tout seul)
   special: boolean; // casse-dents, appuyé à cette image
   swap: boolean; // changer d'arme, appuyé à cette image

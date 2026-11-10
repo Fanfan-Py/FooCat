@@ -17,7 +17,6 @@ export const CASSE = {
   // au premier tour des tableaux, la bonbille est plus lente ; après, on reprend la vitesse ci-dessus
   firstSpeed: 112, firstStep: 5, firstMax: 165,
   cols: 13, bw: 22, bh: 9, top: 22, wall: 6, // largeur des murs en sucre d'orge
-  fingerSpeed: 520, // au doigt : vitesse maximale de la soucoupe (pixels par seconde)
   wide: 15, through: 8, gun: 8, gunRate: 7, glue: 15, glueHold: 2.5, slow: 3, slowFactor: 0.35,
   // monstres : nombre maximum, premier après, attente avant le suivant, vitesse de descente, points
   monsters: 3, firstMonster: 4, nextMonster: 2.2, monsterSpeed: 9, monsterPoints: 100,
@@ -165,12 +164,7 @@ export class Casse {
       const slow = pd.slow > 0 ? CASSE.slowFactor : 1, sp = CASSE.speed * slow;
       const lo = ex && ex.side === 0 && ex.open >= 1 ? -44 : W - 2, hi = ex && ex.side === 1 && ex.open >= 1 ? C.W + 4 : C.W - W - 38;
       let x = pd.x + c.dx * sp * dt;
-      if (c.aimX !== undefined && c.aimX >= 0) { // au doigt : la soucoupe se place sous le doigt (vite, mais pas d'un coup)
-        let target = c.aimX - 20;
-        if (ex && ex.open >= 1 && (ex.side ? c.aimX > C.W - 30 : c.aimX < 30)) target = ex.side ? C.W + 4 : -44; // vers le passage
-        const max = CASSE.fingerSpeed * slow * dt;
-        x = pd.x + Math.max(-max, Math.min(max, target - pd.x));
-      }
+      if (c.dragX) x += c.dragX * slow; // au doigt : la soucoupe suit le mouvement du doigt (ralentie quand elle dort)
       pd.x = Math.max(lo, Math.min(hi, x));
     }
     if (ex) this.updateExit(dt);
