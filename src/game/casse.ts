@@ -17,6 +17,7 @@ export const CASSE = {
   // au premier tour des tableaux, la bonbille est plus lente ; après, on reprend la vitesse ci-dessus
   firstSpeed: 112, firstStep: 5, firstMax: 165,
   cols: 13, bw: 22, bh: 9, top: 22, wall: 6, // largeur des murs en sucre d'orge
+  fingerSpeed: 520, // au doigt : vitesse maximale de la soucoupe (pixels par seconde)
   wide: 15, through: 8, gun: 8, gunRate: 7, glue: 15, glueHold: 2.5, slow: 3, slowFactor: 0.35,
   // monstres : nombre maximum, premier après, attente avant le suivant, vitesse de descente, points
   monsters: 3, firstMonster: 4, nextMonster: 2.2, monsterSpeed: 9, monsterPoints: 100,
@@ -115,6 +116,7 @@ export class Casse {
   private stars = FC.stars(77, C.W, C.H, 80);
   private rnd: () => number;
   private prevFire = false;
+  touch = false; // sur téléphone (pour les messages : « tape » au lieu de « tire »)
 
   // start : le tableau de départ (1 d'habitude ; un autre pour essayer, en mode développeur)
   constructor(private sfx: Sfx, seed = Date.now() % 100000, start = 1) {
@@ -160,9 +162,16 @@ export class Casse {
     if (this.state === 'dying' && this.stateT > 1.8) { this.state = 'over'; this.stateT = 0; }
     // la soucoupe (quand le passage est ouvert, elle peut entrer dans le mur de ce côté)
     if (this.state === 'play' && !(ex && ex.slide >= 0)) {
-      const sp = CASSE.speed * (pd.slow > 0 ? CASSE.slowFactor : 1);
+      const slow = pd.slow > 0 ? CASSE.slowFactor : 1, sp = CASSE.speed * slow;
       const lo = ex && ex.side === 0 && ex.open >= 1 ? -44 : W - 2, hi = ex && ex.side === 1 && ex.open >= 1 ? C.W + 4 : C.W - W - 38;
-      pd.x = Math.max(lo, Math.min(hi, pd.x + c.dx * sp * dt));
+      let x = pd.x + c.dx * sp * dt;
+      if (c.aimX !== undefined && c.aimX >= 0) { // au doigt : la soucoupe se place sous le doigt (vite, mais pas d'un coup)
+        let target = c.aimX - 20;
+        if (ex && ex.open >= 1 && (ex.side ? c.aimX > C.W - 30 : c.aimX < 30)) target = ex.side ? C.W + 4 : -44; // vers le passage
+        const max = CASSE.fingerSpeed * slow * dt;
+        x = pd.x + Math.max(-max, Math.min(max, target - pd.x));
+      }
+      pd.x = Math.max(lo, Math.min(hi, x));
     }
     if (ex) this.updateExit(dt);
     // la bonbille posée sur la soucoupe part quand on tire (ou toute seule au bout d'un moment)
@@ -171,7 +180,7 @@ export class Casse {
       if (this.state === 'play' && ((b.off ? press : c.fire) || b.hold <= 0)) this.launch(b);
     }
     // la mitraillette : deux vermicelles parallèles
-    if (this.state === 'play' && pd.gun > 0 && c.fire && pd.gunCD <= 0 && !ex) {
+    if (this.state === 'play' && pd.gun > 0 && (c.fire || c.finger) && pd.gunCD <= 0 && !ex) { // (au doigt : elle tire toute seule)
       pd.gunCD = 1 / CASSE.gunRate;
       this.shots.push({ x: this.px + 5, y: CASSE.paddleY + 12 }, { x: this.px + this.pw - 6, y: CASSE.paddleY + 12 });
       this.sfx.play('shoot_verm');
@@ -449,7 +458,7 @@ export class Casse {
     }
     if (this.state !== 'play') return;
     const msg = ex && ex.slide < 0 && ex.open >= 1 && !this.banner ? (ex.side ? 'PASSAGE SECRET : VA À DROITE !' : 'PASSAGE SECRET : VA À GAUCHE !')
-      : this.balls.some((b) => b.stuck) ? (this.balls.some((b) => b.stuck && b.off) ? 'TIRE POUR RENVOYER LA BONBILLE' : 'TIRE POUR LANCER LA BONBILLE') : '';
+      : this.balls.some((b) => b.stuck) ? (this.touch ? 'TAPE SUR L\'ÉCRAN POUR ' : 'TIRE POUR ') + (this.balls.some((b) => b.stuck && b.off) ? 'RENVOYER LA BONBILLE' : 'LANCER LA BONBILLE') : '';
     if (msg && t % 1.2 < 0.8) FC.text(scr, msg, Math.round(C.W / 2 - FC.textWidth(msg) / 2), 124, ex ? P.y : P.W, { outline: P.K });
     if (ex && ex.slide < 0 && ex.open >= 1) for (let q = 0; q < 2; q++) { // des flèches vers le passage
       const ax = (ex.side ? 262 + (t * 30) % 16 : 52 - (t * 30) % 16) + q * (ex.side ? 9 : -9);

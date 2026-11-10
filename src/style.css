@@ -31,6 +31,8 @@ body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit
 .tbtn.special { background: var(--special); color: #1b1030; }
 .tbtn.small svg { width: 55%; height: 55%; }
 .tbtn.down { filter: brightness(1.35); }
+/* niveaux secrets sur téléphone : on joue au doigt, sans joystick ni boutons de tir */
+#touch.finger #stick, #touch.finger .tbtn.fire, #touch.finger .tbtn.swap, #touch.finger .tbtn.special { display: none; }
 .tbtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 #touch.overlay .tbtn { opacity: 0.55; }
 #b-sound .cross { display: none; }

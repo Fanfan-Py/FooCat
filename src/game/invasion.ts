@@ -11,7 +11,7 @@ import type { Controls, Sfx } from './world';
 const P = FC.P;
 export const INVASION = {
   lives: 3, maxLives: 6, heartEvery: 50,
-  heroY: 143, heroSpeed: 150, fireRate: 9, shotSpeed: 270,
+  heroY: 143, heroSpeed: 150, fingerSpeed: 300, fireRate: 9, shotSpeed: 270,
   line: 176, // la ligne rouge à défendre
   shieldY: 116, block: 4, shieldHp: 2,
   // la guimauve géante : toutes les bossEvery vagues ; sa vie, ses tirs, ses petites guimauves, les points qu'elle rapporte
@@ -44,6 +44,7 @@ export class Invasion {
   private stars = FC.starsDown(90, 5, C.W, C.H);
   private rnd: () => number;
   private nextWaveT = 1.2;
+  touch = false; // sur téléphone
 
   // start : la vague de départ (1 d'habitude ; une autre pour essayer, en mode développeur)
   constructor(private sfx: Sfx, seed = Date.now() % 100000, start = 1) {
@@ -104,8 +105,10 @@ export class Invasion {
     if (this.banner && (this.banner.t += dt) > 1.8) this.banner = null;
     h.inv = Math.max(0, h.inv - dt); h.cd -= dt; h.hit = Math.max(0, h.hit - dt);
     if (this.state === 'play') {
-      h.x = Math.max(0, Math.min(C.W - 40, h.x + c.dx * I.heroSpeed * dt));
-      if (c.fire && h.cd <= 0) {
+      let x = h.x + c.dx * I.heroSpeed * dt;
+      if (c.aimX !== undefined && c.aimX >= 0) { const max = I.fingerSpeed * dt; x = h.x + Math.max(-max, Math.min(max, c.aimX - 20 - h.x)); } // au doigt
+      h.x = Math.max(0, Math.min(C.W - 40, x));
+      if ((c.fire || c.finger) && h.cd <= 0) { // (au doigt : on tire tout seul)
         h.cd = 1 / I.fireRate;
         this.shots.push({ x: h.x + 19, y: I.heroY + 2, vx: (this.rnd() * 2 - 1) * 14, dead: false, c: Math.floor(this.rnd() * 7) });
         this.sfx.play('shoot_verm');

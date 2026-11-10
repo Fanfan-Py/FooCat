@@ -209,6 +209,8 @@ export class App {
   }
 
   get playing() { return this.state === 'play' || this.state === 'mini'; }
+  // niveaux secrets sur téléphone : on joue au doigt
+  get fingerMode() { return this.touch && this.state === 'mini' && !!this.mini; }
   // le personnage affiché : un personnage secret, sinon le chat choisi
   get heroCat() { return this.special || this.cat; }
   private heroFrame = (f: number) => heroSprite(this.skin, f, this.heroCat);
@@ -340,7 +342,8 @@ export class App {
         const m = this.mini;
         if (!m) return;
         if (c.pause) { this.openPause(); return; }
-        m.update(dt, this.settings.autoFire && m instanceof Invasion ? { ...c, fire: true } : c);
+        m.touch = this.touch;
+        m.update(dt, { ...c, finger: this.touch, fire: c.fire || (this.settings.autoFire && m instanceof Invasion) });
         this.readMiniEvents(m);
         if (m.state === 'over') { this.record(); this.sfx.music?.(null); this.afterGame('over'); }
         break;
@@ -891,7 +894,8 @@ export class App {
     if (this.state === 'mini' && m.t < 2.6 && Math.floor(m.t * 4) % 4 !== 3) {
       center(scr, 'NIVEAU SECRET', 58, P.W, { sc: 2, outline: P.K });
       center(scr, inv ? "L'INVASION DES BONBONS" : 'LE CASSE-BONBONS', 78, P.y, { outline: P.K });
-      center(scr, inv ? 'GAUCHE/DROITE POUR BOUGER, TIRE VERS LE HAUT !' : 'RENVOIE LA BONBILLE AVEC TA SOUCOUPE !', 90, P.q, { outline: P.K });
+      center(scr, this.touch ? (inv ? 'GLISSE TON DOIGT POUR BOUGER : ON TIRE TOUT SEUL !' : 'GLISSE TON DOIGT : LA SOUCOUPE LE SUIT')
+        : inv ? 'GAUCHE/DROITE POUR BOUGER, TIRE VERS LE HAUT !' : 'RENVOIE LA BONBILLE AVEC TA SOUCOUPE !', 90, P.q, { outline: P.K });
     }
     if (this.state === 'name') {
       scr.rect(0, 0, C.W, C.H, FC.alpha(P.K, 190));

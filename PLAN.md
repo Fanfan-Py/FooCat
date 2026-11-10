@@ -459,6 +459,11 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
 - [x] 4 · Une musique pour chaque niveau secret.
 - [x] 5 · **L'aide sur téléphone** au premier lancement (joystick, TIR, ARME, CASSE, pause) ; à revoir dans les Réglages.
 
+## Niveaux secrets au doigt sur téléphone (10 novembre 2026)
+- [x] Dans le casse-bonbons et l'invasion, sur téléphone : plus de joystick ni de boutons de tir (il reste la pause
+      et le son). On glisse le doigt n'importe où : la soucoupe (ou le personnage) se place sous le doigt.
+      Une petite tape lance (ou renvoie) la bonbille ; on tire tout seul dans l'invasion, la mitraillette tire toute seule.
+
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.
 - [x] Un **chronomètre** et un **record par boss**, plus un record « les 3 à la suite ».

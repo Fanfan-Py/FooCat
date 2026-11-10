@@ -19,7 +19,8 @@ export class Input {
   private prevAxis = 0;
   private prevAxisY = 0;
   // état tactile (rempli par les commandes à l'écran)
-  touch = { dx: 0, dy: 0, fire: false, swap: false, special: false, pause: false, tapX: -1, tapY: -1 };
+  // aimX : position du doigt qui guide la soucoupe (niveaux secrets), tapFire : petite tape (un tir, une seule fois)
+  touch = { dx: 0, dy: 0, fire: false, swap: false, special: false, pause: false, tapX: -1, tapY: -1, aimX: -1, tapFire: false };
   onMute: () => void = () => { };
 
   constructor() {
@@ -73,12 +74,12 @@ export class Input {
     // écran tactile
     const t = this.touch;
     if (t.dx || t.dy) { dx = t.dx; dy = t.dy; }
-    fire = fire || t.fire;
+    fire = fire || t.fire || t.tapFire;
     swap = swap || t.swap; special = special || t.special; pause = pause || t.pause;
     const tapX = t.tapX, tapY = t.tapY;
-    t.swap = t.special = t.pause = false; t.tapX = t.tapY = -1;
+    t.swap = t.special = t.pause = t.tapFire = false; t.tapX = t.tapY = -1;
 
     this.pressed.clear();
-    return { dx, dy, fire, swap, special, pause, confirm, select, left, right, up, down, tapX, tapY };
+    return { dx, dy, fire, swap, special, pause, confirm, select, left, right, up, down, tapX, tapY, aimX: t.aimX };
   }
 }

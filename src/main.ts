@@ -109,11 +109,20 @@ function enableTouch() {
 // ?touch dans l'adresse : affiche les commandes tactiles même sur ordinateur (pour tester)
 if ((window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || new URLSearchParams(location.search).has('touch')) enableTouch();
 
+// niveaux secrets sur téléphone : le doigt guide la soucoupe (elle se place sous le doigt), une petite tape lance
+let fingerId: number | null = null, fingerT = 0, fingerX0 = 0, fingerY0 = 0;
+function aimAt(cx: number) { const r = canvas.getBoundingClientRect(); input.touch.aimX = Math.max(0, Math.min(W, (cx - r.left) / r.width * W)); }
+
 $('stage').addEventListener('pointerdown', (e) => {
   sfx.unlock();
   if (e.pointerType === 'touch') enableTouch();
   if ((e.target as HTMLElement).closest('.tbtn')) return;
   if (!app.playing) { tapAt(e.clientX, e.clientY); return; }
+  if (app.fingerMode && e.pointerType === 'touch') {
+    if (fingerId === null) { fingerId = e.pointerId; fingerT = performance.now(); fingerX0 = e.clientX; fingerY0 = e.clientY; aimAt(e.clientX); }
+    else input.touch.tapFire = true; // un deuxième doigt : une tape
+    return;
+  }
   if (e.pointerType !== 'touch') return;
   const vw = window.innerWidth, onStickSide = mirror ? e.clientX > vw * 0.55 : e.clientX < vw * 0.45;
   if (onStickSide && stickId === null) {
@@ -129,6 +138,7 @@ $('stage').addEventListener('pointerdown', (e) => {
   }
 });
 window.addEventListener('pointermove', (e) => {
+  if (e.pointerId === fingerId) { aimAt(e.clientX); return; }
   if (e.pointerId !== stickId) return;
   let dx = e.clientX - stickX, dy = e.clientY - stickY;
   const d = Math.hypot(dx, dy); if (d > R) { dx = dx / d * R; dy = dy / d * R; }
@@ -137,6 +147,10 @@ window.addEventListener('pointermove', (e) => {
   input.touch.dx = Math.abs(nx) < 0.15 ? 0 : nx; input.touch.dy = Math.abs(ny) < 0.15 ? 0 : ny;
 });
 function release(e: PointerEvent) {
+  if (e.pointerId === fingerId) { // une petite tape (doigt levé vite, presque sans bouger) : lancer, renvoyer
+    if (performance.now() - fingerT < 280 && Math.hypot(e.clientX - fingerX0, e.clientY - fingerY0) < 14) input.touch.tapFire = true;
+    fingerId = null; input.touch.aimX = -1;
+  }
   if (e.pointerId === stickId) {
     stickId = null; input.touch.dx = input.touch.dy = 0;
     knob.style.transform = ''; stick.classList.remove('active');
@@ -223,6 +237,9 @@ function frame(now: number) {
   while (acc >= STEP && n < 5) { app.update(STEP, input.poll()); acc -= STEP; n++; }
   if (n === 5) acc = 0;
   syncNameForm();
+  // au doigt : le joystick et les boutons de tir disparaissent (il reste la pause et le son)
+  const finger = app.fingerMode;
+  if (touchUI.classList.contains('finger') !== finger) { touchUI.classList.toggle('finger', finger); if (!finger) { fingerId = null; input.touch.aimX = -1; } }
   const sz = screenSize();
   if (sz.w !== laidOut.w || sz.h !== laidOut.h || layoutVersion !== app.settingsVersion) layout(); // taille ou réglages changés
   app.draw(scr);
