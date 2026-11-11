@@ -87,9 +87,9 @@ Au choix sur la ligne « MODE » de l'accueil :
   M pour couper le son.
 - Manette : stick ou croix, A pour tirer, B pour le casse-dents, Y pour changer d'arme.
 - Téléphone : joystick sous le pouce gauche ; à droite, TIR, ARME et CASSE.
-  Dans les niveaux secrets, on joue au doigt : on le pose où l'on veut et on le glisse, le personnage suit
-  le mouvement (le tir se fait tout seul) ;
-  au casse-bonbons, une petite tape lance la bonbille.
+  Dans les niveaux secrets, deux grosses flèches en bas, à gauche et à droite, font bouger le personnage
+  (le tir se fait tout seul) ; au casse-bonbons, toucher le jeu lance la bonbille. Dans les Réglages, on peut
+  choisir de jouer plutôt au doigt (on le glisse où l'on veut, le personnage suit le mouvement).
 
 ## Installer le jeu sur un téléphone
 

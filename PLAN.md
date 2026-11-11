@@ -464,6 +464,8 @@ Maquettes : planches « Récompenses secrètes » (6 récompenses), « Écran Co
       et le son). On pose le doigt où l'on veut (même sur les bandes des côtés) et on le glisse : la soucoupe
       (ou le personnage) suit le mouvement du doigt, comme sur un pavé tactile.
       Une petite tape lance (ou renvoie) la bonbille ; on tire tout seul dans l'invasion, la mitraillette tire toute seule.
+- [x] Deux flèches (en bas, dans les bandes des côtés) pour bouger dans les niveaux secrets : le doigt ne cache plus
+      la soucoupe. C'est le choix par défaut ; la ligne « NIV. SECRETS (TÉLÉPHONE) » des Réglages permet de jouer au doigt.
 
 ## Étape G : le mode boss (contre la montre)
 - [x] Rejouer **seulement les boss déjà vaincus** : l'Araignée de Fer, le poisson squelette, le Scorpion de feu.

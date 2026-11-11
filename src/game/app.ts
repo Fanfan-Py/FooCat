@@ -135,6 +135,7 @@ const SETTING_ROWS: { key: keyof Settings | 'back' | 'code' | 'help'; label: str
   { key: 'autoFire', label: 'TIR AUTOMATIQUE' },
   { key: 'leftHanded', label: 'COMMANDES GAUCHER' },
   { key: 'vibrate', label: 'VIBRATIONS (ANDROID)' },
+  { key: 'arrows', label: 'NIV. SECRETS (TÉLÉPHONE)' },
   { key: 'help', label: 'AIDE : LES COMMANDES' },
   { key: 'code', label: 'CODE SECRET' },
   { key: 'back', label: 'RETOUR' },
@@ -653,7 +654,7 @@ export class App {
     if (c.left || c.right) this.changeSetting(this.sel, c.right ? 1 : -1);
     else if (c.confirm) this.changeSetting(this.sel, 1);
     if (c.tapX >= 0) {
-      const row = Math.floor((c.tapY - 36 + 5) / 13);
+      const row = Math.floor((c.tapY - 32 + 5) / 12);
       if (row < 0 || row >= n) return;
       this.sel = row;
       this.changeSetting(row, c.tapX < 210 ? -1 : 1); // à gauche : moins, à droite : plus
@@ -894,7 +895,8 @@ export class App {
     if (this.state === 'mini' && m.t < 2.6 && Math.floor(m.t * 4) % 4 !== 3) {
       center(scr, 'NIVEAU SECRET', 58, P.W, { sc: 2, outline: P.K });
       center(scr, inv ? "L'INVASION DES BONBONS" : 'LE CASSE-BONBONS', 78, P.y, { outline: P.K });
-      center(scr, this.touch ? (inv ? 'GLISSE TON DOIGT POUR BOUGER : ON TIRE TOUT SEUL !' : 'GLISSE TON DOIGT, OÙ TU VEUX : LA SOUCOUPE SUIT')
+      center(scr, this.touch ? (this.settings.arrows ? (inv ? 'LES FLÈCHES POUR BOUGER : ON TIRE TOUT SEUL !' : 'LES FLÈCHES POUR BOUGER, TAPE POUR LANCER')
+        : inv ? 'GLISSE TON DOIGT POUR BOUGER : ON TIRE TOUT SEUL !' : 'GLISSE TON DOIGT, OÙ TU VEUX : LA SOUCOUPE SUIT')
         : inv ? 'GAUCHE/DROITE POUR BOUGER, TIRE VERS LE HAUT !' : 'RENVOIE LA BONBILLE AVEC TA SOUCOUPE !', 90, P.q, { outline: P.K });
     }
     if (this.state === 'name') {
@@ -1013,8 +1015,8 @@ export class App {
     center(scr, 'RÉGLAGES', 10, P.y, { sc: 2, outline: P.P });
     const s = this.settings;
     SETTING_ROWS.forEach((r, i) => {
-      const y = 36 + i * 13, on = i === this.sel;
-      if (on) scr.rect(28, y - 4, 264, 13, FC.alpha(P.P, 170));
+      const y = 32 + i * 12, on = i === this.sel;
+      if (on) scr.rect(28, y - 3, 264, 11, FC.alpha(P.P, 170));
       if (r.key === 'back') { center(scr, 'RETOUR', y, on ? P.W : P.v); return; }
       if (r.key === 'help') { FC.text(scr, r.label, 40, y, on ? P.W : P.v, { outline: P.K }); center(scr, '>', y, P.y, {}, 239); return; }
       if (r.key === 'code') {
@@ -1026,7 +1028,8 @@ export class App {
       FC.text(scr, '<', 196, y, P.y); FC.text(scr, '>', 278, y, P.y);
       if (r.key === 'music' || r.key === 'sfx') {
         for (let k = 0; k < 10; k++) scr.rect(204 + k * 7, y, 5, 5, k < s[r.key] ? (k < 7 ? P.g : k < 9 ? P.y : P.P) : P.k);
-      } else center(scr, s[r.key] ? 'OUI' : 'NON', y, s[r.key] ? P.g : P.M, {}, 239);
+      } else if (r.key === 'arrows') center(scr, s.arrows ? 'FLÈCHES' : 'DOIGT', y, P.g, {}, 239);
+      else center(scr, s[r.key] ? 'OUI' : 'NON', y, s[r.key] ? P.g : P.M, {}, 239);
     });
     center(scr, this.touch ? 'TOUCHE À GAUCHE OU À DROITE POUR CHANGER' : 'HAUT/BAS : CHOISIR · GAUCHE/DROITE : CHANGER · ÉCHAP : RETOUR', 146, P.v);
     if (s.leftHanded) center(scr, 'GAUCHER : JOYSTICK À DROITE, BOUTONS À GAUCHE', 156, P.q);

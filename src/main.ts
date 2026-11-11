@@ -23,6 +23,7 @@ if (import.meta.env.DEV) app.setDev(true);
 const touchUI = $('touch'), stick = $('stick'), knob = $('knob'), rotate = $('rotate');
 const btn = {
   fire: $('b-fire'), swap: $('b-swap'), special: $('b-special'), pause: $('b-pause'), sound: $('b-sound'),
+  left: $('b-left'), right: $('b-right'),
 };
 let hint = { x: 70, y: 0 };
 
@@ -87,6 +88,13 @@ function layout() {
     place(btn.pause, right - 26, top + ch * 0.1 + 26, 38); place(btn.sound, right - 70, top + ch * 0.1 + 26, 38);
     hint = { x: ins.l + 70, y: bottom - 70 };
   }
+  // les flèches des niveaux secrets : en bas, une de chaque côté (jamais inversées)
+  const arrow = side >= 64 ? Math.min(84, side - 8) : band >= 64 ? Math.min(80, band - 8) : 72;
+  const ay = side >= 64 ? bottom - 16 - arrow / 2 : band >= 64 ? bottom - band / 2 : bottom - 12 - arrow / 2;
+  const ax = side >= 64 ? side / 2 : 16 + arrow / 2;
+  for (const [el, x] of [[btn.left, ins.l + ax], [btn.right, right - ax]] as [HTMLElement, number][]) {
+    el.style.left = x + 'px'; el.style.top = ay + 'px'; el.style.width = el.style.height = arrow + 'px';
+  }
   hint.x = mx(hint.x);
   if (!stickId) { stick.style.left = hint.x + 'px'; stick.style.top = hint.y + 'px'; }
   rotate.hidden = !(app.touch && vh > vw);
@@ -120,6 +128,7 @@ $('stage').addEventListener('pointerdown', (e) => {
   if (e.pointerType === 'touch') enableTouch();
   if ((e.target as HTMLElement).closest('.tbtn')) return;
   if (!app.playing) { tapAt(e.clientX, e.clientY); return; }
+  if (app.fingerMode && app.settings.arrows) { input.touch.tapFire = true; return; } // avec les flèches : toucher le jeu = une tape
   if (app.fingerMode && e.pointerType === 'touch') {
     if (fingerId === null) { fingerId = e.pointerId; fingerT = performance.now(); fingerX0 = fingerLast = e.clientX; fingerY0 = e.clientY; }
     else input.touch.tapFire = true; // un deuxième doigt : une tape
@@ -168,6 +177,19 @@ btn.fire.addEventListener('pointerdown', (e) => {
   if (!app.playing) { input.touch.tapX = W / 2; input.touch.tapY = 90; return; }
   fireId = e.pointerId; input.touch.fire = true; btn.fire.classList.add('down');
 });
+// les flèches : on garde le doigt appuyé pour avancer
+const arrowIds = new Map<number, { d: number; el: HTMLElement }>(); // doigt -> flèche appuyée
+for (const [el, d] of [[btn.left, -1], [btn.right, 1]] as [HTMLElement, number][]) {
+  el.addEventListener('pointerdown', (e) => { sfx.unlock(); arrowIds.set(e.pointerId, { d, el }); input.touch.arrow = d; el.classList.add('down'); });
+}
+function arrowUp(e: PointerEvent) {
+  const a = arrowIds.get(e.pointerId);
+  if (!a) return;
+  arrowIds.delete(e.pointerId);
+  if (![...arrowIds.values()].some((x) => x.el === a.el)) a.el.classList.remove('down');
+  input.touch.arrow = arrowIds.size ? [...arrowIds.values()].pop()!.d : 0; // (si l'autre flèche est encore appuyée)
+}
+window.addEventListener('pointerup', arrowUp); window.addEventListener('pointercancel', arrowUp);
 btn.swap.addEventListener('pointerdown', () => { input.touch.swap = true; });
 btn.special.addEventListener('pointerdown', () => { input.touch.special = true; });
 btn.pause.addEventListener('pointerdown', () => { input.touch.pause = true; });
@@ -240,8 +262,9 @@ function frame(now: number) {
   if (n === 5) acc = 0;
   syncNameForm();
   // au doigt : le joystick et les boutons de tir disparaissent (il reste la pause et le son)
-  const finger = app.fingerMode;
+  const finger = app.fingerMode, arrows = finger && app.settings.arrows;
   if (touchUI.classList.contains('finger') !== finger) { touchUI.classList.toggle('finger', finger); if (!finger) fingerId = null; }
+  if (touchUI.classList.contains('arrows') !== arrows) { touchUI.classList.toggle('arrows', arrows); if (!arrows) { arrowIds.clear(); input.touch.arrow = 0; btn.left.classList.remove('down'); btn.right.classList.remove('down'); } }
   const sz = screenSize();
   if (sz.w !== laidOut.w || sz.h !== laidOut.h || layoutVersion !== app.settingsVersion) layout(); // taille ou réglages changés
   app.draw(scr);

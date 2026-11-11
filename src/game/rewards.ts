@@ -8,8 +8,9 @@ function read<T>(key: string, def: T): T {
 function write(key: string, v: unknown) { try { localStorage.setItem(key, JSON.stringify(v)); } catch { /* stockage indisponible */ } }
 
 // ---------- réglages ----------
-export interface Settings { music: number; sfx: number; autoFire: boolean; leftHanded: boolean; vibrate: boolean }
-const DEFAULT_SETTINGS: Settings = { music: 7, sfx: 8, autoFire: false, leftHanded: false, vibrate: true };
+// arrows : niveaux secrets sur téléphone, avec deux flèches (sinon, au doigt)
+export interface Settings { music: number; sfx: number; autoFire: boolean; leftHanded: boolean; vibrate: boolean; arrows: boolean }
+const DEFAULT_SETTINGS: Settings = { music: 7, sfx: 8, autoFire: false, leftHanded: false, vibrate: true, arrows: true };
 export const loadSettings = () => read<Settings>('foocat.settings', DEFAULT_SETTINGS);
 export const saveSettings = (s: Settings) => write('foocat.settings', s);
 

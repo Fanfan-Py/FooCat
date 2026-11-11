@@ -33,6 +33,10 @@ body { touch-action: none; user-select: none; -webkit-user-select: none; -webkit
 .tbtn.down { filter: brightness(1.35); }
 /* niveaux secrets sur téléphone : on joue au doigt, sans joystick ni boutons de tir */
 #touch.finger #stick, #touch.finger .tbtn.fire, #touch.finger .tbtn.swap, #touch.finger .tbtn.special { display: none; }
+/* niveaux secrets sur téléphone, avec les flèches : deux grosses flèches dans les bandes des côtés */
+.tbtn.arrow { display: none; background: rgba(255, 230, 128, 0.55); color: #1b1030; }
+.tbtn.arrow svg { width: 55%; height: 55%; stroke-width: 3.2; }
+#touch.arrows .tbtn.arrow { display: flex; }
 .tbtn:focus-visible { outline: 3px solid var(--focus); outline-offset: 2px; }
 #touch.overlay .tbtn { opacity: 0.55; }
 #b-sound .cross { display: none; }
